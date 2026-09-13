@@ -1,0 +1,29 @@
+# ── Chaves e segredos ────────────────────────────────────────────────
+# Nenhuma chave de API entra neste repositório. As chaves do ThumbDrop
+# vivem no localStorage do navegador, nunca em arquivo. As linhas abaixo
+# são rede de proteção contra um .env criado por hábito.
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+secrets.json
+credentials.json
+
+# ── Sistema operacional ──────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Editores ─────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*~
+
+# ── Build / dependências ─────────────────────────────────────────────
+# O projeto não tem build nem npm. Listado para o caso de alguém tentar.
+node_modules/
+dist/
+build/
