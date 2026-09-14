@@ -5,16 +5,22 @@ imagem → filtro de IA → texto → moldura e export. Saída em PNG 1920×1080
 
 HTML, CSS e JavaScript vanilla. **Sem build, sem framework, sem npm, sem servidor.**
 
-Duas formas de abrir, as duas com duplo clique e nenhuma precisando de nada:
+Duas formas de abrir:
 
-- **`thumbdrop.html`** — tudo num arquivo só. É a entrega.
-- **`index.html`** — os oito arquivos separados. É onde se mexe no código.
+- **`thumbdrop.html`** — **um arquivo, 1,4 MB, sem nada ao lado.** Fontes,
+  molduras e amostras vivem dentro dele como data URI. Baixa, dá duplo clique,
+  funciona. É a entrega.
+- **`index.html`** — os nove arquivos separados, com a pasta `assets/` ao lado.
+  É onde se mexe no código.
 
 `./build.sh` gera o primeiro a partir do segundo. É `sh` puro, sem npm e sem
-bundler: não é uma etapa de build do projeto, é só a maneira de empacotar.
-Os dois passam pelo mesmo teste de aceite.
+bundler: não é uma etapa de build do projeto, é só o empacotador. Ele falha de
+propósito se sobrar qualquer ponto de carga apontando para `assets/` — um
+arquivo que se diz único e depende de uma pasta falha em silêncio na máquina de
+outra pessoa.
 
-A pasta `assets/` precisa ficar ao lado do HTML que você abrir.
+Os dois passam pelo mesmo teste de aceite, e o arquivo único foi verificado
+sozinho numa pasta vazia: 12 de 12, zero pedidos de rede.
 
 ---
 

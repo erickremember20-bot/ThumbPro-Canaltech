@@ -1573,7 +1573,12 @@
 
       var art = document.createElement('span');
       art.className = 'td-frameopt__art';
-      if (frame.file && frameImages[frame.id]) art.style.backgroundImage = 'url("' + frame.file + '")';
+      /* A miniatura usa a imagem JÁ CARREGADA, não o caminho em assets/.
+         No arquivo único a moldura vive como data URI e o caminho não
+         existe — apontar para ele deixaria o card vazio. */
+      if (frameImages[frame.id]) {
+        art.style.backgroundImage = 'url("' + frameImages[frame.id].src + '")';
+      }
       if (frame.id === 'cor') art.style.boxShadow = 'inset 0 0 0 3px ' + frameColor;
       if (frame.id === 'none') art.classList.add('td-frameopt__art--none');
 
