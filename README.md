@@ -14,7 +14,7 @@ Abre com duplo clique em `index.html`.
 |---|---|---|
 | 0 | Estrutura do repositório e manifesto de assets | ✅ feito |
 | 1 | `tokens.css` a partir das 5 coleções de variáveis do Figma | ✅ feito |
-| 2 | Tela de configuração das chaves e `config.js` | ⬜ |
+| 2 | Tela de configuração das chaves e `config.js` | ✅ feito |
 | 3 | Shell do editor: barra superior, palco, painel/dock, trilha | ⬜ |
 | 4 | Canvas da parada 1: arraste, zoom ancorado no ponteiro, alças | ⬜ |
 | 5 | Integração PhotoRoom (remoção de fundo) | ⬜ |

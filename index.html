@@ -1,1 +1,66 @@
-<!-- index.html — ThumbDrop V3. Shell montado na etapa 3. -->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ThumbDrop — thumb que performa, pronta em minutos</title>
+<meta name="description" content="Editor guiado de thumbnails 16:9 em quatro paradas: imagem, filtro de IA, texto, moldura e export.">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<!-- A tela de configuração das chaves. Abre sozinha na primeira visita e
+     sempre que uma chamada voltar 401 ou 403. Fica no HTML em vez de ser
+     montada por JS para aparecer mesmo se algo quebrar depois. -->
+<div class="td-setup" id="setup" role="dialog" aria-modal="true" aria-labelledby="setup-title" hidden>
+  <div class="td-setup__card">
+
+    <p class="td-setup__eyebrow" id="setup-eyebrow">Antes de começar</p>
+    <h1 class="td-setup__title" id="setup-title">Duas chaves e você está dentro</h1>
+    <p class="td-setup__lede" id="setup-lede">
+      O ThumbDrop conversa direto com o Google AI e com a PhotoRoom, do seu
+      navegador. Não há servidor no meio, então as chaves precisam ser suas.
+    </p>
+
+    <p class="td-setup__warning">
+      As chaves ficam salvas neste navegador e são visíveis para quem tiver
+      acesso a ele. Use só em máquina sua.
+    </p>
+
+    <form id="setup-form" novalidate>
+      <!-- Os campos são montados a partir de TD_CONFIG.FIELDS, para que
+           exista um lugar só definindo o que cada chave faz. -->
+    </form>
+
+    <div class="td-setup__actions">
+      <button type="button" class="td-btn td-btn--danger" id="setup-clear" hidden>
+        Apagar chaves
+      </button>
+      <button type="submit" class="td-btn td-btn--primary" id="setup-save" form="setup-form">
+        Salvar e abrir o editor
+      </button>
+    </div>
+
+    <p class="td-setup__note">
+      Para tirar as chaves do navegador de vez, o README descreve o worker que
+      as guarda do lado do servidor.
+    </p>
+
+    <p class="td-sr" role="status" aria-live="polite" id="setup-status"></p>
+  </div>
+</div>
+
+<!-- O editor. Montado na etapa 3: barra superior, palco com o canvas 16:9
+     que nunca muda de posição, e painel de 320 à direita no desktop ou dock
+     rolável embaixo no mobile. -->
+<div id="app" hidden>
+  <button type="button" class="td-btn td-btn--ghost" id="open-setup">
+    Trocar ou apagar as chaves
+  </button>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
