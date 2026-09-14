@@ -22,7 +22,7 @@ Abre com duplo clique em `index.html`.
 | 7 | Canvas de texto da parada 3 | ✅ feito |
 | 8 | Parada 4: molduras e export 1920×1080 | ✅ feito |
 | 9 | Recibo, contagem de créditos, saldo insuficiente | ✅ feito |
-| 10 | Passada de acessibilidade | ⬜ |
+| 10 | Passada de acessibilidade | ✅ feito |
 
 ---
 

@@ -584,6 +584,23 @@
       texts.setEnabled(state.step === 2);
       timerGuide.hidden = !(state.step === 2 && timerOn);
     }
+
+    if (typeof announce === 'function') {
+      if (ai && ai.phase === 'working') {
+        announce(ai.stage === 'preview'
+          ? 'Gerando a prévia. Um crédito foi debitado.'
+          : 'Gerando a imagem final em 2K. Dois créditos foram debitados.');
+      } else if (ai && ai.phase === 'preview') {
+        announce('Prévia pronta. Compare antes e depois e aprove para gerar em 2K.');
+      } else if (ai && ai.phase === 'failed') {
+        announce('A geração falhou. Seu saldo foi devolvido e a composição está intacta.');
+      } else if (bgBusy) {
+        announce('Removendo o fundo.');
+      } else {
+        announce('Passo ' + (state.step + 1) + ' de ' + STOPS.length + ': ' +
+                 STOPS[state.step].name + '. Saldo de ' + state.credits + ' créditos.');
+      }
+    }
   }
 
   /* ── Navegação ─────────────────────────────────────────────────────── */
@@ -1761,6 +1778,61 @@
     closeBudget();
     render();
   });
+
+
+  /* =====================================================================
+     ETAPA 10 · ACESSIBILIDADE
+     ---------------------------------------------------------------------
+     O que não dá para resolver com CSS: manter o foco dentro do diálogo
+     aberto, e contar por escrito o que a interface está mostrando por
+     cor e movimento.
+     ===================================================================== */
+
+  var FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), ' +
+                  'select:not([disabled]), textarea:not([disabled]), ' +
+                  '[tabindex]:not([tabindex="-1"])';
+
+  /* Um diálogo que deixa o Tab escapar para trás dele leva quem navega
+     por teclado para controles que ele não consegue ver. */
+  function trapFocus(dialog) {
+    dialog.addEventListener('keydown', function (event) {
+      if (event.key !== 'Tab' || dialog.hidden) return;
+
+      var stops = Array.prototype.slice.call(dialog.querySelectorAll(FOCUSABLE))
+        .filter(function (node) { return node.offsetParent !== null; });
+      if (!stops.length) return;
+
+      var first = stops[0];
+      var last = stops[stops.length - 1];
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    });
+  }
+
+  ['setup', 'confirm', 'receipt', 'budget'].forEach(function (id) {
+    var dialog = document.getElementById(id);
+    if (dialog) trapFocus(dialog);
+  });
+
+  /* O que a cor e o movimento dizem, isto diz por escrito. */
+  var speaker = document.createElement('p');
+  speaker.className = 'td-sr';
+  speaker.setAttribute('role', 'status');
+  speaker.setAttribute('aria-live', 'polite');
+  document.body.appendChild(speaker);
+
+  var lastSpoken = '';
+  function announce(message) {
+    if (!message || message === lastSpoken) return;
+    lastSpoken = message;
+    speaker.textContent = message;
+  }
 
 
   paintFrame();

@@ -83,6 +83,12 @@
       element.className = 'td-text';
       element.dataset.id = model.id;
       element.spellcheck = false;
+      /* Alcançável por Tab: sem isto, quem navega por teclado consegue
+         criar um texto pelo painel e nunca mais voltar a ele. */
+      element.tabIndex = 0;
+      element.setAttribute('role', 'textbox');
+      element.setAttribute('aria-label', 'Caixa de texto da thumb. ' +
+        'Enter edita, Delete apaga, setas movem.');
       element.textContent = options.content || '';
 
       model.element = element;
@@ -336,6 +342,23 @@
 
     container.addEventListener('pointerup', endGesture);
     container.addEventListener('pointercancel', endGesture);
+
+    /* Foco por teclado seleciona, Enter entra em edição — o par do
+       clique e do duplo clique, para quem não usa ponteiro. */
+    container.addEventListener('focusin', function (event) {
+      if (!enabled) return;
+      var box = boxFrom(event.target);
+      if (box && box !== selected) select(box);
+    });
+
+    container.addEventListener('keydown', function (event) {
+      if (!enabled || editing) return;
+      if (event.key !== 'Enter') return;
+      var box = boxFrom(event.target);
+      if (!box) return;
+      event.preventDefault();
+      edit(box);
+    });
 
     /* Duplo clique num texto existente entra em edição daquele texto. */
     container.addEventListener('dblclick', function (event) {

@@ -59,6 +59,18 @@ body {
 h1, h2, h3, p { margin: 0; }
 
 
+/* ── REGRA DE CONTRASTE ────────────────────────────────────────────────
+   Text/Mute (#7c8497) só pode pousar em Surface/Ink (5,18:1),
+   Surface/Mirage (4,64:1) e Surface/Card (4,64:1).
+
+   Sobre Surface/Card 2 ele dá 4,22:1 e REPROVA AA. Onde o fundo é
+   Card 2, o texto de apoio usa Text/Body, que dá 9,94:1. A única
+   exceção é texto de controle desabilitado, que a norma dispensa — e
+   ali o motivo está escrito no próprio botão.
+
+   E o laranja da marca nunca é fundo de texto: branco sobre #F87737 dá
+   2,73:1. Para fundo existe Brand/Orange CTA, com 4,70:1.             */
+
 /* ── Foco ──────────────────────────────────────────────────────────────
    A V2 não tinha um único estado de foco. Esta regra é a dívida sendo
    paga: todo controle interativo ganha anel de 2px em Focus/Ring.
@@ -265,7 +277,9 @@ button:disabled {
   padding: 0 var(--space-12);
   border: 1px solid var(--border-line-2);
   border-radius: var(--radius-input);
-  background: var(--surface-card-2);
+  /* Recuado para Ink, e não Card 2, para o placeholder em Text/Mute
+     passar de 4,22:1 para 5,18:1. */
+  background: var(--surface-ink);
   color: var(--text-primary);
   font-size: var(--font-size-body);
   transition: border-color var(--duration-fast) var(--ease-out);
@@ -879,7 +893,8 @@ label.td-btn { cursor: pointer; }
 }
 
 .td-filter__note {
-  color: var(--text-mute);
+  /* O card é Surface/Card 2: aqui Text/Mute reprovaria. */
+  color: var(--text-body);
   font-size: var(--font-size-legal);
   line-height: 1.3;
 }
