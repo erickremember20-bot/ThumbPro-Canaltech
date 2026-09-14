@@ -117,6 +117,15 @@
     <!-- O PALCO. O canvas é filho único e não se mexe daqui. -->
     <main class="td-stage">
       <div class="td-canvas" id="canvas">
+        <!-- Zoom por controle visível, além do scroll: nem todo mundo
+             descobre a roda do mouse. Clicar no número volta para 100%. -->
+        <div class="td-zoom" id="zoom" hidden>
+          <button type="button" class="td-zoom__btn" id="zoom-out" aria-label="Diminuir o zoom">−</button>
+          <button type="button" class="td-zoom__value" id="zoom-value"
+                  aria-label="Zoom atual. Clique para voltar a 100%">100%</button>
+          <button type="button" class="td-zoom__btn" id="zoom-in" aria-label="Aumentar o zoom">+</button>
+        </div>
+
         <div class="td-canvas__empty" id="canvas-empty">
           <p class="td-canvas__headline">Arraste sua imagem aqui</p>
           <p class="td-canvas__sub">ou clique para escolher · JPG, PNG · fica tudo no seu navegador</p>
@@ -149,6 +158,7 @@
 </div>
 
 <script src="js/config.js"></script>
+<script src="js/canvas.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

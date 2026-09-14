@@ -650,21 +650,6 @@ button:disabled {
   line-height: var(--line-height-legal);
 }
 
-/* A imagem dentro do canvas. Posicionamento absoluto porque o canvas é
-   superfície de composição: o arraste e o zoom da etapa 4 vão escrever
-   num transform aqui, e transform não conversa com layout de fluxo. */
-.td-canvas__image {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  max-width: none;
-  transform: translate(-50%, -50%);
-  /* Enquadre inicial: a imagem inteira cabe no canvas. */
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
 /* O canvas inteiro é a dropzone enquanto não há imagem. */
 .td-canvas:not(:has(.td-canvas__image)) { cursor: pointer; }
 
@@ -688,4 +673,120 @@ label.td-btn { cursor: pointer; }
   .td-topbar__action .td-btn__label { display: none; }
   .td-topbar { min-width: 0; }
   .td-pill--credits { padding: 6px var(--space-8); }
+}
+
+/* =====================================================================
+   A SUPERFÍCIE DE COMPOSIÇÃO (etapa 4)
+   Quem posiciona a camada é canvas.js, em pixels de export. O CSS aqui
+   só cuida da aparência e do cursor — nenhuma medida de layout.
+   ===================================================================== */
+
+.td-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  max-width: none;          /* a camada é maior que o canvas de propósito */
+  transform-origin: 0 0;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* A volta suave quando o arraste passou do limite. Puxar e ver voltar
+   ensina o limite melhor do que uma parede dura durante o gesto. */
+.td-layer--settling {
+  transition: transform var(--duration-base) var(--ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .td-layer--settling { transition: none; }
+}
+
+/* Cursor: grab em repouso, grabbing durante o arraste. */
+.td-canvas--selected { cursor: grab; }
+.td-canvas--grabbing,
+.td-canvas--grabbing .td-layer { cursor: grabbing; }
+
+/* ── Alças ───────────────────────────────────────────────────────────── */
+
+.td-handles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  pointer-events: none;      /* o retângulo não intercepta o arraste;
+                                só as alças, que reativam abaixo */
+  outline: 1px solid var(--brand-blue);
+  outline-offset: 0;
+}
+
+.td-handles.td-layer--settling {
+  transition: transform var(--duration-base) var(--ease-out);
+}
+
+.td-handle {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border: 2px solid var(--brand-blue);
+  border-radius: 3px;
+  background: var(--brand-white);
+  pointer-events: auto;
+}
+
+/* Alvo de toque de 44px sem alça visualmente gorda: a área invisível
+   ao redor é que cresce. */
+.td-handle::before {
+  content: '';
+  position: absolute;
+  inset: -15px;
+}
+
+.td-handle--nw { top: -7px;    left: -7px;    cursor: nwse-resize; }
+.td-handle--ne { top: -7px;    right: -7px;   cursor: nesw-resize; }
+.td-handle--se { bottom: -7px; right: -7px;   cursor: nwse-resize; }
+.td-handle--sw { bottom: -7px; left: -7px;    cursor: nesw-resize; }
+
+/* ── Controle de zoom ────────────────────────────────────────────────── */
+
+/* Centralizado na borda de baixo, e não num canto: os cantos são das
+   alças, e um controle encostado na alça do canto é um clique errado
+   esperando para acontecer. */
+.td-zoom {
+  position: absolute;
+  left: 50%;
+  bottom: var(--space-12);
+  transform: translateX(-50%);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--border-line-2);
+  border-radius: 999px;
+  background: var(--tint-ink-86);
+  backdrop-filter: blur(8px);
+}
+
+.td-zoom__btn,
+.td-zoom__value {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  border-radius: 999px;
+  color: var(--text-body);
+  font-size: var(--font-size-small-bold);
+  font-weight: var(--font-weight-small-bold);
+}
+
+.td-zoom__btn { width: 32px; font-size: var(--font-size-title); }
+.td-zoom__value { min-width: 56px; color: var(--text-primary); }
+
+.td-zoom__btn:hover,
+.td-zoom__value:hover { background: var(--tint-white-6); }
+
+@media (max-width: 880px) {
+  .td-zoom__btn, .td-zoom__value { height: 44px; }
+  .td-zoom__btn { width: 44px; }
 }

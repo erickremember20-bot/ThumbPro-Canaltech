@@ -374,6 +374,26 @@
   var creditsEl   = document.getElementById('credits-count');
   var canvas      = document.getElementById('canvas');
   var canvasEmpty = document.getElementById('canvas-empty');
+  var zoomBar     = document.getElementById('zoom');
+  var zoomValue   = document.getElementById('zoom-value');
+
+  /* A superfície de composição, criada UMA vez. Trocar de parada não a
+     recria — é isso que faz o canvas nunca mudar de posição. */
+  var surface = window.TD_CANVAS.create(canvas, {
+    onChange: function (info) {
+      if (info) zoomValue.textContent = info.zoomPercent + '%';
+    }
+  });
+
+  /* O passo do − e do + é multiplicativo, igual ao da roda: clicar quatro
+     vezes em + e quatro em − volta ao mesmo lugar. */
+  function nudgeZoom(direction) {
+    surface.setZoom(surface.getZoom() * (direction > 0 ? 1.2 : 1 / 1.2));
+  }
+
+  document.getElementById('zoom-in').addEventListener('click', function () { nudgeZoom(1); });
+  document.getElementById('zoom-out').addEventListener('click', function () { nudgeZoom(-1); });
+  zoomValue.addEventListener('click', function () { surface.setZoom(1); });
 
   /* ── Render ────────────────────────────────────────────────────────── */
 
@@ -535,26 +555,14 @@
           width: probe.naturalWidth,
           height: probe.naturalHeight
         };
-        paintImage();
+        canvasEmpty.hidden = true;
+        zoomBar.hidden = false;
+        surface.setImage(reader.result, probe.naturalWidth, probe.naturalHeight);
         render();
       };
       probe.src = reader.result;
     };
     reader.readAsDataURL(file);
-  }
-
-  function paintImage() {
-    if (!state.image) return;
-    canvasEmpty.hidden = true;
-
-    var img = canvas.querySelector('.td-canvas__image');
-    if (!img) {
-      img = document.createElement('img');
-      img.className = 'td-canvas__image';
-      img.alt = '';
-      canvas.insertBefore(img, canvas.firstChild);
-    }
-    img.src = state.image.src;
   }
 
   /* O dropzone é o canvas inteiro — o estado vazio É a área de arraste. */
@@ -580,6 +588,6 @@
 
   render();
 
-  window.TD_EDITOR = { state: state, render: render, goTo: goTo };
+  window.TD_EDITOR = { state: state, render: render, goTo: goTo, surface: surface };
 
 })(window, document);
