@@ -65,7 +65,13 @@ OUT=thumbdrop.html
     | sed '/<\/body>/d' | sed '/<\/html>/d'
 
   echo '<script>'
-  cat js/frames.js js/config.js js/canvas.js js/text.js js/ai.js js/app.js
+  # A ORDEM E A LISTA SAEM DO PRÓPRIO index.html. Escrever os nomes aqui
+  # à mão foi como snap.js entrou na página e ficou fora do arquivo
+  # único: duas listas do mesmo conjunto sempre acabam discordando.
+  cat js/frames.js
+  sed -n 's|.*<script src="\(js/[^"]*\)">.*|\1|p' index.html | while read -r f; do
+    [ -f "$f" ] && cat "$f"
+  done
   echo '</script>'
   echo '</body>'
   echo '</html>'

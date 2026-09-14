@@ -449,7 +449,10 @@
   var surface = window.TD_CANVAS.create(canvas, {
     onChange: function (info) {
       if (info) zoomValue.textContent = info.zoomPercent + '%';
-    }
+    },
+    /* As imagens grudam nos textos, e os textos nas imagens. Um motor de
+       régua só, dois clientes. */
+    otherBoxes: function () { return texts ? texts.boxes() : []; }
   });
 
   /* O passo do − e do + é multiplicativo, igual ao da roda: clicar quatro
@@ -464,8 +467,9 @@
 
   /* ── Render ────────────────────────────────────────────────────────── */
 
-  function icon(id) {
-    return '<svg class="td-icon" aria-hidden="true"><use href="#' + id + '"></use></svg>';
+  function icon(id, size) {
+    var style = size ? ' style="width:' + size + 'px;height:' + size + 'px"' : '';
+    return '<svg class="td-icon"' + style + ' aria-hidden="true"><use href="#' + id + '"></use></svg>';
   }
 
   function renderTrack() {
@@ -501,12 +505,17 @@
       name.className = 'td-step__name';
       name.textContent = stop.name;
 
-      var note = document.createElement('span');
-      note.className = 'td-step__note';
-      note.textContent = status === 'done' ? stop.noteDone : stop.note;
-
       labels.appendChild(name);
-      labels.appendChild(note);
+
+      /* Só a parada ATUAL abre a linha de apoio. É o que o Figma
+         desenha — 40px nos outros passos, 57 no atual — e é o que faz a
+         trilha caber sem empurrar o resto do painel para fora. */
+      if (status === 'current') {
+        var note = document.createElement('span');
+        note.className = 'td-step__note';
+        note.textContent = stop.note;
+        labels.appendChild(note);
+      }
       button.appendChild(marker);
       button.appendChild(labels);
 
@@ -524,30 +533,12 @@
 
     stopBody.textContent = '';
 
-    var title = document.createElement('h2');
-    title.className = 'td-stop__title';
-    title.textContent = stop.title;
-
-    var text = document.createElement('p');
-    text.className = 'td-stop__text';
-    text.textContent = stop.text;
-
-    stopBody.appendChild(title);
-    stopBody.appendChild(text);
-
-    /* Os controles de cada parada entram aqui nas etapas 4 a 8. Por ora
-       a parada 1 tem o que ela precisa para existir: uma imagem. */
-    if (state.step === 0) stopBody.appendChild(buildStopOne());
-    if (state.step === 1) stopBody.appendChild(buildStopTwo());
-    if (state.step === 2) stopBody.appendChild(buildStopThree());
-    if (state.step === 3) stopBody.appendChild(buildStopFour());
-
-    if (stop.cost) {
-      var cost = document.createElement('p');
-      cost.className = 'td-stop__cost';
-      cost.textContent = stop.cost;
-      stopBody.appendChild(cost);
-    }
+    /* CADA PARADA MONTA O QUE O FIGMA DESENHA PARA ELA. Um título e um
+       parágrafo genéricos em todas era invenção minha, e era o que
+       estourava a altura do painel: a parada 2 e a 3 não têm parágrafo
+       nenhum no desenho. */
+    var builders = [buildStopOne, buildStopTwo, buildStopThree, buildStopFour];
+    stopBody.appendChild(builders[state.step]());
 
     var ready = stop.ready();
     advance.disabled = !ready;
@@ -574,15 +565,20 @@
        de zoom saem: oferecer um gesto que vai ser descartado é pior do
        que não oferecer. */
     var busy = ai && (ai.phase === 'working' || ai.phase === 'preview');
-    if (busy) surface.select(false);
     zoomBar.hidden = !state.image || busy;
 
     /* Um gesto, um significado por vez: o duplo clique enquadra a imagem
        na parada 1 e escreve na parada 3. */
     surface.setDoubleClickFit(state.step === 0);
+
+    /* DA PARADA 2 EM DIANTE A COMPOSIÇÃO CONGELA. As imagens deixam de
+       aceitar arraste, zoom e alça: o que foi montado na parada 1 está
+       fechado, e o filtro roda em cima dele. Voltar para a parada 1
+       descongela. */
+    surface.freeze(state.step !== 0);
     if (texts) {
       texts.setEnabled(state.step === 2);
-      timerGuide.hidden = !(state.step === 2 && timerOn);
+      timerGuide.hidden = state.step !== 2;
     }
 
     if (typeof announce === 'function') {
@@ -627,6 +623,17 @@
 
   function buildStopOne() {
     var wrap = document.createElement('div');
+    wrap.className = 'td-stop';
+    var title = document.createElement('h2');
+    title.className = 'td-stop__title';
+    title.textContent = 'Comece pela imagem';
+    wrap.appendChild(title);
+
+    var lede = document.createElement('p');
+    lede.className = 'td-stop__text';
+    lede.textContent = 'Sem imagem não há thumb. Nenhuma ferramenta aparece ' +
+      'antes de existir conteúdo no canvas.';
+    wrap.appendChild(lede);
 
     var input = document.createElement('input');
     input.type = 'file';
@@ -635,31 +642,111 @@
     input.className = 'td-sr';
     input.addEventListener('change', function () {
       if (input.files && input.files[0]) loadImage(input.files[0]);
+      input.value = '';          /* deixa subir a mesma imagem de novo */
     });
 
+    /* Botão/Upload do Figma: fundo Ink, BORDA TRACEJADA, 40 de altura,
+       raio de input, ícone de 14 e rótulo em Body Bold. */
     var label = document.createElement('label');
-    label.className = 'td-btn td-btn--ghost td-btn--block';
+    label.className = 'td-upload';
     label.htmlFor = 'image-input';
-    label.innerHTML = icon('i-upload') + ' ' +
-      (state.image ? 'Trocar a imagem' : 'Escolher imagem');
+    label.innerHTML = icon('i-upload', 14) + '<span>' +
+      (surface.count() ? 'Adicionar outra imagem' : 'Escolher imagem') + '</span>';
 
     wrap.appendChild(input);
     wrap.appendChild(label);
 
-    /* Nenhuma ferramenta aparece antes de existir conteúdo no canvas. */
+    /* A LISTA DE CAMADAS. Cada imagem nova trava as de baixo; é aqui que
+       se volta para uma travada, e é aqui que se vê a ordem da pilha. */
+    if (surface.count()) wrap.appendChild(buildLayers());
+
     if (state.image) wrap.appendChild(buildRemoveBackground());
+
+    var note = document.createElement('p');
+    note.className = 'td-stop__legal';
+    note.textContent = surface.count() > 1
+      ? 'A imagem do topo é a que se mexe. As de baixo ficam travadas — ' +
+        'clique numa delas para destravar.'
+      : 'Uma cobrança por confirmação, não por tentativa: reenquadrar o ' +
+        'recorte é local e não gasta crédito.';
+    wrap.appendChild(note);
 
     return wrap;
   }
 
+  function buildLayers() {
+    var state_ = surface.state();
 
-  /* Saldo insuficiente nunca é só um botão morto: o caminho de volta
-     aparece junto. */
+    var box = document.createElement('div');
+    box.className = 'td-layers';
+
+    var caption = document.createElement('p');
+    caption.className = 'td-label';
+    caption.textContent = 'Camadas';
+    box.appendChild(caption);
+
+    var strip = document.createElement('div');
+    strip.className = 'td-layers__strip';
+
+    /* De cima para baixo, como a pilha é vista. */
+    state_.layers.slice().reverse().forEach(function (entry, position) {
+      var chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'td-chip' + (entry.locked ? '' : ' td-chip--on');
+      chip.title = entry.locked ? 'Travada — clique para destravar' : 'Em edição';
+      chip.setAttribute('aria-pressed', entry.locked ? 'false' : 'true');
+
+      var art = document.createElement('span');
+      art.className = 'td-chip__art';
+      art.style.backgroundImage = 'url("' + entry.src + '")';
+
+      var tag = document.createElement('span');
+      tag.className = 'td-chip__tag';
+      tag.textContent = position === 0 ? 'topo' : String(state_.layers.length - position);
+
+      chip.appendChild(art);
+      chip.appendChild(tag);
+      chip.addEventListener('click', function () {
+        surface.editLayer(entry.id);
+        render();
+      });
+
+      var drop = document.createElement('button');
+      drop.type = 'button';
+      drop.className = 'td-chip__drop';
+      drop.setAttribute('aria-label', 'Remover esta camada');
+      drop.innerHTML = icon('i-close', 12);
+      drop.addEventListener('click', function (event) {
+        event.stopPropagation();
+        surface.removeLayer(entry.id);
+        if (!surface.count()) {
+          state.image = null;
+          canvasEmpty.hidden = false;
+          zoomBar.hidden = true;
+        }
+        render();
+      });
+
+      var cell = document.createElement('div');
+      cell.className = 'td-layers__cell';
+      cell.appendChild(chip);
+      cell.appendChild(drop);
+      strip.appendChild(cell);
+    });
+
+    box.appendChild(strip);
+    return box;
+  }
+
+  function costPill(amount) {
+    return '<span class="td-cost">' + amount + ' ✦</span>';
+  }
+
   function budgetWay() {
     var button = document.createElement('button');
     button.type = 'button';
-    button.className = 'td-btn td-btn--ghost td-btn--block td-stack';
-    button.textContent = 'Ajustar o meu teto de gasto';
+    button.className = 'td-action td-action--secondary td-stack';
+    button.textContent = 'Ajustar o meu teto';
     button.addEventListener('click', function () { openBudget(); });
     return button;
   }
@@ -670,7 +757,7 @@
 
     var button = document.createElement('button');
     button.type = 'button';
-    button.className = 'td-btn td-btn--ghost td-btn--block';
+    button.className = 'td-action td-action--secondary';
 
     var enough = state.credits >= COST.removeBackground;
 
@@ -686,8 +773,12 @@
       box.appendChild(budgetWay());
       return box;
     } else {
-      button.textContent = (state.bgRemoved ? 'Remover fundo de novo' : 'Remover fundo') +
-        ' · ' + COST.removeBackground + ' ✦';
+      /* O custo vive DENTRO do botão, numa pílula — como o Botão/Ação
+         'Primária IA' do Figma. O preço aparece antes do clique, e não
+         numa linha separada. */
+      button.innerHTML = '<span>' +
+        (state.bgRemoved ? 'Remover fundo de novo' : 'Remover fundo') +
+        '</span>' + costPill(COST.removeBackground);
       button.addEventListener('click', removeBackground);
     }
 
@@ -750,7 +841,7 @@
     if (action) {
       var button = document.createElement('button');
       button.type = 'button';
-      button.className = 'td-btn td-btn--ghost td-btn--block';
+      button.className = 'td-action td-action--secondary';
       button.textContent = action.label;
       button.addEventListener('click', action.run);
       box.appendChild(button);
@@ -811,7 +902,8 @@
         };
         canvasEmpty.hidden = true;
         zoomBar.hidden = false;
-        surface.setImage(reader.result, probe.naturalWidth, probe.naturalHeight);
+        /* CADA IMAGEM NOVA ENTRA POR CIMA E TRAVA AS DE BAIXO. */
+        surface.addImage(reader.result, probe.naturalWidth, probe.naturalHeight);
         render();
       };
       probe.src = reader.result;
@@ -891,10 +983,18 @@
       return wrap;
     }
 
+    var title = document.createElement('h2');
+    title.className = 'td-stop__title';
+    title.textContent = 'Escolha a direção de arte';
+    wrap.appendChild(title);
+
     var grid = document.createElement('div');
     grid.className = 'td-filters';
 
     window.TD_AI.FILTERS.forEach(function (filter) {
+      /* Filtro/Amostra do Figma: a própria foto já filtrada, com o custo
+         numa pílula no canto e o nome em Label 12 com tracking. Escolher
+         com os olhos, sem gastar geração para descobrir. */
       var card = document.createElement('button');
       card.type = 'button';
       card.className = 'td-filter';
@@ -905,25 +1005,22 @@
 
       var art = document.createElement('span');
       art.className = 'td-filter__art';
-      /* A amostra é decoração: se o arquivo não estiver em assets/
-         samples/, o card continua funcionando e legível. */
       art.style.backgroundImage = 'url("' + filter.sample + '")';
 
-      var name = document.createElement('span');
-      name.className = 'td-filter__name';
-      name.textContent = filter.name;
+      var cost = document.createElement('span');
+      cost.className = 'td-filter__cost';
+      cost.textContent = COST.filterPreview + ' ✦';
+      art.appendChild(cost);
 
-      var note = document.createElement('span');
-      note.className = 'td-filter__note';
-      note.textContent = filter.note;
+      var info = document.createElement('span');
+      info.className = 'td-filter__info';
+      info.textContent = filter.name;
 
       card.appendChild(art);
-      card.appendChild(name);
-      card.appendChild(note);
+      card.appendChild(info);
 
       /* CLICAR NÃO GERA NADA. Abre a confirmação. */
       card.addEventListener('click', function () { askConfirm(filter, card); });
-
       grid.appendChild(card);
     });
 
@@ -1046,7 +1143,9 @@
         ai.result = null;
         state.filter = filter;
         state.image = result;
-        surface.setImage(result.src, result.width, result.height);
+        /* O filtro devolve o QUADRO INTEIRO já renderizado: ele passa a
+           ser a nova base, no lugar da pilha de camadas que o gerou. */
+        surface.replaceAll(result.src, result.width, result.height);
         clearCompare();
         render();
       }
@@ -1112,7 +1211,7 @@
 
     var cancel = document.createElement('button');
     cancel.type = 'button';
-    cancel.className = 'td-btn td-btn--ghost td-btn--block';
+    cancel.className = 'td-action td-action--secondary';
     cancel.textContent = 'Cancelar a espera';
     cancel.addEventListener('click', cancelFilter);
 
@@ -1144,10 +1243,10 @@
 
     var approve = document.createElement('button');
     approve.type = 'button';
-    approve.className = 'td-btn td-btn--primary td-btn--block';
+    approve.className = 'td-action td-action--primary';
 
     if (state.credits >= COST.filterDelivery) {
-      approve.textContent = 'Aprovar em 2K · ' + COST.filterDelivery + ' ✦';
+      approve.innerHTML = '<span>Aprovar em 2K</span>' + costPill(COST.filterDelivery);
       approve.addEventListener('click', function () { runFilter(ai.filter, 'delivery'); });
     } else {
       approve.disabled = true;
@@ -1161,13 +1260,12 @@
 
     var discard = document.createElement('button');
     discard.type = 'button';
-    discard.className = 'td-btn td-btn--ghost td-btn--block td-stack';
+    discard.className = 'td-action td-action--secondary td-stack';
     discard.textContent = 'Descartar a prévia';
     discard.addEventListener('click', function () {
       ai.phase = 'idle';
       ai.result = null;
       clearCompare();
-      surface.select(true);
       render();
     });
 
@@ -1279,13 +1377,13 @@
 
     var again = document.createElement('button');
     again.type = 'button';
-    again.className = 'td-btn td-btn--ghost td-btn--block';
-    again.textContent = 'Tentar de novo · ' + COST.filterPreview + ' ✦';
+    again.className = 'td-action td-action--secondary';
+    again.innerHTML = '<span>Tentar de novo</span>' + costPill(COST.filterPreview);
     again.addEventListener('click', function () { runFilter(ai.filter, 'preview'); });
 
     var skip = document.createElement('button');
     skip.type = 'button';
-    skip.className = 'td-btn td-btn--ghost td-btn--block td-stack';
+    skip.className = 'td-action td-action--secondary td-stack';
     skip.textContent = 'Seguir sem filtro · 0 ✦';
     skip.addEventListener('click', function () {
       ai.phase = 'idle';
@@ -1305,7 +1403,10 @@
      PARADA 3 · O TEXTO
      ===================================================================== */
 
-  var texts = window.TD_TEXT.create(canvas, { onChange: function () { render(); } });
+  var texts = window.TD_TEXT.create(canvas, {
+    onChange: function () { render(); },
+    otherBoxes: function () { return surface.boxes(); }
+  });
 
   /* O guia do timer. A faixa que o YouTube cobre com a duração do vídeo:
      ninguém deve escrever embaixo dela. Ligado por padrão na parada 3,
@@ -1315,7 +1416,6 @@
   timerGuide.innerHTML = '<span>16:20</span>';
   timerGuide.hidden = true;
   canvas.appendChild(timerGuide);
-  var timerOn = true;
 
   /* DUPLO CLIQUE EM PONTO VAZIO CRIA UMA CAIXA ALI e já entra em edição.
      Na parada 1 o mesmo gesto enquadra a imagem; por isso cada parada
@@ -1339,153 +1439,158 @@
 
   function buildStopThree() {
     var wrap = document.createElement('div');
-    var selected = texts.selected();
+    wrap.className = 'td-stop';
+    var chosen = texts.selected();
 
-    if (!selected) {
-      /* Sem nada selecionado, o painel ensina o gesto que não tem botão. */
-      var hint = document.createElement('p');
-      hint.className = 'td-stop__text';
-      hint.textContent = texts.count()
-        ? 'Clique num texto para editar as opções dele.'
-        : 'Dê um duplo clique em qualquer ponto do canvas para escrever.';
-      wrap.appendChild(hint);
+    /* ── Campo/Área · o título ────────────────────────────────────────
+       O Figma põe um campo de texto no painel, e ele existe por um
+       motivo: dá para escrever sem mirar no canvas, e é o caminho de
+       quem usa teclado. O canvas continua sendo o caminho principal. */
 
+    var field = document.createElement('div');
+    field.className = 'td-field2';
+
+    var heading = document.createElement('h2');
+    heading.className = 'td-stop__title';
+    heading.textContent = 'Escreva o título';
+    field.appendChild(heading);
+
+    var caption = document.createElement('p');
+    caption.className = 'td-label';
+    caption.textContent = 'Título';
+
+    var area = document.createElement('textarea');
+    area.className = 'td-area';
+    area.rows = 2;
+    area.placeholder = chosen ? '' : 'Dê um duplo clique no canvas para escrever';
+    area.value = chosen ? texts.plain() : '';
+    area.disabled = !chosen;
+    area.addEventListener('input', function () { texts.setPlain(area.value); });
+
+    field.appendChild(caption);
+    field.appendChild(area);
+    wrap.appendChild(field);
+
+    if (!chosen) {
       var add = document.createElement('button');
       add.type = 'button';
-      add.className = 'td-btn td-btn--ghost td-btn--block';
+      add.className = 'td-action td-action--secondary';
       add.textContent = 'Adicionar um texto';
       add.addEventListener('click', function () {
-        texts.create(surface.EXPORT_W * 0.08, surface.EXPORT_H * 0.6);
+        texts.create(surface.EXPORT_W * 0.06, surface.EXPORT_H * 0.62);
       });
       wrap.appendChild(add);
-
-      wrap.appendChild(buildTimerToggle());
       return wrap;
     }
 
-    /* ── Cor ──────────────────────────────────────────────────────────
-       O amarelo aqui é o destaque: com um trecho selecionado dentro da
-       edição, pinta só ele. Sem seleção, pinta a caixa. É o mesmo botão
-       porque é o mesmo conceito — não há um "modo destaque". */
+    /* ── Cor do texto · Estilo do texto ──────────────────────────────
+       Duas colunas, como no Figma. O amarelo é o destaque: com uma
+       palavra selecionada dentro da edição, pinta só ela. */
 
-    wrap.appendChild(group('Cor', function (row) {
-      row.appendChild(swatch('#ffffff', 'Branco', selected.color === '#ffffff'));
-      row.appendChild(swatch('#ffd400', 'Amarelo · destaque', selected.color === '#ffd400'));
+    var row = document.createElement('div');
+    row.className = 'td-duo';
 
-      var picker = document.createElement('input');
-      picker.type = 'color';
-      picker.className = 'td-swatch td-swatch--pick';
-      picker.value = /^#[0-9a-f]{6}$/i.test(selected.color) ? selected.color : '#ffffff';
-      picker.setAttribute('aria-label', 'Escolher outra cor');
-      picker.addEventListener('input', function () { texts.paint(picker.value); });
-      row.appendChild(picker);
+    var colors = column('Cor do texto');
+    var swatches = document.createElement('div');
+    swatches.className = 'td-swatches';
+    swatches.appendChild(swatch('#ffffff', 'Branco', chosen.color === '#ffffff'));
+    swatches.appendChild(swatch('#ffd400', 'Amarelo · destaque', chosen.color === '#ffd400'));
+
+    var custom = document.createElement('label');
+    custom.className = 'td-swatch td-swatch--pick' +
+      (['#ffffff', '#ffd400'].indexOf(chosen.color) < 0 ? ' td-swatch--on' : '');
+    custom.title = 'Escolher outra cor';
+    var picker = document.createElement('input');
+    picker.type = 'color';
+    picker.className = 'td-sr';
+    picker.value = /^#[0-9a-f]{6}$/i.test(chosen.color) ? chosen.color : '#ffffff';
+    picker.setAttribute('aria-label', 'Escolher outra cor do texto');
+    picker.addEventListener('input', function () { texts.paint(picker.value); });
+    custom.appendChild(picker);
+    swatches.appendChild(custom);
+
+    colors.appendChild(swatches);
+
+    var alignment = column('Estilo do texto');
+    var aligns = document.createElement('div');
+    aligns.className = 'td-aligns';
+    [['left', 'i-align-left', 'Alinhar à esquerda'],
+     ['center', 'i-align-center', 'Centralizar'],
+     ['right', 'i-align-right', 'Alinhar à direita']].forEach(function (item) {
+      var button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'td-align' + (chosen.align === item[0] ? ' td-align--on' : '');
+      button.innerHTML = icon(item[1], 20);
+      button.setAttribute('aria-label', item[2]);
+      if (chosen.align === item[0]) button.setAttribute('aria-pressed', 'true');
+      button.addEventListener('click', function () { texts.update({ align: item[0] }); });
+      aligns.appendChild(button);
+    });
+    alignment.appendChild(aligns);
+
+    row.appendChild(colors);
+    row.appendChild(alignment);
+    wrap.appendChild(row);
+
+    /* ── Peso da fonte · Controle/Seletor ────────────────────────────
+       Um seletor, não quatro botões: são quatro pesos e o painel tem
+       320 de largura. Sempre em itálico — o padrão de título da casa. */
+
+    var weightBox = column('Peso da fonte');
+    var select = document.createElement('div');
+    select.className = 'td-select';
+
+    var picker2 = document.createElement('select');
+    picker2.setAttribute('aria-label', 'Peso da fonte do título');
+    texts.WEIGHTS.forEach(function (weight) {
+      var option = document.createElement('option');
+      option.value = weight.value;
+      option.textContent = weight.label;
+      if (chosen.weight === weight.value) option.selected = true;
+      picker2.appendChild(option);
+    });
+    picker2.addEventListener('change', function () {
+      texts.update({ weight: parseInt(picker2.value, 10) });
+    });
+
+    select.appendChild(picker2);
+    select.insertAdjacentHTML('beforeend', icon('i-caret', 20));
+    weightBox.appendChild(select);
+    wrap.appendChild(weightBox);
+
+    /* ── Sombra abaixo do texto ─────────────────────────────────────── */
+
+    var shadowBox = column('Sombra abaixo do texto');
+    var pair = document.createElement('div');
+    pair.className = 'td-pair';
+    pair.appendChild(toggle('Com sombra', chosen.shadow, function () {
+      texts.update({ shadow: true });
     }));
-
-    var painted = document.createElement('p');
-    painted.className = 'td-stop__cost';
-    painted.textContent = 'Selecione uma palavra dentro do texto e clique no amarelo ' +
-      'para destacar só ela.';
-    wrap.appendChild(painted);
-
-    /* ── Alinhamento ─────────────────────────────────────────────────── */
-
-    wrap.appendChild(group('Alinhamento', function (row) {
-      [['left', 'Esquerda'], ['center', 'Centro'], ['right', 'Direita']].forEach(function (pair) {
-        row.appendChild(choice(pair[1], selected.align === pair[0], function () {
-          texts.update({ align: pair[0] });
-        }));
-      });
+    pair.appendChild(toggle('Sem sombra', !chosen.shadow, function () {
+      texts.update({ shadow: false });
     }));
+    shadowBox.appendChild(pair);
+    wrap.appendChild(shadowBox);
 
-    /* ── Peso ─────────────────────────────────────────────────────────
-       Sempre em itálico: o padrão da casa é Barlow Black Italic. */
-
-    wrap.appendChild(group('Peso', function (row) {
-      texts.WEIGHTS.forEach(function (weight) {
-        row.appendChild(choice(weight.label, selected.weight === weight.value, function () {
-          texts.update({ weight: weight.value });
-        }));
-      });
-    }));
-
-    /* ── Sombra ───────────────────────────────────────────────────────── */
-
-    wrap.appendChild(group('Sombra', function (row) {
-      row.appendChild(choice('Com sombra', selected.shadow, function () {
-        texts.update({ shadow: true });
-      }));
-      row.appendChild(choice('Sem sombra', !selected.shadow, function () {
-        texts.update({ shadow: false });
-      }));
-    }));
-
-    var remove = document.createElement('button');
-    remove.type = 'button';
-    remove.className = 'td-btn td-btn--ghost td-btn--block td-stack';
-    remove.textContent = 'Apagar este texto';
-    remove.addEventListener('click', function () { texts.remove(texts.selected()); });
-    wrap.appendChild(remove);
-
-    var keys = document.createElement('p');
-    keys.className = 'td-stop__cost';
-    keys.textContent = 'Delete apaga · Esc desseleciona · setas movem um pixel, ' +
-      'dez com Shift.';
-    wrap.appendChild(keys);
-
-    wrap.appendChild(buildTimerToggle());
     return wrap;
   }
 
-  function buildTimerToggle() {
-    var box = document.createElement('label');
-    box.className = 'td-check';
-
-    var input = document.createElement('input');
-    input.type = 'checkbox';
-    input.checked = timerOn;
-    input.addEventListener('change', function () {
-      timerOn = input.checked;
-      render();
-    });
-
-    var text = document.createElement('span');
-    text.textContent = 'Mostrar a faixa do timer do YouTube';
-
-    var note = document.createElement('span');
-    note.className = 'td-check__note';
-    note.textContent = 'Some no export.';
-
-    box.appendChild(input);
-    box.appendChild(text);
-    box.appendChild(note);
-    return box;
-  }
-
-  /* ── Peças do painel ───────────────────────────────────────────────── */
-
-  function group(label, fill) {
+  function column(label) {
     var box = document.createElement('div');
-    box.className = 'td-group';
-
+    box.className = 'td-col';
     var caption = document.createElement('p');
-    caption.className = 'td-group__label';
+    caption.className = 'td-label';
     caption.textContent = label;
-
-    var row = document.createElement('div');
-    row.className = 'td-group__row';
-    fill(row);
-
     box.appendChild(caption);
-    box.appendChild(row);
     return box;
   }
 
-  /* AZUL MARCA O CONTROLE ATIVO — nunca laranja, porque escolher peso
-     não avança a parada. */
-  function choice(label, active, run) {
+  /* Botão/Ação secundário com estado ligado: AZUL MARCA O CONTROLE
+     ATIVO — nunca laranja, porque escolher sombra não avança a parada. */
+  function toggle(label, active, run) {
     var button = document.createElement('button');
     button.type = 'button';
-    button.className = 'td-choice' + (active ? ' td-choice--on' : '');
+    button.className = 'td-action td-action--secondary' + (active ? ' td-action--on' : '');
     button.textContent = label;
     if (active) button.setAttribute('aria-pressed', 'true');
     button.addEventListener('click', run);
@@ -1507,6 +1612,7 @@
     return button;
   }
 
+  /* ── Peças do painel ───────────────────────────────────────────────── */
 
   /* =====================================================================
      PARADA 4 · MOLDURA E EXPORT
@@ -1626,8 +1732,7 @@
     if (anyMissing) {
       var note = document.createElement('p');
       note.className = 'td-stop__cost';
-      note.textContent = 'As molduras da marca são PNG 1920 × 1080 com fundo ' +
-        'transparente. O README lista os nomes exatos que o código procura.';
+      note.textContent = 'Falta o PNG da moldura. Veja os nomes no README.';
       wrap.appendChild(note);
     }
 

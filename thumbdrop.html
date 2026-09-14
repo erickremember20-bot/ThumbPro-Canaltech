@@ -62,6 +62,12 @@
                                       aconteceu. Nunca anuncia. */
   --feedback-danger:    #ff4d6d;   /* VERMELHO SÓ PARA FALHA. */
 
+  /* Fundo de controle ligado. Vem do Figma (Botão/Ação e
+     Controle/Seletor no estado ativo), onde é um preenchimento fixo e
+     não uma variável da coleção — por isso está escrito aqui e não sai
+     de um token de cor. */
+  --control-on:         #182538;
+
   /* Foco */
   --focus-ring:         #5cb2ff;   /* anel de 2px em todo controle
                                       interativo. Ver app.css. */
@@ -146,7 +152,7 @@
      TopBar/Height e TopBar/Padding X são variáveis. A largura do painel
      é medida das telas: o painel ocupa x=1120..1440 num frame de 1440.  */
 
-  --topbar-height:    54px;
+  --topbar-height:    88px;
   --topbar-padding-x: 10px;
   --panel-width:      320px;
 
@@ -206,6 +212,12 @@
        largura cheia, com o canvas fixo no topo.                        */
 
     --panel-width: 100%;
+
+    /* Mobile, medido nas telas do Figma: barra 64, palco fixo 233 com o
+       canvas de 358 × 201, trilha compacta de 49 e o dock com o resto. */
+    --topbar-height: 64px;
+    --stage-height:  233px;
+    --track-height:  49px;
   }
 }
 /* =====================================================================
@@ -568,7 +580,8 @@ button:disabled {
   align-items: center;
   gap: var(--space-12);
   flex-shrink: 0;
-  padding: var(--space-24) 48px;
+  height: var(--topbar-height);
+  padding: 0 48px;
   border-bottom: 1px solid var(--border-line);
   background: var(--surface-mirage);
 }
@@ -585,9 +598,8 @@ button:disabled {
 
 @media (max-width: 880px) {
   .td-topbar {
-    height: var(--topbar-height);
     gap: var(--space-8);
-    padding: 0 var(--topbar-padding-x);
+    padding: 0 var(--space-16);
   }
   /* No mobile o título e o formato saem: o saldo e as ações é que
      precisam do espaço. O nome da thumb reaparece na parada 4. */
@@ -712,15 +724,20 @@ button:disabled {
 
 /* ── Painel ────────────────────────────────────────────────────────── */
 
+/* O PAINEL NÃO ROLA. Foi desenhado para que tudo na lateral aconteça
+   numa tela só, sem rolagem — no desktop e no mobile. Se algum conteúdo
+   não couber, o conteúdo é que está errado, não o painel: é sinal de
+   que sobrou texto explicativo que o desenho não pede. */
 .td-panel {
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
   width: var(--panel-width);
+  min-height: 0;
   padding: 0 var(--space-24);
   border-left: 1px solid var(--border-line);
   background: var(--surface-card);
-  overflow-y: auto;
+  overflow: hidden;
 }
 
 .td-panel__head { padding: var(--space-12) 0; }
@@ -746,7 +763,11 @@ button:disabled {
   background: var(--border-line);
 }
 
-.td-panel__stop { flex: 1 1 auto; }
+.td-panel__stop {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
 
 .td-panel__foot {
   padding: var(--space-16) 0 var(--space-24);
@@ -759,19 +780,49 @@ button:disabled {
 @media (max-width: 880px) {
   .td-body { flex-direction: column; }
 
+  /* Palco fixo de 233, com o canvas de 358 × 201 dentro — as medidas das
+     telas mobile do Figma. */
   .td-stage {
-    flex: 0 0 auto;
-    padding: var(--space-12);
+    flex: 0 0 var(--stage-height);
+    padding: var(--space-16);
   }
 
   .td-panel {
     flex: 1 1 auto;
     width: 100%;
-    min-height: 0;
     padding: 0 var(--space-16);
     border-left: 0;
     border-top: 1px solid var(--border-line);
   }
+
+  /* A TRILHA VIRA HORIZONTAL: quatro chips de 84 × 25 numa faixa de 49.
+     Empilhada, ela comeria 217px e nada mais caberia sem rolagem. */
+  .td-track {
+    flex-direction: row;
+    gap: var(--space-8);
+    height: var(--track-height);
+    align-items: center;
+    margin: 0 calc(var(--space-16) * -1);
+    padding: 0 var(--space-16);
+    border-bottom: 1px solid var(--border-line);
+  }
+
+  .td-track li { flex: 1 0 0; min-width: 0; }
+
+  .td-step {
+    flex-direction: column;
+    gap: 0;
+    justify-content: center;
+    padding: var(--space-4) var(--space-8);
+    min-height: 44px;
+  }
+
+  .td-step__marker { display: none; }
+  .td-step__note { display: none; }
+  .td-step__name { font-size: var(--font-size-label); letter-spacing: 0.4px; }
+
+  .td-panel__head { display: none; }
+  .td-panel__rule { display: none; }
 }
 
 /* ── A trilha ──────────────────────────────────────────────────────────
@@ -859,14 +910,14 @@ button:disabled {
 /* ── Conteúdo da parada ────────────────────────────────────────────── */
 
 .td-stop__title {
-  margin-bottom: var(--space-8);
+  margin-bottom: 0;
   color: var(--text-primary);
   font-size: var(--font-size-title);
   font-weight: var(--font-weight-title);
 }
 
 .td-stop__text {
-  margin-bottom: var(--space-16);
+  margin-bottom: 0;
   color: var(--text-body);
   font-size: var(--font-size-small);
   line-height: var(--line-height-small);
@@ -1525,6 +1576,440 @@ button.td-pill--credits { cursor: pointer; }
 button.td-pill--credits:hover { border-color: var(--text-mute); }
 
 .td-modal .td-field input[type='number'] { margin-bottom: var(--space-8); }
+
+/* =====================================================================
+   COMPONENTES FIÉIS AO FIGMA
+   Medidas tiradas dos componentes do arquivo de handoff, não estimadas.
+   ===================================================================== */
+
+/* ── Botão/Ação ────────────────────────────────────────────────────────
+   px 16 · py 14 · raio 10 · Small Bold 14 · centralizado.
+   Primária: laranja de CTA com o glow. Secundária: Card 2 com borda.
+   UM LARANJA POR TELA, sempre o que avança.                            */
+
+.td-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
+  width: 100%;
+  padding: 14px var(--space-16);
+  border-radius: var(--radius-button);
+  font-size: var(--font-size-small-bold);
+  font-weight: var(--font-weight-small-bold);
+  line-height: var(--line-height-small-bold);
+  text-align: center;
+  transition: filter var(--duration-fast) var(--ease-out),
+              background-color var(--duration-fast) var(--ease-out);
+}
+
+.td-action--primary {
+  background: var(--brand-orange-cta);
+  color: var(--brand-white);
+  box-shadow: var(--shadow-glow-orange);
+}
+.td-action--primary:hover:not(:disabled) { filter: brightness(1.12); }
+
+/* Desabilitado deixa de ser laranja: um botão que não avança não pode
+   gastar o único laranja da tela. O motivo fica escrito nele. */
+.td-action--primary:disabled {
+  background: var(--surface-card-2);
+  border: 1px solid var(--border-line-2);
+  color: var(--text-mute);
+  box-shadow: none;
+}
+
+.td-action--secondary {
+  background: var(--surface-card-2);
+  border: 1px solid var(--border-line-2);
+  color: var(--text-body);
+}
+.td-action--secondary:hover:not(:disabled) { background: var(--control-on); }
+
+/* AZUL MARCA O CONTROLE ATIVO. */
+.td-action--on {
+  background: var(--control-on);
+  border-color: var(--brand-blue);
+}
+
+.td-action--danger {
+  background: var(--surface-card-2);
+  border: 1px solid var(--border-line-2);
+  color: var(--feedback-danger);
+}
+
+/* O custo mora DENTRO do botão, numa pílula — o preço aparece antes do
+   clique, e não numa linha separada. */
+.td-cost {
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.22);
+  color: var(--brand-white);
+  font-size: var(--font-size-legal);
+  font-weight: var(--font-weight-legal);
+}
+
+.td-action--secondary .td-cost {
+  background: var(--tint-white-6);
+  color: var(--feedback-yellow);
+}
+
+/* ── Botão/Upload · borda tracejada ──────────────────────────────────── */
+
+.td-upload {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
+  height: 40px;
+  border: 1px dashed var(--border-line-2);
+  border-radius: var(--radius-input);
+  background: var(--surface-ink);
+  color: var(--text-body);
+  font-size: var(--font-size-body-bold);
+  font-weight: var(--font-weight-body-bold);
+  cursor: pointer;
+}
+.td-upload:hover { border-color: var(--brand-blue); }
+
+/* ── A parada, e o espaçamento de 12 do Figma ────────────────────────── */
+
+.td-stop {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  min-height: 0;
+}
+
+/* Os controles NÃO encolhem. Sem isto o flex esmaga cada um até tudo
+   caber, e o resultado é um seletor de 6px de altura que parece
+   cortado — pior do que transbordar, porque transbordar aparece nos
+   testes e encolher não. */
+.td-stop > * { flex-shrink: 0; }
+
+.td-label {
+  color: var(--text-mute);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-label);
+  letter-spacing: var(--letter-spacing-label);
+  text-transform: uppercase;
+}
+
+.td-stop__legal {
+  margin-top: auto;
+  color: var(--text-mute);
+  font-size: var(--font-size-legal);
+  line-height: var(--line-height-legal);
+}
+
+.td-col { display: flex; flex-direction: column; gap: var(--space-8); }
+.td-duo { display: flex; gap: var(--space-24); }
+.td-duo .td-col { flex: 1 0 0; min-width: 0; }
+.td-pair { display: flex; gap: var(--space-12); }
+.td-pair .td-action { flex: 1 0 0; min-width: 0; padding: 8px var(--space-16); }
+
+/* ── Camadas ───────────────────────────────────────────────────────────
+   Cada imagem nova trava as de baixo. A tira mostra a pilha e é por onde
+   se volta para uma camada travada.                                     */
+
+.td-layers { display: flex; flex-direction: column; gap: var(--space-4); }
+
+.td-layers__strip {
+  display: flex;
+  gap: var(--space-8);
+  overflow-x: auto;         /* a tira é a única coisa que rola, e só no
+                               eixo X: o painel continua inteiro */
+  scrollbar-width: thin;
+  padding-bottom: 2px;
+}
+
+.td-layers__cell { position: relative; flex: 0 0 auto; }
+
+.td-chip {
+  display: block;
+  width: 52px;
+  padding: 0;
+  border: 1px solid var(--border-line);
+  border-radius: var(--radius-input);
+  overflow: hidden;
+  opacity: 0.55;
+}
+
+/* A camada destravada é a que se mexe — azul marca onde você está. */
+.td-chip--on {
+  border: 2px solid var(--brand-blue);
+  opacity: 1;
+}
+
+.td-chip__art {
+  display: block;
+  aspect-ratio: 16 / 9;
+  background: var(--surface-mirage) center / cover no-repeat;
+}
+
+.td-chip__tag {
+  display: block;
+  padding: 2px;
+  background: var(--surface-ink);
+  color: var(--text-body);
+  font-size: var(--font-size-legal);
+  text-align: center;
+}
+
+.td-chip__drop {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--border-line-2);
+  border-radius: 999px;
+  background: var(--surface-card-2);
+  color: var(--text-body);
+}
+.td-chip__drop:hover { color: var(--feedback-danger); border-color: var(--feedback-danger); }
+
+/* ── Filtro/Amostra ────────────────────────────────────────────────────
+   Amostra de 62 de altura com o custo numa pílula no canto, e o nome em
+   Label 12 com tracking. Selecionado: borda de 2 em azul.               */
+
+.td-filters {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-8);
+  min-height: 0;
+}
+
+.td-filter {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--border-line);
+  border-radius: var(--radius-input);
+  background: var(--surface-ink);
+  text-align: left;
+}
+
+.td-filter--on {
+  border: 2px solid var(--brand-blue);
+  background: var(--tint-blue-10);
+}
+
+.td-filter__art {
+  position: relative;
+  display: block;
+  height: 62px;
+  background: var(--surface-mirage) center / cover no-repeat;
+}
+
+.td-filter__cost {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgb(10 13 20 / 0.82);
+  color: var(--feedback-yellow);
+  font-size: var(--font-size-legal);
+  font-weight: var(--font-weight-legal);
+}
+
+.td-filter__info {
+  display: block;
+  padding: 4px 10px 5px;
+  color: var(--text-body);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-label);
+  letter-spacing: var(--letter-spacing-label);
+}
+.td-filter--on .td-filter__info { color: var(--brand-white); }
+
+/* ── Controles do texto ────────────────────────────────────────────── */
+
+.td-area {
+  width: 100%;
+  padding: var(--space-12);
+  border: 1px solid var(--border-line);
+  border-radius: var(--radius-input);
+  background: var(--surface-ink);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+  resize: none;
+}
+.td-area::placeholder { color: var(--text-mute); }
+.td-area:focus { border-color: var(--brand-blue); outline: none; }
+.td-area:disabled { opacity: 0.6; }
+
+.td-field2 { display: flex; flex-direction: column; gap: var(--space-8); }
+
+/* Controle/Cor do texto: três amostras de 48, raio 12, sempre nesta
+   ordem — branco, amarelo, e a que abre o seletor. */
+.td-swatches { display: flex; gap: var(--space-8); height: 48px; }
+
+.td-swatch {
+  flex: 1 0 0;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  cursor: pointer;
+}
+.td-swatch--on { border-color: var(--brand-blue); }
+.td-swatch--pick {
+  display: block;
+  background: linear-gradient(180deg, var(--feedback-yellow), #990096);
+}
+
+/* Controle/Alinhamento: três ícones de 48. Azul marca o ativo. */
+.td-aligns { display: flex; gap: var(--space-8); height: 48px; }
+
+.td-align {
+  display: grid;
+  place-items: center;
+  flex: 1 0 0;
+  min-width: 0;
+  height: 100%;
+  border: 1px solid var(--border-line-2);
+  border-radius: 12px;
+  background: var(--surface-card-2);
+  color: var(--text-body);
+}
+.td-align--on {
+  background: var(--control-on);
+  border-color: var(--brand-blue);
+  color: var(--brand-white);
+}
+
+/* Controle/Seletor: o peso da fonte, sempre em itálico. */
+.td-select {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--brand-blue);
+  border-radius: var(--radius-button);
+  background: var(--control-on);
+}
+
+.td-select select {
+  flex: 1 0 0;
+  min-width: 0;
+  padding: 8px var(--space-16);
+  border: 0;
+  background: none;
+  color: var(--text-body);
+  font-family: var(--font-thumb-title);
+  font-style: italic;
+  font-weight: 900;
+  font-size: var(--font-size-small-bold);
+  text-align: center;
+  appearance: none;
+  cursor: pointer;
+}
+
+.td-select select option {
+  background: var(--surface-card);
+  color: var(--text-body);
+  font-style: normal;
+}
+
+.td-select .td-icon {
+  position: absolute;
+  right: var(--space-8);
+  pointer-events: none;
+  color: var(--text-body);
+}
+
+/* ── Réguas magnéticas ─────────────────────────────────────────────────
+   Aparecem só durante o gesto. Guia que fica na tela depois de soltar
+   vira sujeira.                                                         */
+
+.td-guides {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  pointer-events: none;
+}
+
+.td-guide {
+  position: absolute;
+  background: var(--brand-blue);
+  box-shadow: 0 0 0 0.5px rgb(0 0 0 / 0.4);
+}
+.td-guide--x { width: 1px; }
+.td-guide--y { height: 1px; }
+
+/* ── A moldura de seleção do texto ─────────────────────────────────────
+   Oito alças: os quatro cantos ESCALAM o texto, os quatro lados mudam só
+   a largura da caixa. É a separação que torna o gesto previsível.        */
+
+.td-textframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  outline: 1px solid var(--brand-blue);
+  pointer-events: none;
+}
+.td-textframe--editing { outline-width: 2px; }
+
+.td-thandle {
+  position: absolute;
+  padding: 0;
+  border: 2px solid var(--brand-blue);
+  background: var(--brand-white);
+  pointer-events: auto;
+}
+
+/* A área de pegada cresce PARA FORA da caixa, não para dentro.
+   Crescendo para dentro, a alça de baixo cobria o meio de um texto de
+   uma linha e roubava o clique do próprio texto — a pessoa clicava na
+   palavra e pegava a alça. */
+.td-thandle::before { content: ''; position: absolute; inset: -10px; }
+
+.td-thandle--n::before { top: -14px; bottom: -2px; left: -6px; right: -6px; }
+.td-thandle--s::before { bottom: -14px; top: -2px; left: -6px; right: -6px; }
+.td-thandle--w::before { left: -14px; right: -2px; top: -6px; bottom: -6px; }
+.td-thandle--e::before { right: -14px; left: -2px; top: -6px; bottom: -6px; }
+
+.td-thandle--corner { width: 11px; height: 11px; border-radius: 3px; }
+.td-thandle--side { border-radius: 2px; }
+
+.td-thandle--nw { top: -6px;  left: -6px;  cursor: nwse-resize; }
+.td-thandle--ne { top: -6px;  right: -6px; cursor: nesw-resize; }
+.td-thandle--se { bottom: -6px; right: -6px; cursor: nwse-resize; }
+.td-thandle--sw { bottom: -6px; left: -6px;  cursor: nesw-resize; }
+
+.td-thandle--n { top: -4px; left: 50%; width: 24px; height: 7px; margin-left: -12px; cursor: ns-resize; }
+.td-thandle--s { bottom: -4px; left: 50%; width: 24px; height: 7px; margin-left: -12px; cursor: ns-resize; }
+.td-thandle--w { left: -4px; top: 50%; width: 7px; height: 24px; margin-top: -12px; cursor: ew-resize; }
+.td-thandle--e { right: -4px; top: 50%; width: 7px; height: 24px; margin-top: -12px; cursor: ew-resize; }
+
+/* A caixa em si não desenha mais contorno nem pontos: quem faz isso é a
+   moldura, que é uma só e segue a seleção. */
+.td-text--on::before, .td-text--on::after { display: none; }
+.td-text--on { outline: none; }
+.td-text--editing { outline: none; }
+
+/* Camada travada não convida ao gesto. */
+.td-layer--locked { cursor: default; }
+
+@media (max-width: 880px) {
+  .td-action { padding: 12px var(--space-12); }
+  .td-swatches, .td-aligns { height: 44px; }
+  .td-filter__art { height: 54px; }
+
+  /* O Botão/Upload tem 40 no desenho. No mobile ele vai para 44, porque
+     a regra de alvo de toque do briefing é mais forte que a medida — e
+     é a única das duas que alguém sente no dedo. No desktop ele fica
+     com os 40 do Figma. */
+  .td-upload { height: 44px; }
+}
 </style>
 </head>
 <body>
@@ -1553,10 +2038,10 @@ button.td-pill--credits:hover { border-color: var(--text-mute); }
     </form>
 
     <div class="td-setup__actions">
-      <button type="button" class="td-btn td-btn--danger" id="setup-clear" hidden>
+      <button type="button" class="td-action td-action--danger" id="setup-clear" hidden>
         Apagar chaves
       </button>
-      <button type="submit" class="td-btn td-btn--primary" id="setup-save" form="setup-form">
+      <button type="submit" class="td-action td-action--primary" id="setup-save" form="setup-form">
         Salvar e abrir o editor
       </button>
     </div>
@@ -1592,10 +2077,10 @@ button.td-pill--credits:hover { border-color: var(--text-mute); }
     </p>
 
     <div class="td-modal__actions">
-      <button type="button" class="td-btn td-btn--ghost" id="confirm-discard">Descartar</button>
-      <button type="button" class="td-btn td-btn--ghost" id="confirm-skip">Seguir sem filtro · 0 ✦</button>
-      <button type="button" class="td-btn td-btn--ghost" id="confirm-budget" hidden>Ajustar o meu teto</button>
-      <button type="button" class="td-btn td-btn--primary" id="confirm-go">Ver prévia · 1 ✦</button>
+      <button type="button" class="td-action td-action--secondary" id="confirm-discard">Descartar</button>
+      <button type="button" class="td-action td-action--secondary" id="confirm-skip">Seguir sem filtro</button>
+      <button type="button" class="td-action td-action--secondary" id="confirm-budget" hidden>Ajustar o meu teto</button>
+      <button type="button" class="td-action td-action--primary" id="confirm-go">Ver prévia · 1 ✦</button>
     </div>
   </div>
 </div>
@@ -1615,8 +2100,8 @@ button.td-pill--credits:hover { border-color: var(--text-mute); }
     <dl class="td-ledger" id="receipt-ledger"></dl>
 
     <div class="td-modal__actions">
-      <button type="button" class="td-btn td-btn--primary" id="receipt-go">Baixar PNG 1920 × 1080</button>
-      <button type="button" class="td-btn td-btn--ghost" id="receipt-back">Voltar a editar</button>
+      <button type="button" class="td-action td-action--primary" id="receipt-go">Baixar PNG 1920 × 1080</button>
+      <button type="button" class="td-action td-action--secondary" id="receipt-back">Voltar a editar</button>
     </div>
   </div>
 </div>
@@ -1640,8 +2125,8 @@ button.td-pill--credits:hover { border-color: var(--text-mute); }
     </div>
 
     <div class="td-modal__actions">
-      <button type="button" class="td-btn td-btn--primary" id="budget-save">Salvar o teto</button>
-      <button type="button" class="td-btn td-btn--ghost" id="budget-cancel">Cancelar</button>
+      <button type="button" class="td-action td-action--primary" id="budget-save">Salvar o teto</button>
+      <button type="button" class="td-action td-action--secondary" id="budget-cancel">Cancelar</button>
     </div>
   </div>
 </div>
@@ -1673,6 +2158,18 @@ button.td-pill--credits:hover { border-color: var(--text-mute); }
       <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor"
               stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M5 13l4 4L19 7"/></symbol>
+      <symbol id="i-align-left" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round">
+        <path d="M4 6h16M4 11h10M4 16h13M4 21h8"/></symbol>
+      <symbol id="i-align-center" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round">
+        <path d="M4 6h16M7 11h10M5 16h14M8 21h8"/></symbol>
+      <symbol id="i-align-right" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round">
+        <path d="M4 6h16M10 11h10M7 16h13M12 21h8"/></symbol>
+      <symbol id="i-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M6 9l6 6 6-6"/></symbol>
     </defs>
   </svg>
 
@@ -1743,7 +2240,7 @@ button.td-pill--credits:hover { border-color: var(--text-mute); }
       <div class="td-panel__stop" id="stop-body"></div>
 
       <div class="td-panel__foot">
-        <button type="button" class="td-btn td-btn--primary td-btn--block" id="advance" disabled>
+        <button type="button" class="td-action td-action--primary" id="advance" disabled>
           Continuar
         </button>
       </div>
@@ -1753,6 +2250,13 @@ button.td-pill--credits:hover { border-color: var(--text-mute); }
 </div>
 
 <script>
+/* GERADO POR build.sh A PARTIR DE assets/frames/ — não edite à mão.
+   As molduras vivem aqui como data URI porque um PNG carregado de
+   assets/ contamina o canvas em file:// e quebraria o export. */
+window.TD_FRAMES = {
+  'canaltech': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAB4AAAAQ4CAYAAADo08FDAAA072NhQlgAADTvanVtYgAAAB5qdW1kYzJwYQARABCAAACqADibcQNjMnBhAAAANMlqdW1iAAAAR2p1bWRjMm1hABEAEIAAAKoAOJtxA3VybjpjMnBhOjQ2NmYwYzk3LTQ4OGMtNDEwYS04ZDFiLWRmZWZlMzBkYjI2NAAAAAJKanVtYgAAAClqdW1kYzJhcwARABCAAACqADibcQNjMnBhLmFzc2VydGlvbnMAAAABVmp1bWIAAABBanVtZGNib3IAEQAQgAAAqgA4m3ETYzJwYS5hY3Rpb25zLnYyAAAAABhjMnNo72EegEEuRbfrMMIbxI9zkQAAAQ1jYm9yomdhY3Rpb25zgqJmYWN0aW9ubGMycGEuY3JlYXRlZHFkaWdpdGFsU291cmNlVHlwZXgnaHR0cDovL2MycGEub3JnL2RpZ2l0YWxzb3VyY2V0eXBlL2VtcHR5o2ZhY3Rpb25rYzJwYS5lZGl0ZWRtc29mdHdhcmVBZ2VudG1BZG9iZSBGaXJlZmx5cWRpZ2l0YWxTb3VyY2VUeXBleFNodHRwOi8vY3YuaXB0Yy5vcmcvbmV3c2NvZGVzL2RpZ2l0YWxzb3VyY2V0eXBlL2NvbXBvc2l0ZVdpdGhUcmFpbmVkQWxnb3JpdGhtaWNNZWRpYXJhbGxBY3Rpb25zSW5jbHVkZWT0AAAAw2p1bWIAAABAanVtZGNib3IAEQAQgAAAqgA4m3ETYzJwYS5oYXNoLmRhdGEAAAAAGGMyc2hx/P1qyPn2XfYoZXjED84mAAAAe2Nib3KlamV4Y2x1c2lvbnOBomVzdGFydBghZmxlbmd0aBk0+2RuYW1lbmp1bWJmIG1hbmlmZXN0Y2FsZ2ZzaGEyNTZkaGFzaFggxkiAS8Z/VXgDn4AuUTe83dzIPgM7WrZO79RlRrFR8FZjcGFkSAAAAAAAAAAAAAACIGp1bWIAAAAnanVtZGMyY2wAEQAQgAAAqgA4m3EDYzJwYS5jbGFpbS52MgAAAAHxY2JvcqdqaW5zdGFuY2VJRHgseG1wOmlpZDphOGY5MGZhMy03ZGMxLTRkZTItOTliZC0wZTJiNmM5ZTM0YWN0Y2xhaW1fZ2VuZXJhdG9yX2luZm+/ZG5hbWVvQWRvYmUgUGhvdG9zaG9wZ3ZlcnNpb25mMjcuNy4wd29yZy5jb250ZW50YXV0aC5jMnBhX3JzZjAuNzIuMP9pc2lnbmF0dXJleE1zZWxmI2p1bWJmPS9jMnBhL3VybjpjMnBhOjQ2NmYwYzk3LTQ4OGMtNDEwYS04ZDFiLWRmZWZlMzBkYjI2NC9jMnBhLnNpZ25hdHVyZXJjcmVhdGVkX2Fzc2VydGlvbnOBomN1cmx4KXNlbGYjanVtYmY9YzJwYS5hc3NlcnRpb25zL2MycGEuaGFzaC5kYXRhZGhhc2hYIKQjoZ1mHjpm9P0vIDFT6fWpzu3D1s/EDihuj33gsgsRc2dhdGhlcmVkX2Fzc2VydGlvbnOBomN1cmx4KnNlbGYjanVtYmY9YzJwYS5hc3NlcnRpb25zL2MycGEuYWN0aW9ucy52MmRoYXNoWCCPK7QwadmNdn44h2xwCXUsH3DNHo7fLejDyv2KSVxEFGhkYzp0aXRsZW9HZW5lcmF0ZWQgaW1hZ2VjYWxnZnNoYTI1NgAAMBBqdW1iAAAAKGp1bWRjMmNzABEAEIAAAKoAOJtxA2MycGEuc2lnbmF0dXJlAAAAL+BjYm9y0oRZDRmiATgkGCGCWQalMIIGoTCCBImgAwIBAgIUJF0VdjrNGWPWW9RGCK81lSfQjEgwDQYJKoZIhvcNAQELBQAwdTELMAkGA1UEBhMCVVMxIzAhBgNVBAoTGkFkb2JlIFN5c3RlbXMgSW5jb3Jwb3JhdGVkMR0wGwYDVQQLExRBZG9iZSBUcnVzdCBTZXJ2aWNlczEiMCAGA1UEAxMZQWRvYmUgUHJvZHVjdCBTZXJ2aWNlcyBHNDAeFw0yNjA4MjAxNjIxNDhaFw0yNzA4MjAxNjIxNDhaMIGwMRgwFgYDVQQDDA9BZG9iZSBQaG90b3Nob3AxKDAmBgNVBAsMH0NvbnRlbnQgQXV0aGVudGljaXR5IEluaXRpYXRpdmUxEzARBgNVBAoMCkFkb2JlIEluYy4xETAPBgNVBAcMCFNhbiBKb3NlMRMwEQYDVQQIDApDYWxpZm9ybmlhMQswCQYDVQQGEwJVUzEgMB4GCSqGSIb3DQEJARYRY2FpLW9wc0BhZG9iZS5jb20wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC6np7srWP/VBhEADGydaPe9NpIdc4rJonG8oZc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AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA9lkBAKgYPzVSK/L2C+MnI6+OzVppeNQqMEMTs5dDbYAG4EPjDfonKEvPGud7PQ6rWgK383qf4C+3wEswppt4kLjYAKxrGydBk2kjT9dlonzECkS1ncI1UsFV8HlDp+a41+O5yOiKbGyUUYa1Zrt7uwmKtGrLzS8k1rYd0lkj+nsO4Pqm+VXwoQBmzEA/KhEJ8tynCpJkbR5o2bXAvARXO2ZN9q7cxY5/SQeRDA1yVewrPbVt8O+EjBuJnq7/tgSWcTA0KiQXGAPkoVk/3wKF+nZJWMAXvWqO61u6J/zVqZHTfOuehtDyFMUOUTdB7RpCfAn5XKDHq0bK6wQ79UC0u3khiFs+m/87AAAKQ2lDQ1BJQ0MgcHJvZmlsZQAAeNqdU3dYk/cWPt/3ZQ9WQtjwsZdsgQAiI6wIyBBZohCSAGGEEBJAxYWIClYUFRGcSFXEgtUKSJ2I4qAouGdBiohai1VcOO4f3Ke1fXrv7e371/u855zn/M55zw+AERImkeaiagA5UoU8Otgfj09IxMm9gAIVSOAEIBDmy8JnBcUAAPADeXh+dLA//AGvbwACAHDVLiQSx+H/g7pQJlcAIJEA4CIS5wsBkFIAyC5UyBQAyBgAsFOzZAoAlAAAbHl8QiIAqg0A7PRJPgUA2KmT3BcA2KIcqQgAjQEAmShHJAJAuwBgVYFSLALAwgCgrEAiLgTArgGAWbYyRwKAvQUAdo5YkA9AYACAmUIszAAgOAIAQx4TzQMgTAOgMNK/4KlfcIW4SAEAwMuVzZdL0jMUuJXQGnfy8ODiIeLCbLFCYRcpEGYJ5CKcl5sjE0jnA0zODAAAGvnRwf44P5Dn5uTh5mbnbO/0xaL+a/BvIj4h8d/+vIwCBAAQTs/v2l/l5dYDcMcBsHW/a6lbANpWAGjf+V0z2wmgWgrQevmLeTj8QB6eoVDIPB0cCgsL7SViob0w44s+/zPhb+CLfvb8QB7+23rwAHGaQJmtwKOD/XFhbnauUo7nywRCMW735yP+x4V//Y4p0eI0sVwsFYrxWIm4UCJNx3m5UpFEIcmV4hLpfzLxH5b9CZN3DQCshk/ATrYHtctswH7uAQKLDljSdgBAfvMtjBoLkQAQZzQyefcAAJO/+Y9AKwEAzZek4wAAvOgYXKiUF0zGCAAARKCBKrBBBwzBFKzADpzBHbzAFwJhBkRADCTAPBBCBuSAHAqhGJZBGVTAOtgEtbADGqARmuEQtMExOA3n4BJcgetwFwZgGJ7CGLyGCQRByAgTYSE6iBFijtgizggXmY4EImFINJKApCDpiBRRIsXIcqQCqUJqkV1II/ItchQ5jVxA+pDbyCAyivyKvEcxlIGyUQPUAnVAuagfGorGoHPRdDQPXYCWomvRGrQePYC2oqfRS+h1dAB9io5jgNExDmaM2WFcjIdFYIlYGibHFmPlWDVWjzVjHVg3dhUbwJ5h7wgkAouAE+wIXoQQwmyCkJBHWExYQ6gl7CO0EroIVwmDhDHCJyKTqE+0JXoS+cR4YjqxkFhGrCbuIR4hniVeJw4TX5NIJA7JkuROCiElkDJJC0lrSNtILaRTpD7SEGmcTCbrkG3J3uQIsoCsIJeRt5APkE+S+8nD5LcUOsWI4kwJoiRSpJQSSjVlP+UEpZ8yQpmgqlHNqZ7UCKqIOp9aSW2gdlAvU4epEzR1miXNmxZDy6Qto9XQmmlnafdoL+l0ugndgx5Fl9CX0mvoB+nn6YP0dwwNhg2Dx0hiKBlrGXsZpxi3GS+ZTKYF05eZyFQw1zIbmWeYD5hvVVgq9ip8FZHKEpU6lVaVfpXnqlRVc1U/1XmqC1SrVQ+rXlZ9pkZVs1DjqQnUFqvVqR1Vu6k2rs5Sd1KPUM9RX6O+X/2C+mMNsoaFRqCGSKNUY7fGGY0hFsYyZfFYQtZyVgPrLGuYTWJbsvnsTHYF+xt2L3tMU0NzqmasZpFmneZxzQEOxrHg8DnZnErOIc4NznstAy0/LbHWaq1mrX6tN9p62r7aYu1y7Rbt69rvdXCdQJ0snfU6bTr3dQm6NrpRuoW623XP6j7TY+t56Qn1yvUO6d3RR/Vt9KP1F+rv1u/RHzcwNAg2kBlsMThj8MyQY+hrmGm40fCE4agRy2i6kcRoo9FJoye4Ju6HZ+M1eBc+ZqxvHGKsNN5l3Gs8YWJpMtukxKTF5L4pzZRrmma60bTTdMzMyCzcrNisyeyOOdWca55hvtm82/yNhaVFnMVKizaLx5balnzLBZZNlvesmFY+VnlW9VbXrEnWXOss623WV2xQG1ebDJs6m8u2qK2brcR2m23fFOIUjynSKfVTbtox7PzsCuya7AbtOfZh9iX2bfbPHcwcEh3WO3Q7fHJ0dcx2bHC866ThNMOpxKnD6VdnG2ehc53zNRemS5DLEpd2lxdTbaeKp26fesuV5RruutK10/Wjm7ub3K3ZbdTdzD3Ffav7TS6bG8ldwz3vQfTw91jicczjnaebp8LzkOcvXnZeWV77vR5Ps5wmntYwbcjbxFvgvct7YDo+PWX6zukDPsY+Ap96n4e+pr4i3z2+I37Wfpl+B/ye+zv6y/2P+L/hefIW8U4FYAHBAeUBvYEagbMDawMfBJkEpQc1BY0FuwYvDD4VQgwJDVkfcpNvwBfyG/ljM9xnLJrRFcoInRVaG/owzCZMHtYRjobPCN8Qfm+m+UzpzLYIiOBHbIi4H2kZmRf5fRQpKjKqLupRtFN0cXT3LNas5Fn7Z72O8Y+pjLk722q2cnZnrGpsUmxj7Ju4gLiquIF4h/hF8ZcSdBMkCe2J5MTYxD2J43MC52yaM5zkmlSWdGOu5dyiuRfm6c7Lnnc8WTVZkHw4hZgSl7I/5YMgQlAvGE/lp25NHRPyhJuFT0W+oo2iUbG3uEo8kuadVpX2ON07fUP6aIZPRnXGMwlPUit5kRmSuSPzTVZE1t6sz9lx2S05lJyUnKNSDWmWtCvXMLcot09mKyuTDeR55m3KG5OHyvfkI/lz89sVbIVM0aO0Uq5QDhZML6greFsYW3i4SL1IWtQz32b+6vkjC4IWfL2QsFC4sLPYuHhZ8eAiv0W7FiOLUxd3LjFdUrpkeGnw0n3LaMuylv1Q4lhSVfJqedzyjlKD0qWlQyuCVzSVqZTJy26u9Fq5YxVhlWRV72qX1VtWfyoXlV+scKyorviwRrjm4ldOX9V89Xlt2treSrfK7etI66Trbqz3Wb+vSr1qQdXQhvANrRvxjeUbX21K3nShemr1js20zcrNAzVhNe1bzLas2/KhNqP2ep1/XctW/a2rt77ZJtrWv913e/MOgx0VO97vlOy8tSt4V2u9RX31btLugt2PGmIbur/mft24R3dPxZ6Pe6V7B/ZF7+tqdG9s3K+/v7IJbVI2jR5IOnDlm4Bv2pvtmne1cFoqDsJB5cEn36Z8e+NQ6KHOw9zDzd+Zf7f1COtIeSvSOr91rC2jbaA9ob3v6IyjnR1eHUe+t/9+7zHjY3XHNY9XnqCdKD3x+eSCk+OnZKeenU4/PdSZ3Hn3TPyZa11RXb1nQ8+ePxd07ky3X/fJ897nj13wvHD0Ivdi2yW3S609rj1HfnD94UivW2/rZffL7Vc8rnT0Tes70e/Tf/pqwNVz1/jXLl2feb3vxuwbt24m3Ry4Jbr1+Hb27Rd3Cu5M3F16j3iv/L7a/eoH+g/qf7T+sWXAbeD4YMBgz8NZD+8OCYee/pT/04fh0kfMR9UjRiONj50fHxsNGr3yZM6T4aeypxPPyn5W/3nrc6vn3/3i+0vPWPzY8Av5i8+/rnmp83Lvq6mvOscjxx+8znk98ab8rc7bfe+477rfx70fmSj8QP5Q89H6Y8en0E/3Pud8/vwv94Tz+4A5JREAAAAZdEVYdFNvZnR3YXJlAEFkb2JlIEltYWdlUmVhZHlxyWU8AAAD6GlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4gPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iQWRvYmUgWE1QIENvcmUgMTAuMC1jMDAwIDc5LmQyMGU0NjYzMCwgMjAyNS8xMi8wOS0wMjoxMToyMyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtbG5zOmRjPSJodHRwOi8vcHVybC5vcmcvZGMvZWxlbWVudHMvMS4xLyIgeG1wTU06T3JpZ2luYWxEb2N1bWVudElEPSJ4bXAuZGlkOjU4MDcyMmFhLTBmNDItNDZiOC05NWZiLTk4ZDFmY2NhYmUzOCIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDo0RkEyNkZDOEFGOTkxMUYxQkU1RDg1NTBDMDJCOTMyOCIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDo0RkEyNkZDN0FGOTkxMUYxQkU1RDg1NTBDMDJCOTMyOCIgeG1wOkNyZWF0b3JUb29sPSJBZG9iZSBQaG90b3Nob3AgMjIuNSAoTWFjaW50b3NoKSI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOjQ4YjUwNjY1LTI1OTctMjk0Mi1iNDA4LWM1YTU3NmQyYjRiOSIgc3RSZWY6ZG9jdW1lbnRJ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AAAAAAAAAEQABgAAAAAAAIgADAAAAAAAAEAEYAAAAAAAAAAiAAMAAAAAAAAQARgAAAAAAAAgAjAAAAAAAAAAEYABAAAAAAAAiAAMAAAAAAAAQARgAAAAAAAAgAjAAAAAAAAAAEQABgAAAAAAACACMAAAAAAAAAARgAEAAAAAAACIAAwAAAAAAAAQARgAAAAAAACACMAAAAAAAAAARAAGAAAAAAAAIAIwAAAAAAAAQARgAAAAAAAAACIAAwAAAAAAABABGAAAAAAAAIAIwAAAAAAAAAARgAEAAAAAAACIAAwAAAAAAABABGAAAAAAAAAAIgADAAAAAAAAEAEYAAAAAAAAIAIwAAAAAAAAABGAAQAAAAAAAIgADAAAAAAAAEAEYAAAAAAAAIAIwAAAAAAAAABEAAYAAAAAAAAgAjAAAAAAAAAAEYABAAAAAAAAIgADAAAAAAAAEAEYAAAAAAAAgAjAAAAAAAAAAEQABgAAAAAAAEAABgAAAAAAAIgADAAAAAAAAEAEYAAAAAAAAAAiAAMAAAAAAAAQARgAAAAAAAAgAjAAAAAAAAAAEYABAAAAAAAAiAAMAAAAAAAAQARgAAAAAAAAgAjAAAAAAAAAAEQABgAAAAAAACACMAAAAAAAAAARgAEAAAAAAAAiAAMAAAAAAAAQARgAAAAAAACACMAAAAAAAAAARAAGAAAAAAAAIAIwAAAAAAAAQARgAAAAAAAAACIAAwAAAAAAABABGAAAAAAAAIAIwAAAAAAAAAARgAEAAAAAAACIAAwAAAAAAABABGAAAAAAAAAAIgADAAAAAAAARAAGAAAAAAAAIAIwAAAAAAAAABGAAQAAAAAAAIgADAAAAAAAAEAEYAAAAAAAAIAIwAAAAAAAAABEAAYAAAAAAAAgAjAAAAAAAAAAEYABAAAAAAAAIgADAAAAAAAAEAEYAAAAAAAAgAjAAAAAAAAAAEQABgAAAAAAAIgADAAAAAAAAEAEYAAAAAAAAAAiAAMAAAAAAAAQARgAAAAAAAAAARgAAAAAAAAgAjAAAAAAAAAAEYABAAAAAAAAiAAMAAAAAAAAQARgAAAAAAAAgAjAAAAAAAAAAEQABgAAAAAAACACMAAAAAAAAAARgAEAAAAAAAAiAAMAAAAAAAAQARgAAAAAAACACMAAAAAAAAAARAAGAAAAAAAAiAAMAAAAAAAAQARgAAAAAAAAACIAAwAAAAAAABABGAAAAAAAAIAIwAAAAAAAAAARgAEAAAAAAACIAAwAAAAAAABABGAAAAAAAAAAIgADAAAAAAAARAAGAAAAAAAAIAIwAAAAAAAAABGAAQAAAAAAAIgADAAAAAAAABABGAAAAAAAAIAIwAAAAAAAAABEAAYAAAAAAAAgAjAAAAAAAAAAEYABAAAAAAAAIgADAAAAAAAAEAEYAAAAAAAAgAjAAAAAAAAAAEQABgAAAAAAAIgADAAAAAAAAEAEYAAAAAAAAAAiAAMAAAAAAAAQARgAAAAAAAAgAjAAAAAAAAAAEYABAAAAAAAAiAAMAAAAAAAAQARgAAAAAAAAACIAAwAAAAAAAEQABgAAAAAAACACMAAAAAAAAAARgAEAAAAAAACIAAwAAAAAAAAQARgAAAAAAACACMAAAAAAAAAARAAGAAAAAAAAIAIwAAAAAAAAQARgAAAAAAAAACIAAwAAAAAAABABGAAAAAAAAIAIwAAAAAAAAAARgAEAAAAAAACIAAwAAAAAAABABGAAAAAAAAAAIgADAAAAAAAAEAEYAAAAAAAAIAIwAAAAAAAAABGAAQAAAAAAAIgADAAAAAAAAEAEYAAAAAAAAIAIwAAAAAAAAABEAAYAAAAAAAAgAjAAAAAAAAAAEYABAAAAAAAAIgADAAAAAAAAEAEYAAAAAAAAgAjAAAAAAAAAAEQABgAAAAAAACACMAAAAAAAAEAEYAAAAAAAAAAiAAMAAAAAAAAQARgAAAAAAACACMAAAAAAAAAAEYABAAAAAAAAiAAMAAAAAAAAQARgAAAAAAAAACIAAwAAAAAAAEQABgAAAAAAACACMAAAAAAAAAARgAEAAAAAAACIAAwAAAAAAABABGAAAAAAAACACMAAAAAAAAAARAAGAAAAAAAAIAIwAAAAAAAAABGAAQAAAAAAACIAAwAAAAAAABABGAAAAAAAAIAIwAAAAAAAAABEAAYAAAAAAACIAAwAAAAAAABABGAAAAAAAAAAIgADAAAAAAAAEAEYAAAAAAAAIAIwAAAAAAAAABGAAQAAAAAAAIgADAAAAAAAAEAEYAAAAAAAAAAiAAMAAAAAAABEAAYAAAAAAAAgAjAAAAAAAAAAEYABAAAAAAAAiAAMAAAAAAAAEAEYAAAAAAAAgAjAAAAAAAAAAEQABgAAAAAAACACMAAAAAAAAEAEYAAAAAAAAAAiAAMAAAAAAAAQARgAAAAAAACACMAAAAAAAAAARAAGAAAAAAAAiAAMAAAAAAAAQARgAAAAAAAAACIAAwAAAAAAABABGAAAAAAAACACMAAAAAAAAAARgAEAAAAAAACIAAwAAAAAAABABGAAAAAAAACACMAAAAAAAAAARAAGAAAAAAAAIAIwAAAAAAAAABGAAQAAAAAAAIgADAAAAAAAABABGAAAAAAAAIAIwAAAAAAAAABEAAYAAAAAAAAgAjAAAAAAAABABGAAAAAAAAAAIgADAAAAAAAAEAEYAAAAAAAAgAjAAAAAAAAAABGAAQAAAAAAAIgADAAAAAAAAEAEYAAAAAAAAAAiAAMAAAAAAABEAAYAAAAAAAAgAjAAAAAAAAAAEYABAAAAAAAAiAAMAAAAAAAAQARgAAAAAAAAgAjAAAAAAAAAAEQABgAAAAAAACACMAAAAAAAAAARgAEAAAAAAAAiAAMAAAAAAAAQARgAAAAAAACACMAAAAAAAAAARAAGAAAAAAAAiAAMAAAAAAAAQARgAAAAAAAAACIAAwAAAAAAABABGAAAAAAAAIAIwAAAAAAAAAARgAEAAAAAAACIAAwAAAAAAABABGAAAAAAAAAAIgADAAAAAAAARAAGAAAAAAAAIAIwAAAAAAAAABGAAQAAAAAAAIgADAAAAAAAABABGAAAAAAAAIAIwAAAAAAAAABEAAYAAAAAAAAgAjAAAAAAAAAAEYABAAAAAAAAIgADAAAAAAAAEAEYAAAAAAAAgAjAAAAAAAAAAEQABgAAAAAAAIgADAAAAAAAAEAEYAAAAAAAAAAiAAMAAAAAAAAQARgAAAAAAAAgAjAAAAAAAAAAEYABAAAAAAAAiAAMAAAAAAAAQARgAAD4P/bumAhAKIaC4DGDAvxLwBY1EoIDej67El6ZKwIAAAAACcAAAAAAAAAAJAADAAAAAAAAkAAMAAAAAAAAQAIwAAAAAAAAAAnAAAAAAAAAAAnAAAAAAAAAACQAAwAAAAAAAJAADAAAAAAAAEACMAAAAAAAAEACMAAAAAAAAAAJwAAAAAAAAAAkAAMAAAAAAACQAAwAAAAAAACQAAwAAAAAAABAAjAAAAAAAAAACcAAAAAAAAAAJAADAAAAAAAAkAAMAAAAAAAAkAAMAAAAAAAAQAIwAAAAAAAAAAnAAAAAAAAAACQAAwAAAAAAACQAAwAAAAAAAJAADAAAAAAAAEACMAAAAAAAAAAJwAAAAAAAAAAJwAAAAAAAAAAkAAMAAAAAAACQAAwAAAAAAABAAjAAAAAAAAAACcAAAAAAAAAACcAAAAAAAAAAJAADAAAAAAAAkAAMAAAAAAAAQAIwAAAAAAAAQAIwAAAAAAAAAAnAAAAAAAAAACQAAwAAAAAAAJAADAAAAAAAAJAADAAAAAAAAEACMAAAAAAAAAAJwAAAAAAAAAAkAAMAAAAAAAAkAAMAAAAAAACQAAwAAAAAAABAAjAAAAAAAAAACcAAAAAAAAAAJAADAAAAAAAAJAADAAAAAAAAkAAMAAAAAAAAQAIwAAAAAAAAAAnAAAAAAAAAAAnAAAAAAAAAACQAAwAAAAAAAJAADAAAAAAAAEACMAAAAAAAAEACMAAAAAAAAAAJwAAAAAAAAAAkAAMAAAAAAACQAAwAAAAAAABAAjAAAAAAAABAAjAAAAAAAAAACcAAAAAAAAAAJAADAAAAAAAAkAAMAAAAAAAAkAAMAAAAAAAAQAIwAAAAAAAAAAnAAAAAAAAAACQAAwAAAAAAACQAAwAAAAAAAJAADAAAAAAAAEACMAAAAAAAAAAJwAAAAAAAAAAkAAMAAAAAAAAkAAMAAAAAAACQAAwAAAAAAABAAjAAAAAAAAAACcAAAAAAAAAACcAAAAAAAAAAJAADAAAAAAAAkAAMAAAAAAAAQAIwAAAAAAAAQAIwAAAAAAAAAAnAAAAAAAAAACQAAwAAAAAAAJAADAAAAAAAAJAADAAAAAAAAEACMAAAAAAAAAAJwAAAAAAAAAAkAAMAAAAAAACQAAwAAAAAAACQAAwAAAAAAABAAjAAAAAAAAAACcAAAAAAAAAAJAADAAAAAAAAJAADAAAAAAAAkAAMAAAAAAAAQAIwAAAAAAAAAAnAAAAAAAAAAAnAAAAAAAAAACQAAwAAAAAAAJAADAAAAAAAAEACMAAAAAAAAAAJwAAAAAAAAAAJwAAAAAAAAAAkAAMAAAAAAACQAAwAAAAAAABAAjAAAAAAAABAAjAAAAAAAAAACcAAAAAAAAAAJAADAAAAAAAAkAAMAAAAAAAAkAAMAAAAAAAAQAIwAAAAAAAAAAnAAAAAAAAAACQAAwAAAAAAAJAADAAAAAAAAJAADAAAAAAAAEACMAAAAAAAAAAJwAAAAAAAAAAkAAMAAAAAAAAkAAMAAAAAAACQAAwAAAAAAABAAjAAAAAAAAAACcAAAAAAAAAACcAAAAAAAAAAJAADAAAAAAAAkAAMAAAAAAAAQAIwAAAAAAAAQAIwAAAAAAAAAAnAAAAAAAAAACQAAwAAAAAAAJAADAAAAAAAAEACMAAAAAAAAEACMAAAAAAAAAAJwAAAAAAAAAAkAAMAAAAAAACQAAwAAAAAAACQAAwAAAAAAABAAjAAAAAAAAAACcAAAAAAAAAAJAADAAAAAAAAJAADAAAAAAAAkAAMAAAAAAAAQAIwAAAAAAAAAAnAAAAAAAAAACQAAwAAAAAAACQAAwAAAAAAAJAADAAAAAAAAEACMAAAAAAAAAAJwAAAAAAAAAAJwAAAAAAAAAAkAAMAAAAAAACQAAwAAAAAAABAAjAAAAAAAABAAjAAAAAAAAAACcAAAAAAAAAAJAADAAAAAAAAkAAMAAAAAAAAQAIwAAAAAAAAQAIwAAAAAAAAAAnAAAAAAAAAACQAAwAAAAAAAJAADAAAAAAAAJAADAAAAAAAAEACMAAAAAAAAAAJwAAAAAAAAAAkAAMAAAAAAAAkAAMAAAAAAACQAAwAAAAAAABAAjAAAAAAAAAACcAAAAAAAAAACcAAAAAAAAAAJAADAAAAAAAAkAAMAAAAAAAAQAIwAAAAAAAAAAnAAAAAAAAAAAnAAAAAAAAAACQAAwAAAAAAAJAADAAAAAAAAEACMAAAAAAAAEACMAAAAAAAAAAJwAAAAAAAAAAkAAMAAAAAAACQAAwAAAAAAACQAAwAAAAAAABAAjAAAAAAAAAACcAAAAAAAAAAJAADAAAAAAAAkAAMAAAAAAAAkAAMAAAAAAAAQAIwAAAAAAAAAAnAAAAAAAAAACQAAwAAAAAAACQAAwAAAAAAAJAADAAAAAAAAEACMAAAAAAAAAAJwAAAAAAAAAAJwAAAAAAAAAAkAAMAAAAAAACQAAwAAAAAAABAAjAAAAAAAAAACcAAAAAAAAAACcAAAAAAAAAAJAADAAAAAAAAkAAMAAAAAAAAQAIwAAAAAAAAQAIwAAAAAAAAAAnAAAAAAAAAACQAAwAAAAAAAJAADAAAAAAAAJAADAAAAAAAAEACMAAAAAAAAAAJwAAAAAAAAAAkAAMAAAAAAAAkAAMAAAAAAACQAAwAAAAAAABAAjAAAAAAAAAACcAAAAAAAAAAJAADAAAAAAAAJAADAAAAAAAAkAAMAAAAAAAAQAIwAAAAAAAAAAnAAAAAAAAAAAnAAAAAAAAAACQAAwAAAAAAAJAADAAAAAAAAEACMAAAAAAAAEACMAAAAAAAAAAJwAAAAAAAAAAkAAMAAAAAAACQAAwAAAAAAABAAjAAAAAAAABAAjAAAAAAAAAACcAAAAAAAAAAJAADAAAAAAAAkAAMAAAAAAAAkAAMAAAAAAAAQAIwAAAAAAAAAAnAAAAAAAAAACQAAwAAAAAAACQAAwAAAAAAAJAADAAAAAAAAEACMAAAAAAAAAAJwAAAAAAAAAAkAAMAAAAAAAAkAAMAAAAAAACQAAwAAAAAAABAAjAAAAAAAAAACcAAAAAAAAAACcAAAAAAAAAAJAADAAAAAAAAkAAMAAAAAAAAQAIwAAAAAAAAQAIwAAAAAAAAAAnAAAAAAAAAACQAAwAAAAAAAJAADAAAAAAAAJAADAAAAAAAAEACMAAAAAAAAAAJwAAAAAAAAAAkAAMAAAAAAACQAAwAAAAAAACQAAwAAAAAAABAAjAAAAAAAAAACcAAAAAAAAAAJAADAAAAAAAAJAADAAAAAAAAkAAMAAAAAAAAQAIwAAAAAAAAAAnAAAAAAAAAAAnAAAAAAAAAACQAAwAAAAAAAJAADAAAAAAAAEACMAAAAAAAAAAJwAAAAAAAAAAJwAAAAAAAAAAkAAMAAAAAAACQAAwAAAAAAABAAjAAAAAAAABAAjAAAAAAAAAACcAAAAAAAAAAJAADAAAAAAAAkAAMAAAAAAAAkAAMAAAAAAAAQAIwAAAAAAAAAAnAAAAAAAAAACQAAwAAAAAAAJAADAAAAAAAAJAADAAAAAAAAEACMAAAAAAAAAAJwAAAAAAAAAAkAAMAAAAAAAAkAAMAAAAAAACQAAwAAAAAAABAAjAAAAAAAAAACcAAAAAAAAAACcAAAAAAAAAAJAADAAAAAAAAkAAMAAAAAAAAQAIwAAAAAAAAQAIwAAAAAAAAAAnAAAAAAAAAACQAAwAAAAAAAJAADAAAAAAAAEACMAAAAAAAAEACMAAAAAAAAAAJwAAAAAAAAAAkAAMAAAAAAACQAAwAAAAAAACQAAwAAAAAAABAAjAAAAAAAAAACcAAAAAAAAAAJAADAAAAAAAAJAADAAAAAAAAkAAMAAAAAAAAQAIwAAAAAAAAAAnAAAAAAAAAACQAAwAAAAAAACQAAwAAAAAAAJAADAAAAAAAAEACMAAAAAAAAAAJwAAAAAAAAAAJwAAAAAAAAAAkAAMAAAAAAACQAAwAAAAAAABAAjAAAAAAAABAAjAAAAAAAAAACcAAAAAAAAAAJAADAAAAAAAAkAAMAAAAAAAAQAIwAAAAAAAAQAIwAAAAAAAAAAnAAAAAAAAAACQAAwAAAAAAAJAADAAAAAAAAJAADAAAAAAAAEACMAAAAAAAAAAJwAAAAAAAAAAkAAMAAAAAAAAkAAMAAAAAAACQAAwAAAAAAABAAjAAAAAAAAAACcAAAAAAAAAACcAAAAAAAAAAJAADAAAAAAAAkAAMAAAAAAAAQAIwAAAAAAAAAAnAAAAAAAAAAAnAAAAAAAAAACQAAwAAAAAAAJAADAAAAAAAAEACMAAAAAAAAEACMAAAAAAAAAAJwAAAAAAAAAAkAAMAAAAAAACQAAwAAAAAAACQAAwAAAAAAABAAjAAAAAAAAAACcAAAAAAAAAAJAADAAAAAAAAkAAMAAAAAAAAkAAMAAAAAAAAQAIwAAAAAAAAAAnAAAAAAAAAACQAAwAAAAAAACQAAwAAAAAAAJAADAAAAAAAAEACMAAAAAAAAAAJwAAAAAAAAAAJwAAAAAAAAAAkAAMAAAAAAACQAAwAAAAAAABAAjAAAAAAAAAACcAAAAAAAAAACcAAAAAAAAAAJAADAAAAAAAAkAAMAAAAAAAAQAIwAAAAAAAAQAIwAAAAAAAAAAnAAAAAAAAAACQAAwAAAAAAAJAADAAAAAAAAJAADAAAAAAAAEACMAAAAAAAAAAJwAAAAAAAAAAkAAMAAAAAAAAkAAMAAAAAAACQAAwAAAAAAABAAjAAAAAAAAAACcAAAAAAAAAAJAADAAAAAAAAJAADAAAAAAAAkAAMAAAAAAAAQAIwAAAAAAAAAAnAAAAAAAAAAAnAAAAAAAAAACQAAwAAAAAAAJAADAAAAAAAAEACMAAAAAAAAEACMAAAAAAAAAAJwAAAAAAAAAAkAAMAAAAAAACQAAwAAAAAAABAAjAAAAAAAABAAjAAAAAAAAAACcAAAAAAAAAAJAADAAAAAAAAkAAMAAAAAAAAkAAMAAAAAAAAQAIwAAAAAAAAAAnAAAAAAAAAACQAAwAAAAAAACQAAwAAAAAAAJAADAAAAAAAAEACMAAAAAAAAAAJwAAAAAAAAAAkAAMAAAAAAAAkAAMAAAAAAACQAAwAAAAAAABAAjAAAAAAAAAACcAAAAAAAAAACcAAAAAAAAAAJAADAAAAAAAAkAAMAAAAAAAAQAIwAAAAAAAAQAIwAAAAAAAAAAnAAAAAAAAAACQAAwAAAAAAAJAADAAAAAAAAJAADAAAAAAAAEACMAAAAAAAAAAJwAAAAAAAAAAkAAMAAAAAAACQAAwAAAAAAACQAAwAAAAAAABAAjAAAAAAAAAACcAAAAAAAAAAJAADAAAAAAAAJAADAAAAAAAAkAAMAAAAAAAAQAIwAAAAAAAAAAnAAAAAAAAAAAnAAAAAAAAAACQAAwAAAAAAAJAADAAAAAAAAEACMAAAAAAAAAAJwAAAAAAAAAAJwAAAAAAAAAAkAAMAAAAAAACQAAwAAAAAAABAAjAAAAAAAABAAjAAAAAAAAAACcAAAAAAAAAAJAADAAAAAAAAkAAMAAAAAAAAkAAMAAAAAAAAQAIwAAAAAAAAAAnAAAAAAAAAACQAAwAAAAAAAJAADAAAAAAAAJAADAAAAAAAAEACMAAAAAAAAAAJwAAAAAAAAAAkAAMAAAAAAAAkAAMAAAAAAACQAAwAAAAAAABAAjAAAAAAAAAACcAAAAAAAAAACcAAAAAAAAAAJAADAAAAAAAAkAAMAAAAAAAAQAIwAAAAAAAAQAIwAAAAAAAAAAnAAAAAAAAAACQAAwAAAAAAAJAADAAAAAAAAEACMAAAAAAAAEACMAAAAAAAAAAJwAAAAAAAAAAkAAMAAAAAAACQAAwAAAAAAACQAAwAAAAAAABAAjAAAAAAAAAACcAAAAAAAAAAJAADAAAAAAAAJAADAAAAAAAAkAAMAAAAAAAAQAIwAAAAAAAAAAnAAAAAAAAAACQAAwAAAAAAACQAAwAAAAAAAJAADAAAAAAAAEACMAAAAAAAAAAJwAAAAAAAAAAJwAAAAAAAAAAkAAMAAAAAAACQAAwAAAAAAABAAjAAAAAAAABAAjAAAAAAAAAACcAAAAAAAAAAJAADAAAAAAAAkAAMAAAAAAAAQAIwAAAAAAAAQAIwAAAAAAAAAAnAAAAAAAAAACQAAwAAAAAAAJAADAAAAAAAAJAADAAAAAAAAEACMAAAAAAAAAAJwAAAAAAAAAAkAAMAAAAAAAAkAAMAAAAAAACQAAwAAAAAAABAAjAAAAAAAAAACcAAAAAAAAAACcAAAAAAAAAAJAADAAAAAAAAkAAMAAAAAAAAQAIwAAAAAAAAAAnAAAAAAAAAAAnAAAAAAAAAACQAAwAAAAAAAJAADAAAAAAAAEACMAAAAAAAAMBP7CYAAAAAAAAAXhwmSAAGAAAAAAAAlnCb4Du2mbECAAAArH4AOC8jAAAA5AcwAAAAAAAAAAnAAAAAAAAAACQAAwAAAAAAAJAADAAAAPCwbwdFAMAwDMM8/qAzIJUg5OsLAABAAjAAAAAAAAAACcAAAAAAAAAAJAADAAAAAAAAkAAMAAAAAAAAQAIwAAAAAAAAQAIwAAAAAAAAAAnAAAAAAAAAACQAAwAAAAAAAJAADAAAAAAAAJAADAAAAAAAAEACMAAAAAAAAAAJwAAAAAAAAAAkAAMAAAAAAAAc87ZZAQAAAAAAACAPYAAAAAAAAAASgAEAAAAAAABIAAYAAAAAAAAgARgAAAAAAAAgARgAAAAAAACABGAAAAAAAAAAEoABAAAAAAAASAAGAAAAAAAASAAGAAAAAAAAIAEYAAAAAAAAgARgAAAAAAAAABKAAQAAAAAAABKAAQAAAAAAAEgABgAAAAAAACABGAAAAAAAAIAEYAAAAAAAAAASgAEAAAAAAAASgAEAAAAAAABIAAYAAAAAAAAgARgAAAAAAACABGAAAAAAAACABGAAAAAAAAAAEoABAAAAAAAASAAGAAAAAAAAIAEYAAAAAAAAIAEYAAAAAAAAgARgAAAAAAAAABKAAQAAAAAAAEgABgAAAAAAACABGAAAAAAAACABGAAAAAAAAIAEYAAAAAAAAAASgAEAAAAAAABIAAYAAAAAAABIAAYAAAAAAAAgARgAAAAAAACABGAAAAAAAAAAEoABAAAAAAAAEoABAAAAAAAASAAGAAAAAAAAIAEYAAAAAAAAgARgAAAAAAAAgARgAAAAAAAAABKAAQAAAAAAAEgABgAAAAAAACABGAAAAAAAAIAEYAAAAAAAAIAEYAAAAAAAAAASgAEAAAAAAABIAAYAAAAAAAAgARgAAAAAAAAgARgAAAAAAACABGAAAAAAAAAAEoABAAAAAAAASAAGAAAAAAAAOOsLMAB7QkBRYJLTeAAAAABJRU5ErkJggg==',
+  'cteletro': 'data:image/png;base64,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UmVhZHlxyWU8AAADQmlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4gPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iQWRvYmUgWE1QIENvcmUgMTAuMC1jMDAwIDc5LmQyMGU0NjYzMCwgMjAyNS8xMi8wOS0wMjoxMToyMyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIDI3LjcgKDIwMjYwNDE5Lm0uMzUxMSBiYTNhOWUyKSAgKFdpbmRvd3MpIiB4bXBNTTpJbnN0YW5jZUlEPSJ4bXAuaWlkOkI5NTUzRDVFQUY5OTExRjE4NjVFREJCNjc1MkYxOTA4IiB4bXBNTTpEb2N1bWVudElEPSJ4bXAuZGlkOkI5NTUzRDVGQUY5OTExRjE4NjVFREJCNjc1MkYxOTA4Ij4gPHhtcE1NOkRlcml2ZWRGcm9tIHN0UmVmOmluc3RhbmNlSUQ9InhtcC5paWQ6Qjk1NTNENUNBRjk5MTFGMTg2NUVEQkI2NzUyRjE5MDgiIHN0UmVmOmRvY3VtZW50SUQ9InhtcC5kaWQ6Qjk1NTNENURBRjk5MTFGMTg2NUVEQkI2NzUyRjE5MDgiLz4gPC9yZGY6RGVzY3JpcHRpb24+IDwvcmRmOlJERj4gPC94OnhtcG1ldGE+IDw/eHBhY2tldCBlbmQ9InIiPz6VRp5nAABNIElEQVR42uzdeZRkZ3ke8KelmRGj0YKW0TJI3Q1I7CAFMzIHfAzWgrECmB2MiW1sMDaKHZslhDgHMDlJCAdjsNmCZYwDAQcQwawHkIIQyEYMiwwKxpFsdbdWJEZoQaPRaGYqb9HNMRGSZrqm6ta9Vb/fOc/5BltVde9b1X8957vfTK/XCwAAAAAAAADdt58RAAAAAAAAAEQBDAAAAAAAAEAUwAAAAAAAAABEAQwAAAAAAABAFMAAAAAAAAAAUQADAAAAAAAAEAUwAAAAAAAAAFEAAwAAAAAAABAFMAAAAAAAAEAUwAAAAAAAAABEAQwAAAAAAABAFMAAAAAAAAAARAEMAAAAAAAAEAUwAAAAAAAAAFEAAwAAAAAAABAFMAAAAAAAAABRAAMAAAAAAAAQBTAAAAAAAABAFMAAAAAAAAAARAEMAAAAAAAAQBTAAAAAAAAAAEQBDAAAAAAAABAFMAAAAAAAAABRAAMAAAAAAAAQBTAAAAAAAAAAUQADAAAAAAAARAEMAAAAAAAAQBTAAAAAAAAAAEQBDAAAAAAAAEAUwAAAAAAAAABEAQwAAAAAAAAQBTAAAAAAAAAAUQADAAAAAAAAEAUwAAAAAAAAAFEAAwAAAAAAAEQBDAAAAAAAAEAUwAAAAAAAAABEAQwAAAAAAABAFMAAAAAAAAAAUQADAAAAAAAAEAUwAAAAAAAAjMbMlpmZfkwC7uHvpNfrmQIAAAAAAAAZc7l7TC2Pqjy88pDKfStzlY2VA+7hpTdUrqksVC6rfHMlF/c293aaLApgAAAAAAAAyMgL38NqOa1yZuVxlfsN+SNuq1xUObfy6co3qhBWjKEABgAAAAAAgAyn9D2wlqdXnlc5o7KmwY+/ovI/K++rIvjvfBsogAEAAAAAACADFb8PrOXfVJ5fObgFl7Sl8vbK+6sM3uEbQgEMAAAAAAAA2WPx+y9qeU3lKf3/2cJL7J8d/KbK26oIvs03hgIYAAAAAAAA8hPF74m1vKHy1I5c8rWV11X+rIrgnb5BFMAAAAAAAABE8fvDM35fW/m9ytoO3sIllbOqBL7At4kCGAAAAAAAgExx+XtGLe+qzE/A7fTv4xVVBN/sm0UBDAAAAAAAQKao+D2gltdnedfvJLm88vwqgf/Gt4wCGAAAAAAAgExB+TtfyzmVR07oLe6q/Nsqgd/k20YBDAAAAAAAQCa4/H1cLR+pHD4Ft/tXlRdUEbzdN0/b7WcEAAAAAAAAZHXl7/Nr+Vymo/zte27l3LrvI337RAEMAAAAAABAJqf8PauW91bWTtmtP7by+br/TX4FRAEMAAAAAABAul/+vqKWt07xCB5WuaDmcJxfA84ABgAAAAAAIB0uf3+7lrebxA9dUjm1zgS+3ihQAAMAAAAAAJCOlb9Pr+VD8XTZH3dRlkvgbUZBPAIaAAAAAACAdKP8PaWW90WvdGc/XfnvNZ8ZoyAKYAAAAAAAANL+8veoWs6prDeNu/SMyh8YAx4BDQAAAAAAQFpe/vY3En62cppp3KPdlSfUo6DPMwpiBzAAAAAAAAAt9fIof7OXfVv/UdBHGAUKYAAAAAAAANLC3b8PreU/msRe21R5mzEQBTAAAAAAAABp36Ofz66sM41VeU7N7knGQBTAAAAAAAAAtMhvVB5tDAP50yqB72UMRAEMAAAAAABAxr/799Ba/pNJDGy+8jJjIApgAAAAAAAAWuCllY3GsE/+XRXpRxoDUQADAAAAAACQ8e3+PdLu1aE4qPJyY2Bsf8u9Xs8UAAAAAAAAMvUF8B/W8uoBX359ZdsEjmVTZe0Ar/tB5fje5t6NflkogAEAAAAAAEjD5e/6WpYqgz66+GlVdn50AudycS0nDfjyV9ZM3uDXRTwCGgAAAAAAgIY9J4OXv9y1s6pA1sURBTAAAAAAAABNe5ERDN1s5XRjIApgAAAAAAAA0txjju9fy2NMYiR+3QiIAhgAAAAAAIAGPcsIRuZJK+crQxTAAAAAAAAANOHZRjAyGypPMAaiAAYAAAAAACCjf/zzUbWcbBIj9UQjIApgAAAAAAAAGtDfnTpjDCOfMUQBDAAAAAAAwKj9jBGM3P1qp/WxxkBT1hgBAAAAAADA1HpMmnvc9Gwtr2vgo17d29xb2sO19IvvF+7Fe80O6ZoeW/mwnxtRAAMAAAAAAJDRFLL9nujBDX7k4ZVfbeBz3lxZ2sN/c0JD1/IjJyuAiUdAAwAAAAAAMELHxWbBpjzcCIgCGAAAAAAAgBFyLm1zHmgERAEMAAAAAADACB1lBI2ZNwKiAAYAAAAAACCjPZOXZhxQZy5vNAaiAAYAAAAAAGBEDjGCRh1hBEQBDAAAAAAAwIgcZARRADNx1hgBAAAAAADAVFprBOY9KvXI6yNrOaFy/8qmypEr6RfhB1bWZbmrXF+5ZeVlt1Vuqmyt3FC5qrJQubyf3ubeDj+jKIABAAAAAACIJ8WO3/pMbtl7Yi2nVH6q8qjKSRn+I8Z31ed8p9aLK9+ofKG/Vim8y08rCmAAAAAAAADSM4JG7ZqgwvfwWs6snF45rXJcAx+7f+WhK/nllf/bzXUt59f60crHqwz+np+ZAhgAAAAAACAKYBqwo+Ol771reUblWVkufdvQM/Z3GT9lJbvrGs+r9c8rH60y+PYogAEAAAAAAJgitxtBo7anm8XvY2r5zcqz0+7HWPcfaX7GSm6o6/5vtb6liuDvxrPdAQAAAAAAmAI/MIJGbU13St/9Ks+sfK3+54WVX023zjDuP6L6VZWFuoe3V46JAhgAAAAAAIAJd6MRNOq6dKP4/ZX6599XPlR5ZMdnfq/Kb1cuq/t6TeXAKIABAAAAAACYUDcYQWNuqUcR35R2l7+n1/L1yl9WHjBh899QeW3l/6zcZxTAAAAAAAAAxI5UBrSQ9ha/s5VP1D8/Vzlpwr+H+f591v2+q7I+CmAAAAAAAAAmyNVG0JjvpH3F7/6V369/frvyL6fs+3hR5St1/w+KAhgAAAAAAIAJcU1luzE04ltpV/k7X8sFlTdl+fHI0+hhlS01iydO2o2t8fcGAAAAAAAwfepM2t1Vfn2z/nlKQx95beUP9+H1Gysv6ei4v572lL/PreWdlUP9FeSgyidqJi+uv4c/jwIYAAAAAACAjrswDRXAVbD1C+DXZt/Ky0tqeXsH5/y3acEjn7O84/d3/ez/P/25nF3zWVe/0XfEI6ABAAAAAADosC+mW7uW39HBXcCX1HXfkPGWv4fV8pkof+/J22tOvxUFMAAAAAAAAB12XmVnlMCj9JmMt/w9rpaLKqf5ue/R22peT44CGAAAAAAAgHTzHOCbs/wY6CiBR+aTGV/5+4Bavlw50a89e9udfqDmdrICGAAAAAAAgK46J90sr7tQAl9fuSDjKX8fnuVy/z5+4quyofLhmt/BUQADAAAAAACQbhbAu6MEHoWP1DXuSvPl7wm1fLZypJ/3QO5feWcUwAAAAAAAAKR7JerVtXy6w9ff5hL43RnPmb/9s52P8eveJ8+rWT49CmAAAAAAAAA66Ox0u8RuYwl8SV3XV9Js+XtQls8cnvWTHoo/qZke0rWLXuN7AwAAAAAAmHofr1xeue+Ar99QRdm9x3wPH6isrxy0F9dyYAPX85Y0W/7uX8v7K4/wcx6a/vnJr6m8rEsXPdPr9Xx1AAAAAAAAU64KxN+p5U9MYiiuq8zWDuDbG/z+/nMtrzL6oet/hw+o73IpHgENAAAAAABAuvUY6GuNYShe33D5+/NR/o7KAVneBRwFMAAAAAAAAOnQObq31fJ6k9hn/RL9nWmu/N1Uy3uNfaT+Vc35PlEAAwAAAAAA0DHvqFxqDPvkP6yU6U35i8pGYx+ptZWXRAEMAAAAAABAurULeEctLzOJgX0jy4VsGtr9+2u1PMHYG/Himve6KIABAAAAAABIt0rgj9fyUZNYtd2V36z57U4z5e8xtfyRsTfmiMqZUQADAAAAAADQQWdVbjKGVfnjKn+/2uDnvaFyuLE36pe7cJEzvV7PVwUAAAAAAEDutMP0ubV8wCT2yrcqp1QBvL2h7+ZRtXyl/0+jb1T/bOfDm/qeYwcwAAAAAAAAGd6joP+qlveYRPamFHxew6XgHyl/x2J95XHxCGgAAAAAAAA66iWVi43hHvXP/b0kze3MfmItP9uSe99S+bVKf0fyGZV3D+l9t1X+a+XxlVOy/Ejyq1pyz0+MR0ADAAAAAACQ7j4Ker6WiypHmcZPeGOVv69o+Pu4sJbHtODe31x5ed3/rjtd37+u5U/34X2XKqfX+156p/c9OsuF8/Fjvu8tdW2nKIABAAAAAABIh0vgfuF1fpYfgcuycyrPrjJwd4Pfw+Nr+XwL7v1/Z7mk7d3NdfZ3RD90gPftrZyl/NW7ed/fqOXsMd/7HZWD6xpvj0dAAwAAAAAAkG6eB/yVWp6W5fKL5RL2eU2Wvyte3pL7f8Pdlb8rvjTg+37u7srffXzfYVpbOSnOAAYAAAAAACDdLoE/U8szowTul79PqnnsSLO7sOdqObMlM7gwey5JR/G+a1py/w+OAhgAAAAAAIB0vwT+WC1Prdw2pSP4bJbL321j+OwXVmZaMIPv1f3/YA//zdyA7335iN532B4QBTAAAAAAAACZjBL4U7WcUdk6Zbf+vsqTx1H+1u7f/bNcALfB4l78N7Mjeu+2FMAnRAEMAAAAAABAJqcE7j+q99GVv5+G2628pvIrTT/2+cc8vnJMS+axlHsuq2f2oahdSjcK4E1RAAMAAAAAAJDJKoEvq+WUyocn+DZvzPKu39dVemO8jme1aCZ72qV7dGXdAO+7q3JlulEAb4wCGAAAAAAAgExeCfyDSr+cfHFl24Td3gWVR9T9fXKcF7Hy+OenpzsF8PyA73t1zXpnulEAHxkFMAAAAAAAAJncIvhdtZxcOX8CbufWyu9XTq37uqIF1/PItGvH6eKYzv/dl/cetgOjAAYAAAAAACCTXQJfWsuplRdUvtvR2/hflYfWvby5sqsl13RGy2a0OKJduot72Am9rkVn766PAhgAAAAAAIBMfgncq7yn/nli5b9keTdtF1xU+bm69qdXFlt2bae37HqWMpoCeE/ve1xlxl9ZFMAAAAAAAACk6SL4lsq/z/J5sK+v3NTSS72wcmZd66Mr57ft4mrX69paHtOiS9pWc/pexrADuEXn/0YBDAAAAAAAQKa0CP5e5VVZ3r35O5VLWnBZt1X+stIvfX+m8ukWj/ARlQPSncc/RwE8fmuMAAAAAAAAgIy2CP5BLW/tp3a1bq71uZVnVmYbuoSdlfMqH6qcU9dzY0dGtzndOv83+/CdLozofUf1e4oCGAAAAAAAgCiDe1tq6edlVQY/rNYnVh6X5UcdHz6sj8nybuMvVc7tpz735g6O66fSoQK4vs9Dazk0ozkDeL5Fc7hVAQwAAAAAAAD5iTL4kpWi9o1VHs5kueQ7qfLgyn2z/NjfIytHVQ7OPx9xurtyR2Vr5YbKVZXLK5dVvtV/z/45xBMwooekWzuAB31Mc/9R4dvSnR3AO6IABgAAAAAAgNxTGdxbKXH7+aiJ/NAD060CeLaFZwuPwvVt/tHs5+8GAAAAAAAA2qV2RB9WyxEtu6xRPaZ5aQ+zmGnZDuCrowAGAAAAAAAAVuGEFl7TQsazA/joyroWzeG7UQADAAAAAAAAq3Dfll3Pzso1Gc1jmhdHtLM4Y9oJHQUwAAAAAAAAkBaXnlfWOc27Mp4CeC7dOgt5rNb42wEAAAAAAIAogO/ZbJ3Fe+Me/ptDBnzv99Z777yH//+6KICjAAYAAAAAAIAogDO8JwsfOqL33tCx72bRI6ABAAAAAACAdLgAJs4ABgAAAAAAAKIAniBb6yzkW6MABgAAAAAAAPZGnYd7VC3rTSJ2/0YBDAAAAAAAALH7l0zh+b9RAAMAAAAAAEAUwEQBDAAAAAAAAEQBHI+AbpE1viMAAAAAAADINBbAf1v5yoTMbGPlebEDWAEMAAAAAAAAmc4C+N29zb2zJ2FgM1tmTo8COB4BDQAAAAAAAJnaAnhpgmY2Z2ZRAAMAAAAAAECmtwBejAJ4NbbXjunrogAGAAAAAAAAsnePMj6qlvVRAK/WrHlFAQwAAAAAAACZzt2/19Vu1u3mFgUwAAAAAAAAEI9/jh3AUQADAAAAAAAAGX8BvJTJeWx2v/M83syiAAYAAAAAAIBMZwG8MEEz21RZEzuAowAGAAAAAACA2AEcj3+OAhgAAAAAAACIM4CV5lEAAwAAAAAAAFEApyM7gHdXrowCGAAAAAAAANgbM1tmjqplfexmTQtL86t6m3s7owAGAAAAAAAA0q7dv7dUmXlD7ADOJBbmCmAAAAAAAACIs2w7bC4emR0FMAAAAAAAAMT5v1EAK4ABAAAAAACAKIAz9nOTj6hlQ+yajgIYAAAAAAAA4hHQsft3byxEAQwAAAAAAACkfQXwwgTNbDZK8yiAAQAAAAAAIB4BHTuAnQEMAAAAAAAAZNhn2R5Vy/ooM9PCAnhrb3Pv1iiAAQAAAAAAgLRr9+8dlWujAM6knpmsAAYAAAAAAIBMTQF8Re1m3R0FcCZ1x7QCGAAAAAAAAOL8346aNbMogAEAAAAAACDTWQAvZXLOTe6fmbzRzKIABgAAAAAAgExnAbwQj3+OHcAAAAAAAABA7AD22OwogAEAAAAAAIAoM9PB83/jEdAAAAAAAABAVnGWbf8c2/VRAKeFj4De1tvcuy4KYAAAAAAAAGAvHdXgZ10RBfBqXNa1oSiAAQAAAAAAYLyOaehzttZu1tsnaG4nRAEcBTAAAAAAAABkKncA35DJeWz2TC0Pa+CjLo0CGAAAAAAAAFiFAxr6nNsmaGYPr2xo4HO+HQUwAAAAAAAAkPYVwIdO0MzOaOhzvhYFMAAAAAAAALAK6xv6nI0TNLPnNPAZ2yrfiQIYAAAAAAAAaKED6+zcY9P9838fWsvmBj7q4t7m3q4ogAEAAAAAAICW+ukJuIdXNPQ5X+zicBTAAAAAAAAAMD1OTbd3/55Yy/Mb+rhzowAGAAAAAAAAVmlHg5/1rCpR9+/wrN5caeL6b6/8TRTAAAAAAAAAwCrd2OBnHVN5Srq5+/eXajmzoY/7Up3/uy0KYAAAAAAAAGCVbmr4815dZepMulX+3q+Wdzb4kR/u6o9JAQwAAAAAAADjdX3Dn3dy5QXpTvl771o+WTmkoY/sVT4SBTAAAAAAAAAwgCvG8JlvrGJ1Lu0vfw+q5a8rD2rwY/uPf74uCmAAAAAAAABgAP2y8Y6GP/OwykeqYD0w7S1/D6/lvMrPNvzR7+7yj0kBDAAAAAAAAGNUu0131XLZGD76kZVPtLEErmt6SC0XVU5J8+cxfzAKYAAAAAAAAGAf/N8xfe7PVb5Qhet90o7id6ZyVv3zq5UTxnAJ761CflsUwAAAAAAAAMA++PoYP/tRlYureP2ljLf87e/2vbDy1sr6MVxCb+WzO22m1+v5cwIAAAAAAICMtfw8s5ZPtuBSvlB5XeXztRO218B99zesnlp5aeUXxnzv59Q9P1MBDAAAAAAAAGQfi9DDatna/2dLLunSyv+onFvZUsXojiHf62Mrp1X6hetxLbnnzXWfX1UAAwAAAAAAABlCMXpxLSe18NJ2Vf6pcnXllpX/vVr9RzofVLl/5egW3uMnqvx98iT8jtb4UwIAAAAAAIBW+FTaWQDvXzlxJZOoX2i/clJuZj9/RwAAAAAAANAKHzeCsTi7dv9+OwpgAAAAAAAAYIi+XFkyhkbdUHnNJN2QAhgAAAAAAABaoHah9mp5v0k06uU19+9GAQwAAAAAAACMwNmVnjE04rzKeybtphTAAAAAAAAAkNbsAv7HWj5lEiN3U+WFK7uuowAGAAAAAAAARuWNRjByL6ryd2ESb0wBDAAAAAAAAGnVLuDza/mCSYzMn9WMPzSpN6cABgAAAAAAgPZ5pRGMxEWV353kG1QAAwAAAAAAQFq3C7hfVH7AJIbqispTa7bbowAGAAAAAAAAGvbSyk3GMBQ3V36xyt9rJ/1GFcAAAAAAAACQVu4C7peVv2cS++y2LO/8/cY03OxMr9fzlQMAAAAAAEBLzWyZ+WAtzzKJgdxReVqVv5+clhu2AxgAAAAAAADa7YWVfzCGDLLz9xnTVP7GDmAAAAAAAABIF3YBP6iWiyqHmEZWc+bv+dN243YAAwAAAAAAQFp/HvB3anlyZYdp7NHVlVOnsfyNAhgAAAAAAADSlRL4giyfBXyHadyt/i7pR9WsvjatA1AAAwAAAAAAQDpTAn+slmfGTuC7cnblcTWja6Z5CM4ABgAAAAAAgHTuTODH1/LXcSZw342VF1fx+0GjUAADAAAAAABAOloCPyTLJfAJUzyG8yq/XuXvkl+EAhgAAAAAAADS8RL4sFr+ovKLU3br36u8tIrf9/oVKIABAAAAAAAgE1YE/1Ytb6xsmPBb3Vl5Z+W1Vf5u9c0rgAEAAAAAACATWgLP1vKOypkTeovnVF5Vxe+lvm0FMAAAAAAAAGRKiuBfyPJu4IdMwO3sqnyw8voqfr/p21UAAwAAAAAAQKawBN6vlmdX/qDysA7ewg2V/vm+b6ni93LfqAIYAAAAAAAAogiemanltMpZlSdV1rT4cndXPl95d+WcKn5v9w0qgAEAAAAAAIDcZRl8dJZ3Bffz2P7/qQWXtb1yfuXDlY9V6Xu9b0oBDAAAAAAAAGRVZfCRtZy+kn4Z/KCGPvrmysWVL1bOrXy5St/tvhEFMAAAAAAAAJChFcKH1XJy5aQsl8H3r8xX7lNZv8q321Hp7+Ttn937T5V/rPxD5euVy6rwVVAqgAEAAAAAAICM7xzhHz0u+sf//SO9H1t7Cl4FMAAAAAAAAABDsJ8RAAAAAAAAAEQBDAAAAAAAAEAUwAAAAAAAAABEAQwAAAAAAABAFMAAAAAAAAAAUQADAAAAAAAAEAUwAAAAAAAAAFEAAwAAAAAAABAFMAAAAAAAAEAUwAAAAAAAAABEAQwAAAAAAABAFMAAAAAAAAAARAEMAAAAAAAAEAUwAAAAAAAAAFEAAwAAAAAAANAGa4wAAAAAAABg781smTEEpsV1lY0DvO7kyt81dZG9zT3fVOwABgAAAAAAAO7ehgxW/vYtGV8UwAAAAAAAAEBrzA74upsq3ze+KIABAAAAAACA1pgf8HWLRhcFMAAAAAAAANAqc1EARwEMAAAAAAAARAFMFMAAAAAAAABAFMBEAQwAAAAAAABk7AXwgtFFAQwAAAAAAABkEgrgJaOLAhgAAAAAAABojXWVY2MHcBTAAAAAAAAAQNfNZrAe8bbKdcYXBTAAAAAAAACQNhXAg1g0uiiAAQAAAAAAgFaZjwI4CmAAAAAAAABgEszF+b9RAAMAAAAAAACZ4gJ4yeiiAAYAAAAAAABiBzBRAAMAAAAAAABpyRnAdgBHAQwAAAAAAAC0x/6V+8QO4CiAAQAAAAAAgK7rl79rB3jdHZWrjS8KYAAAAAAAAKA1Zgd83RWV3cYXBTAAAAAAAACQrp//u2h0UQADAAAAAAAArTIXBXAUwAAAAAAAAEAUwEQBDAAAAAAAAKTbBfCC0UUBDAAAAAAAAMQOYKIABgAAAAAAAKIAJgpgAAAAAAAA4E6OqdxrgNftrlxhfFEAAwAAAAAAAOn67t+rK3cYXxTAAAAAAAAAQDz+mSiAAQAAAAAAgCiAiQIYAAAAAAAAyHAK4AWjiwIYAAAAAAAAyCQUwEtGFwUwAAAAAAAAEDuAiQIYAAAAAAAAGLb52AEcBTAAAAAAAADQdYdVDo4dwFEAAwAAAAAAAJnS3b/XVW4zviiAAQAAAAAAgNaYjd2/UQADAAAAAAAAcf4vUQADAAAAAAAALTEXO4CjAAYAAAAAAABiBzBRAAMAAAAAAABxBjBRAAMAAAAAAAAZ+w7gRaOLAhgAAAAAAABojQ2VI6IAjgIYAAAAAAAAyJTu/r2xcpPxRQEMAAAAAAAAtMZc7P6NAhgAAAAAAACIApgogAEAAAAAAIAogIkCGAAAAAAAAMjYC+AFo4sCGAAAAAAAAMgkFMBLRhcFMAAAAAAAABA7gIkCGAAAAAAAABimAyrHxhnAUQADAAAAAAAAXXd8ZWaA191aud74ogAGAAAAAAAAWmM+zv+NAhgAAAAAAACI83+JAhgAAAAAAACIHcBEAQwAAAAAAAAMz2zsAI4CGAAAAAAAAIgdwEQBDAAAAAAAAMQOYKIABgAAAAAAAIZjTeW4AV+7aHxRAAMAAAAAAACtsSnLJfBq7ahcY3xRAAMAAAAAAADp+vm/V1R2G18UwAAAAAAAAEBrzMXjn6MABgAAAAAAAKIAJgpgAAAAAAAAIN0ugBeMLgpgAAAAAAAAIHYAEwUwAAAAAAAAEAUwUQADAAAAAAAAdzITBXAUwAAAAAAAAMAkOKZywACv21W50viiAAYAAAAAAADS9cc/X1W5w/iiAAYAAAAAAADS9QJ4yeiiAAYAAAAAAAAyCQXwgtFFAQwAAAAAAAC0ynzsAI4CGAAAAAAAAJgEs7EDOApgAAAAAAAAIHYAEwUwAAAAAAAAEDuAiQIYAAAAAAAAGI4jKgcP+NpF44sCGAAAAAAAAEjXd/9eW9lufFEAAwAAAAAAAHH+L1EAAwAAAAAAAMM0F+f/RgEMAAAAAAAAxA5gogAGAAAAAAAA0u0zgBeMLgpgAAAAAAAAIJOwA3jR6KIABgAAAAAAADIJO4AVwFEAAwAAAAAAAO1xcOWIKICjAAYAAAAAAAC6bm7A132/crPxRQEMAAAAAAAApOsF8ILRRQEMAAAAAAAAZBIK4CWjiwIYAAAAAAAAiB3ARAEMAAAAAAAADNt87ACOAhgAAAAAAACYBLOxAzgKYAAAAAAAACBTvAN40eiiAAYAAAAAAABa44DK0bEDOApgAAAAAAAAoOvmKjMDvO7WylbjiwIYAAAAAAAASJsK4Nj9GwUwAAAAAAAAkGk9/3fJ6KIABgAAAAAAAFplNnYARwEMAAAAAAAAxA5gogAGAAAAAAAAYgcwUQADAAAAAAAAGfsO4EWjiwIYAAAAAAAAaI01lU1RAEcBDAAAAAAAAHTdcVkugVdrR+Ua44sCGAAAAAAAAGiNuQFft1TpGV8UwAAAAAAAAEC6XgAvGF0UwAAAAAAAAEAmoQB2/m8UwAAAAAAAAEAUwEQBDAAAAAAAAAzdfBTAUQADAAAAAAAAsQOYKIABAAAAAACAFpipzEYBHAUwAAAAAAAA0HXHVtYN8LqdlSuNLwpgAAAAAAAAIF1//PPVWS6BiQIYAAAAAAAASKcL4AWjiwIYAAAAAAAAaJX5AV+3ZHRRAAMAAAAAAACtMhs7gKMABgAAAAAAADLFO4AXjS4KYAAAAAAAACCTsANYARwFMAAAAAAAABA7gIkCGAAAAAAAABiqIysbBnhdLwrgKIABAAAAAACANpkb8HXfrdxufFEAAwAAAAAAAOl6AbxgdFEAAwAAAAAAAHH+L1EAAwAAAAAAAMM2GwVwFMAAAAAAAABA7AAmCmAAAAAAAAAg3T4DWAEcBTAAAAAAAAAQBTBRAAMAAAAAAABDdUjlsCiAowAGAAAAAAAAMqW7f7dWbjG+KIABAAAAAACAdL0AXjK6KIABAAAAAACATEIBvGB0UQADAAAAAAAArTIfO4CjAAYAAAAAAAAmweyAr7vc6KIABgAAAAAAAGIHMFEAAwAAAAAAAGnJDuAFo4sCGAAAAAAAAGiN9ZVjYgdwFMAAAAAAAABApnT37y2VrcYXBTAAAAAAAAAQ5/8SBTAAAAAAAAAQ5/8SBTAAAAAAAACQ4ewAXjS6KIABAAAAAACATMIOYAVwFMAAAAAAAABA7AAmCmAAAAAAAABg6OaiAI4CGAAAAAAAAOi6tZVNUQBHAQwAAAAAAAB03XGV/Qd43e2Va40vCmAAAAAAAAAgk/D4557xRQEMAAAAAAAAxPm/RAEMAAAAAAAARAFMFMAAAAAAAADAncxHARwFMAAAAAAAAJAp3gG8YHRRAAMAAAAAAACZhAJ4yeiiAAYAAAAAAADSpv7v+NgBrAAGAAAAAAAAOm9TZd0Ar9tZudr4ogAGAAAAAAAAWmN2wNddmeUSmCiAAQAAAAAAgHaYj/N/owAGAAAAAAAAMsU7gBeMLgpgAAAAAAAAIJOwA3jR6KIABgAAAAAAADIJO4AVwFEAAwAAAAAAALEDmCiAAQAAAAAAgKGbizOAowAGAAAAAAAAum5j5cABXterXGF8UQADAAAAAAAA6fru32sqtxtfFMAAAAAAAABAnP9LFMAAAAAAAADAMM1GARwFMAAAAAAAABA7gIkCGAAAAAAAAEi3zwBWAEcBDAAAAAAAAGQiCuAFo4sCGAAAAAAAAMgkFMBLRhcFMAAAAAAAANAah1buHTuAowAGAAAAAAAAum5+wNdtrdxqfFEAAwAAAAAAAK0xG7t/iQIYAAAAAAAAMsU7gJ3/GwUwAAAAAAAAkInYAXy50UUBDAAAAAAAAMQOYKIABgAAAAAAAOIMYKIABgAAAAAAAO7CfWMHMFEAAwAAAAAAQNetr2yMHcBEAQwAAAAAAACZ0vN/b6l83/iiAAYAAAAAAADi/F+iAAYAAAAAAADSgh3Ai0YXBTAAAAAAAACQSdgBrACOAhgAAAAAAACIHcBEAQwAAAAAAAAM3VwUwEQBDAAAAAAAAJniAnjB6KIABgAAAAAAAFpjbWXTgK9dMr4ogAEAAAAAAIDWOD6DdX7bK9caXxTAAAAAAAAAQGvMx/m/RAEMAAAAAAAAk2A2CmCiAAYAAAAAAIDYAUwUwAAAAAAAAEBLzA34ugWjiwIYAAAAAAAAyCQUwEtGFwUwAAAAAAAAEDuAiQIYAAAAAAAAGKb9K8fHDmCiAAYAAAAAAICuO7aydoDX3VG5yviiAAYAAAAAAABaY37A1/XL313GFwUwAAAAAAAA0Bqzcf4vUQADAAAAAABApngH8KLRRQEMAAAAAAAAZBJ2ACuAowAGAAAAAOD/sXdHPVBVVwOGX4JAKR+11NICysz0//8oZwYEqyFqDVFB4dvGpBfEm55M4j5nnidZl+dm3b5ZZwNALoBJAAYAAAAAAAAubp83gEkABgAAAAAAgK44ALsATgAGAAAAAAAA5vGPMXcXfPduzDPrSwAGAAAAAAAAWvv7vy/HvLG+BGAAAAAAAAAgv38mARgAAAAAAABIACYBGAAAAAAAAEgAJgEYAAAAAAAAEoD/62h1CcAAAAAAAABAWwjAZ6tLAAYAAAAAAAByAUwCMAAAAAAAAHBJD8Z8nAtgEoABAAAAAABg7XYLv/t6zGvrSwAGAAAAAAAApnFY+N3J6hKAAQAAAAAAgLZwAXy0ugRgAAAAAAAAoC1cAHv/NwEYAAAAAAAAyAUwCcAAAAAAAADAxf0rF8AkAAMAAAAAAEAugEkABgAAAAAAACZwb8zDhd+erC8BGAAAAAAAAGjt17/fjfnW+hKAAQAAAAAAgGkccv1LAjAAAAAAAABswT4BmARgAAAAAAAASAAmARgAAAAAAABIACYBGAAAAAAAAOgPD8BHq0sABgAAAAAAANpCAD5bXQIwAAAAAAAAMI3bYx7nApgEYAAAAAAAAFi7Xcv63g9jvrK+BGAAAAAAAACgmQJwrn9JAAYAAAAAAIDVO+T9XxKAAQAAAAAAYAv2uQAmARgAAAAAAAC64gDsAjgBGAAAAAAAAMgFMAnAAAAAAAAAQN4AJgEYAAAAAAAA+NDNMZ/mApgEYAAAAAAAAFi7X+PvrQXfvR3zwvoSgAEAAAAAAIBp7BZ+92zMO+tLAAYAAAAAAABa+/u/J6tLAAYAAAAAAACmsk8AJgEYAAAAAAAAEoBJAAYAAAAAAABadwA+Wl0CMAAAAAAAAJALYBKAAQAAAAAAgARgEoABAAAAAACADzwa86cF370b88z6EoABAAAAAACA1n79+2LMW+tLAAYAAAAAAABaewA+Wl0CMAAAAAAAANAWAvDZ6hKAAQAAAAAAgFwAkwAMAAAAAAAAXNohF8AkAAMAAAAAAMAW7HIBTAIwAAAAAAAA5AKYBGAAAAAAAABgAg/G3M8FMAnAAAAAAAAA0JVe/3415gfrSwAGAAAAAAAA8v4vCcAAAAAAAABA3v8lARgAAAAAAAD4wD4XwCQAAwAAAAAAQC6ASQAGAAAAAAAA8gYwCcAAAAAAAABAf/gF8MnqEoABAAAAAACAadwb80kCMAnAAAAAAAAA0JVe/3475jvrSwAGAAAAAAAAprHP9S8JwAAAAAAAANAVB+Cj1SUAAwAAAAAAAG0hAJ+tLgEYAAAAAAAAyAUwCcAAAAAAAADApR1yAUwCMAAAAAAAAGzBLhfAJAADAAAAAADA2t0Z83jhtyfrSwAGAAAAAAAApvF0zI0F370e87X1JQADAAAAAAAAef+XBGAAAAAAAADgkvZ5/5cEYAAAAAAAAMgFMAnAAAAAAAAAwCR2uQAmARgAAAAAAAByAUwCMAAAAAAAAJALYBKAAQAAAAAAgMv4aMxnC789WV8CMAAAAAAAADCNJ/0Wgf9Xb8a8tL4EYAAAAAAAAKC1v//7bMw760sABgAAAAAAAKaxz++fSQAGAAAAAACArjgAH60OARgAAAAAAAByAUwCMAAAAAAAAJAATAIwAAAAAAAA8HsOCcAkAAMAAAAAAMDa3RizSwAmARgAAAAAAADW7tGYOwu++2XMc+tDAAYAAAAAAIBW//7vF2PeWh8CMAAAAAAAALT6AHy2OhKAAQAAAAAAoC0E4KPVkQAMAAAAAAAAUznkApgEYAAAAAAAANiCXS6ASQAGAAAAAACAXACTAAwAAAAAAADkApgEYAAAAAAAAOAyPhlzf+G3J+sjARgAAAAAAABa+/Xvl2N+tD4SgAEAAAAAACDv/5IADAAAAAAAAFzSPu//kgAMAAAAAAAAXfEFsPd/SQAGAAAAAACANvEGsABMAjAAAAAAAADkApgEYAAAAAAAAKBZ3gAWgEkABgAAAAAAgHncH/O3BGASgAEAAAAAAKArvf79Zsx/rI8EYAAAAAAAAGjtAfhodSQAAwAAAAAAQFsIwGerIwEYAAAAAAAAcgFMAjAAAAAAAABwaYdcAJMADAAAAAAAAFuwW/jd51ZHAjAAAAAAAADkApgEYAAAAAAAAOCS7oz5Z94AJgEYAAAAAAAA1m4/5saC716PeWV9JAADAAAAAABAMwXgXP+SAAwAAAAAAAB5/xcSgAEAAAAAAGAGu1wAkwAMAAAAAAAAXfEF8MnqSAAGAAAAAACAtnABLACTAAwAAAAAAAC5ACYBGAAAAAAAALioj8Z8mgBMAjAAAAAAAACs3Wdjbi747s2Yl9ZHAjAAAAAAAABMY7/wu/OY99ZHAjAAAAAAAAC09gB8tDoSgAEAAAAAAKAtBGDv/5IADAAAAAAAAAnAJAADAAAAAAAAF3dIACYBGAAAAAAAAPIGMCQAAwAAAAAAwARujNkt/PZsfSQAAwAAAAAAwDQej7m94Lufxzy3PhKAAQAAAAAAoLX//vlFv0VgSAAGAAAAAACAvP9LAjAAAAAAAABwMYe8/0sCMAAAAAAAAGzBLhfAJAADAAAAAABAV3wBfLI6EoABAAAAAACgLVwAC8AkAAMAAAAAAEAugEkABgAAAAAAAC7q72PuLfjufQIwCcAAAAAAAAAwk/3C7/495ifrIwEYAAAAAAAAWnsAPlodCcAAAAAAAACQ939JAAYAAAAAAAAubZcATAIwAAAAAAAA5AIYEoABAAAAAACgdb8BLACTAAwAAAAAAABtIgAfrY4EYAAAAAAAAJjGX8Y8WPjt2fpIAAYAAAAAAIDWfv37asz31kcCMAAAAAAAALT2AOz6lwRgAAAAAAAAyPu/JAADAAAAAAAAF3fIBTAJwAAAAAAAALAFu4XffW51JAADAAAAAABALoBJAAYAAAAAAACa5AL4aHUkAAMAAAAAAMA07o55lAtgEoABAAAAAACgK73+/X7MK+sjARgAAAAAAADy/i8JwAAAAAAAAEDe/yUBGAAAAAAAAOgyF8AnqyMBGAAAAAAAANrCBbAATAIwAAAAAAAA5AKYBGAAAAAAAADg4vYJwCQAAwAAAAAAwNrdGvNk4bdH6yMBGAAAAAAAAKbx2ZibC777acy/rY8EYAAAAAAAAGgLv39+b30kAAMAAAAAAMA0Dnn/lwRgAAAAAAAA2IJdAjAJwAAAAAAAAJALYEgABgAAAAAAgNb9BvDR6kgABgAAAAAAgLYQgM9WRwIwAAAAAAAANFOXe5oLYARgAAAAAAAAWL0nY24v+O7nMS+sjwRgAAAAAAAAmMZu4XfP+y0CQwIwAAAAAAAAzOGQ939JAAYAAAAAAICu+AL4aHUkAAMAAAAAAEBbuAA+WR0JwAAAAAAAANAWLoAFYBKAAQAAAAAAIBfAJAADAAAAAAAAF7fPG8AkAAMAAAAAAMDaPRzz5wXfvR9ztj4SgAEAAAAAAKC1X/++HPPG+kgABgAAAAAAgLz/SwIwAAAAAAAA0AQXwAIwCcAAAAAAAACQAEwCMAAAAAAAAJAATAIwAAAAAAAA0AUD8NHqSAAGAAAAAACAthCAz1ZHAjAAAAAAAABM4+Mxf80FMAnAAAAAAAAAsHaHhd+9GvPa+kgABgAAAAAAgGnscv1LAjAAAAAAAAB0xRfA3v8lARgAAAAAAADaxAXw51ZHAjAAAAAAAADkApgEYAAAAAAAACBvAJMADAAAAAAAAPyOf+UCmARgAAAAAAAAWLu7Yx7mApgEYAAAAAAAAOhK3//9z5hvrI8EYAAAAAAAAGjt7/+erI4EYAAAAAAAAGgLF8ACMAnAAAAAAAAAMJd9AjAJwAAAAAAAAJAADAnAAAAAAAAAkABMAjAAAAAAAADQHx6Aj1ZHAjAAAAAAAABM49aYJwu/PVsfCcAAAAAAAAAwjacta3E/jvnS+kgABgAAAAAAgGkc8v4vCcAAAAAAAACwBbu8/0sCMAAAAAAAAHTFF8De/yUBGAAAAAAAAOayzwUwCcAAAAAAAADQFQdgF8AkAAMAAAAAAEAugEEABgAAAAAAgMu6OeZpLoBJAAYAAAAAAIC1ezzm1oLv3o75wvpIAAYAAAAAAIBpHBZ+93zML9ZHAjAAAAAAAABMY7fwu5PVkQAMAAAAAAAAbeECWAAmARgAAAAAAADmsk8AJgEYAAAAAAAAEoAhARgAAAAAAABadwA+Wh0JwAAAAAAAAJALYEgABgAAAAAAgEv6x5i7C757N+aZ9ZEADAAAAAAAANM4LPzu5Zg31kcCMAAAAAAAAOT3z5AADAAAAAAAAE0QgI9WRwIwAAAAAAAAtIUAfLY6EoABAAAAAAAgF8CQAAwAAAAAAAC5ACYBGAAAAAAAAMgFMAnAAAAAAAAAsEUPxnycC2ASgAEAAAAAAGDtdgu/+3rMa+sjARgAAAAAAACmcVj43cnqSAAGAAAAAACAtnABfLQ6EoABAAAAAACgLVwAe/+XBGAAAAAAAACYyz4XwCQAAwAAAAAAQC6AIQEYAAAAAAAA8gYwJAADAAAAAADAZdwb83DhtyfrIwEYAAAAAAAAWvv173djvrU+EoABAAAAAACgtb//6/qXBGAAAAAAAACYyz4BmARgAAAAAAAA6IoD8NHqSAAGAAAAAACAthCAz1ZHAjAAAAAAAADkAhgSgAEAAAAAACAXwCQAAwAAAAAAAB+4PeZxLoBJAAYAAAAAAIC127Wsu/0w5ivrIwEYAAAAAAAAmikA5/qXBGAAAAAAAABYvUPe/yUBGAAAAAAAALZgnwtgEoABAAAAAAAgF8CQAAwAAAAAAAB5AxgSgAEAAAAAACAXwCQAAwAAAAAAAP91c8ynuQAmARgAAAAAAADW7tf4e2vBd2/HvLA+EoABAAAAAACgtb//+2zMO+sjARgAAAAAAABa+/u/J6sjARgAAAAAAACmsk8AJgEYAAAAAAAAuuIAfLQ6EoABAAAAAAAgF8CQAAwAAAAAAAAJwCQAAwAAAAAAAAnAJAADAAAAAADAFj0a86cF370b88z6SAAGAAAAAACA1n79+2LMW+sjARgAAAAAAABaewA+Wh0JwAAAAAAAANAWAvDZ6kgABgAAAAAAgFwAQwIwAAAAAAAAXNohF8AkAAMAAAAAAMAW7HIBTAIwAAAAAAAA5AIYEoABAAAAAABgAg/G3M8FMAnAAAAAAAAA0JVe/3415gfrIwEYAAAAAAAA8v4vJAADAAAAAABA3v8lARgAAAAAAAD4wD4XwCQAAwAAAAAAQFd8AXyyOhKAAQAAAAAAoC28ASwAkwAMAAAAAAAAuQCGBGAAAAAAAAC4qHtjPkkAJgEYAAAAAAAAutLr32/HfGd9JAADAAAAAADANPa5/iUBGAAAAAAAALriAHy0OhKAAQAAAAAAoC0E4LPVkQAMAAAAAAAAuQCGBGAAAAAAAAC4tEMugEkABgAAAAAAgC3Y5QKYBGAAAAAAAABYuztjHi/89mR9JAADAAAAAADANJ6OubHgu9djvrY+EoABAAAAAAAg7/9CAjAAAAAAAABc0j7v/5IADAAAAAAAALkAhgRgAAAAAAAAmMQuF8AkAAMAAAAAAEBXfAF8sjoSgAEAAAAAAKAtXAALwCQAAwAAAAAAwDw+GvNZAjAJwAAAAAAAALB2n/ZbBP5fvRnz0vpIAAYAAAAAAIBp7Bd+92zMO+sjARgAAAAAAABaewD2+2cSgAEAAAAAAKBNBOCj1ZEADAAAAAAAALkAhgRgAAAAAAAASAAmARgAAAAAAAD4HYcEYBKAAQAAAAAAYO1ujNnlDWASgAEAAAAAAGDtHo25s+C7X8Z8YX0kAAMAAAAAAEBrf//31/j71vpIAAYAAAAAAIDWHoDPVkcCMAAAAAAAALSFAHy0OhKAAQAAAAAAYCqHXACTAAwAAAAAAABbsMsFMAnAAAAAAAAA0BVfAJ+sjgRgAAAAAAAAaAsXwAIwCcAAAAAAAAAwj0/G3E8AJgEYAAAAAAAA1m6/8Lsvx/xofSQAAwAAAAAAQGsPwGerIwEYAAAAAAAA2kIAPlodCcAAAAAAAAAwlUPe/yUBGAAAAAAAALZglwBMAjAAAAAAAADkAhgSgAEAAAAAAKB1vwEsAJMADAAAAAAAAPO4P+ZvC789Wh8JwAAAAAAAANDar3+/GfO99ZEADAAAAAAAAK09AB+tjgRgAAAAAAAAaAsB+Gx1JAADAAAAAABALoAhARgAAAAAAAAu7ZALYBKAAQAAAAAAYAt2C7/73OpIAAYAAAAAAIBcAEMCMAAAAAAAAFzSnTH/zBvAJAADAAAAAABAG7j+vbHgu9djXlkfCcAAAAAAAADQ2t//PVodCcAAAAAAAACQ938hARgAAAAAAAByAUwCMAAAAAAAANDlLoBPVkcCMAAAAAAAALSFC2ABmARgAAAAAAAAyAUwJAADAAAAAADARX005tMEYBKAAQAAAAAAYO0+G3NzwXc/jXlpfSQAAwAAAAAAwDT2C797Nua99ZEADAAAAAAAAK09AB+tjgRgAAAAAAAAaAsB2Pu/JAADAAAAAABAAjAkAAMAAAAAAMDFHRKASQAGAAAAAACAvAEMCcAAAAAAAAAwgRtjdgu/PVsfCcAAAAAAAAAwjcdjbi/47ucxz62PBGAAAAAAAABo7e//vui3CAwJwAAAAAAAADCHnfd/SQAGAAAAAACArvkC2Pu/JAADAAAAAABALoAhARgAAAAAAACa5QL4ZHUkAAMAAAAAAEBbuAAWgEkABgAAAAAAgFwAQwIwAAAAAAAAXNTfx9xb8N37BGASgAEAAAAAAGAm+4XffTnmJ+sjARgAAAAAAABaewB2/UsCMAAAAAAAAOT9X0gABgAAAAAAgIvbJQCTAAwAAAAAAAC5AIYEYAAAAAAAAMgbwJAADAAAAAAAAP3hAfhodSQAAwAAAAAAwDT+MubBwm/P1kcCMAAAAAAAALT2699XY763PhKAAQAAAAAAYBqHXP+SAAwAAAAAAABbsMv7vyQAAwAAAAAAQC6AIQEYAAAAAAAAWvcF8OdWRwIwAAAAAAAA5AIYEoABAAAAAAAgbwBDAjAAAAAAAAB84O6YR7kAJgEYAAAAAAAAutLr3+/HvLI+EoABAAAAAACgtb//e7I6EoABAAAAAACgLVwAC8AkAAMAAAAAAEAugCEBGAAAAAAAAHIBDAnAAAAAAAAAkAtgEoABAAAAAABgs/YJwCQAAwAAAAAAwNrdGvNk4bdH6yMBGAAAAAAAAKbx2ZibC777acy/rY8EYAAAAAAAAGgLv39+b30kAAMAAAAAAMA0Dnn/lwRgAAAAAAAA2IJdAjAJwAAAAAAAAJALYEgABgAAAAAAgNb9BvDR6kgABgAAAAAAgLYQgM9WRwIwAAAAAAAANFMve5oLYARgAAAAAAAAWL0nY24v+O7nMS+sjwRgAAAAAAAAmMZu4XfP+y0CQwIwAAAAAAAAzOGw8LuT1ZEADAAAAAAAAG3hAlgAJgEYAAAAAAAAcgEMCcAAAAAAAACQC2BIAAYAAAAAAIBcAJMADAAAAAAAAJu1X/jd0epIAAYAAAAAAIBpPBzz5wXfvR9ztj4SgAEAAAAAAKC1X/++HPPG+kgABgAAAAAAgLz/CwnAAAAAAAAA0AQXwAIwCcAAAAAAAACQAAwJwAAAAAAAAJAADAnAAAAAAAAA0AUD8NHqSAAGAAAAAACAthCAz1ZHAjAAAAAAAABM4+Mxf80FMAnAAAAAAAAAsHaHhd+9GvPa+kgABgAAAAAAgGnscv1LAjAAAAAAAAB0xRfAJ6sjARgAAAAAAAByAQwJwAAAAAAAANAkF8BnqyMBGAAAAAAAAHIBDAnAAAAAAAAAcGn/ygUwCcAAAAAAAACwdnfHPMwFMAnAAAAAAAAA0JW+//ufMd9YHwnAAAAAAAAA0Nrf/z1ZHQnAAAAAAAAA0BYugAVgEoABAAAAAABgLvsEYBKAAQAAAAAAoCsOwEerIwEYAAAAAAAA2kIAPlsdCcAAAAAAAACQC2BIAAYAAAAAAIBLujXmSS6ASQAGAAAAAACAtXvaskb245gvrY8EYAAAAAAAAJjGYeF3J6sjARgAAAAAAACmssv7vyQAAwAAAAAAQFd8Aez9XxKAAQAAAAAAYC77XACTAAwAAAAAAAC5AIYEYAAAAAAAAMgbwJAADAAAAAAAAJdxc8zTXACTAAwAAAAAAABr93jMrQXfvR3zhfWRAAwAAAAAAACt/f3f52N+sT4SgAEAAAAAAKC1v/97sjoSgAEAAAAAAKAtXAALwCQAAwAAAAAAwFz2CcAkAAMAAAAAAEBXHICPVkcCMAAAAAAAAOQCGBKAAQAAAAAAIAEYEoABAAAAAADgA/8Yc3fBd+/GPLM+EoABAAAAAABgGoeF370c88b6SAAGAAAAAACA/P4ZEoABAAAAAACgCQLw0epIAAYAAAAAAIC2EIDPVkcCMAAAAAAAAOQCGBKAAQAAAAAA4NIOuQAmARgAAAAAAAC2YJcLYBKAAQAAAAAAYO0ejPk4F8AkAAMAAAAAAEBXev379ZjX1kcCMAAAAAAAALT2939PVkcCMAAAAAAAAOT9X0gABgAAAAAAgCa5APb+LwnAAAAAAAAAMJd9LoBJAAYAAAAAAIC8AQwJwAAAAAAAANC63wAWgEkABgAAAAAAgHncG/MwAZgEYAAAAAAAAOhKr3+/G/Ot9ZEADAAAAAAAAHn/FxKAAQAAAAAA4JL2CcAkAAMAAAAAAEBXHICPVkcCMAAAAAAAALSFAHy2OhKAAQAAAAAAIBfAkAAMAAAAAAAAl3bIBTAJwAAAAAAAALB2t8c8ygUwCcAAAAAAAACwdruW9bAfxnxlfSQAAwAAAAAAQDMF4Fz/kgAMAAAAAAAAef8XEoABAAAAAABgBvtcAJMADAAAAAAAALkAhgRgAAAAAAAAyBvAkAAMAAAAAAAA/eEXwCerIwEYAAAAAAAApnFzzKcJwCQAAwAAAAAAwNr9Gn9vLfju7ZgX1kcCMAAAAAAAALT293+fjXlnfSQAAwAAAAAAQN7/hQRgAAAAAAAAuKR9AjAJwAAAAAAAANAVB+Cj1ZEADAAAAAAAALkAhgRgAAAAAAAASACGBGAAAAAAAAD4HYcEYBKAAQAAAAAAYO0ejbmz4Lt3Y55ZHwnAAAAAAAAA0Np///xizFvrIwEYAAAAAAAAWnsAPlodCcAAAAAAAADQFgLw2epIAAYAAAAAAIBcAEMCMAAAAAAAAFzaIRfAJAADAAAAAADAFuxyAUwCMAAAAAAAAHTFF8AnqyMBGAAAAAAAAKbxYMz9BGASgAEAAAAAAKArvf79aswP1kcCMAAAAAAAAOT9X0gABgAAAAAAgCa4AD5bHQnAAAAAAAAAMJV9LoBJAAYAAAAAAICu+AL4ZHUkAAMAAAAAAEBbeANYACYBGAAAAAAAAHIBDAnAAAAAAAAAcFH/N+aTBGASgAEAAAAAAGDt9gu/+3bMd9ZHAjAAAAAAAAC09gDs+pcEYAAAAAAAAGgTAfhodSQAAwAA/8/e/YfaWdBxHP/ebbpKRZe05tLt6kYlphk1KTLNFNKESA3/SCILK7BYI4oyokAQLEPMTDCMlFAc/SKLVZYjnZI2LUEzidC70TbtLt0aps620+d2b38G+pzn3POcs9cL3mz/POeO7/788JwLAAAA1DgMwFudjjIAAwAAAAAAQHkDGMoADAAAAAAAAG2bLG8AUwZgAAAAAAAAGAcrGj73hNNRBmAAAAAAAADojMXpqPIGMGUABgAAAAAAgFF3TJpo8Nyzadr5KAMwAAAAAAAAlN//C2UABgAAAAAAgDatbPjclNNRBmAAAAAAAAAobwBDGYABAAAAAACgbSvKG8BgAAYAAAAAAKAO5DeAtzgdZQAGAAAAAACAGoc3gA3AlAEYAAAAAAAAumNROroMwGAABgAAAAAAYOS9rmZH4Jdrb9rhfJQBGAAAAAAAADpjZcPntqb9zkcZgAEAAAAAAKDGYQCGMgADAAAAAABAjfwAPOV0lAEYAAAAAAAAahwG4C1ORxmAAQAAAAAAoAzAUAZgAAAAAAAAaNtkGYChDMAAAAAAAACMuom0ovwOYCgDMAAAAAAAAKNuWVrc4Ll9aZvzUQZgAAAAAAAAqFH//b8z4++LzkcZgAEAAAAAAKBGfQDe6nSUARgAAAAAAABqHAbgKaejDMAAAAAAAADQKZPlDWAoAzAAAAAAAADjYEV5AxjKAAwAAAAAAEAdwG8Ab3E6ygAMAAAAAAAANQ5vABuAKQMwAAAAAAAAdMeR6bAyAEMZgAEAAAAAABh1Kxs+92R63vkoAzAAAAAAAADUqA/A3v6lDMAAAAAAAABQBmAoAzAAAAAAAAC0brIMwFAGYAAAAAAAAMbBijIAQxmAAQAAAAAAKG8AQxmAAQAAAAAAoAzAUAZgAAAAAAAAaMcRaUnDZ6ecjzIAAwAAAAAAQGe8vuFz02mP81EGYAAAAAAAAOiM4xs+95jTUQZgAAAAAAAA6JSTGj73F6ejDMAAAAAAAADQKSeXARjKAAwAAAAAAMCoW5hOafjsw85HGYABAAAAAACgM96cDm347EPORxmAAQAAAAAAoDPe3fC5v6UdzkcZgAEAAAAAAKAzTm/43GanY9wtmtg84QoAAAAAAACMioOr+QB8r/ONn2Hsnb01vfIGMAAAAAAAAFQrX/98eMNnNzkf5SugAQAAAAAAoDPObfjc7vSg81EGYAAAAAAAAKiubFvnNXx2Y9rnhBiAAQAAAAAAoBvelY5p+OwG56MMwAAAAAAAANAZH2r43P4yAFMGYAAAAAAAAOiKV6YPNnx2c9ruhJQBGAAAAAAAADrhwvTqhs/e7nyUARgAAAAAAAA645MNn+ul25yPMgADAAAAAABAJ7wlvaPhs/elx52QMgADAAAAAABAJ3yxj2dvdT7KAAwAAAAAAACdsDqd3/DZvWm9E1IGYAAAAAAAAOiEz6dFDZ/9UZp2QsoADAAAAAAAAEO3Kn20j+dvcELKAAwAAAAAAACd8NV0UMNn/5zudkLKAAwAAAAAAABDd1K6qI/nr0k9Z6QMwAAAAAAAADB01/SxZT2Vvu+ElAEYAAAAAAAAhu68dEYfz1+XnnNGygAMAAAAAAAAQ3VIurqP5/ek652RMgADAAAAAADA0F2eJqu/r45+2hk5UE3U7x0BAAAAAACATnhbui8tbPj8M+nYtNspGaTeml55AxgAAAAAAAD+v1ekm6r5+DvjG2X8pXwFNAAAAAAAAAzblemEPp7fnr7pjJQBGAAAAAAAAIbqrLS2z8/4cnrWKSkDMAAAAAAAAAzN8nRLmujjMx5INzslGIABAAAAAAAYnkVpfVrax2fsT5+e+xPKAAwAAAAAAADDcVU6tc/P+E663ymhDMAAAAAAAAAMzSfSuj4/Y3u6zCmhDMAAAAAAAAAMzXvSt1r4nEvTLueEMgADAAAAAAAwFCemH6eD+/ycm9NPnRPKAAwAAAAAAMBQHJc2pMP7/JyptNY5oQzAAAAAAAAADMXy9Kt0dJ+fsy9dnP7ppFAGYAAAAAAAAObdsrQxrW7hs65IdzkplAEYAAAAAACAGtb4+4YWPuvX6XInhTIAAwAAAAAAMO+OTfek41v4rG3popr9CmigDMAAAAAAAADMnxNqdvxd1cJnPZ8uSNPOCmUABgAAAAAAYF6dmTal5S18Vi9dku53VigDMAAAAAAAAPPqY+kXaUlLn/e1dIuzQhmAAQAAAAAAmDcHpWvSd+f+3oaZ4fdLTgsv3SInAAAAAAAAoE/L0vp0WoufubFm3ybuOS+UN4ABAAAAAACYF+emP1S74+8D6fy013mhDMAAAAAAAAAM3GHphvSzdFSLn/tIel/a7cRQvgIaAAAAAACAgTs13ZRWtfy5j6Wz0rQTQ3kDGAAAAAAAgIFanK5Mv632x99H0xnpKWeG8gYwAAAAAAAAA3VOujatHsBnz/wO4femnc4M5Q1gAAAAAAAABmZm8P1J2jCg8feudGYZf6EMwAAAAAAAAAzKa9O305/SBwb0M36Yzk67nBvKV0ADAAAAAADQuqXps+lT6dAB/pyr0hdSz8mhDMAAAAAAAAC0ajKtSx9Prxrgz3kxXZpudHIoAzAAAAAAAACtmUinp7Xp/WnhgH/ek+nCtMnpoQzAAAAAAAAAtGJ5+nC6OL1xnn7mPTU7/u5wfigDMAAAAAAAAH1Zli6Y67Qa/Nu+/zPzO36vTpfV7Nc/A2UABgAAAAAAoF72DrQmnZPOTm9NC+b53zDzlc8fSXf47wADMAAAAAAAAC/dinRiOiW9M709HTLEf8/t6ZI07b8GygAMAAAAAADAfy2Z+/Pw9Jp0ZFqajk3HzfWmdERH/r0zg++6dKv/OqihDMA9ZwAAAAAAAKAFt6XPpL87BZQ3gAEAAAAAABhJj6a16U6ngOFa4AQAAAAAAAA0tDt9Lp1cxl8obwADAAAAAAAwivam69MVaadzQBmAAQAAAAAAGDn/Trekr6StzgFlAAYAAAAAAGDkvJC+l76ennAOKAMwAAAAAAAAI+cf6cZ0bdruHFAGYAAAAAAAAEbOQ+m6dGt6zjmgDMAAAAAAAACMlKdrdvC9KT3oHFAGYAAAAAAAAEbKrvTz9IP0y7TXSaAMwAAAAAAAAIyMx9Md6fZ0Zxl9oQzAAAAAAAAAjIqt6d50d/pN+quTQBmAAQAAAAAA6LRemkoPp0fSH9Pv0jangTIAAwAAAAAAMHQvpH/N/f2Zmv2dvdNp51xP1OzoOzX31c57nAwObBO9Xs8VAAAAAAAAAMbAAicAAAAAAAAAKAMwAAAAAAAAAGUABgAAAAAAAKAMwAAAAAAAAACUARgAAAAAAACgDMAAAAAAAAAAlAEYAAAAAAAAgDIAAwAAAAAAAFAGYAAAAAAAAIAyAAMAAAAAAABQBmAAAAAAAAAAygAMAAAAAAAAQBmAAQAAAAAAAMoADAAAAAAAAEAZgAEAAAAAAAAoAzAAAAAAAAAAZQAGAAAAAAAAoAzAAAAAAAAAAGUABgAAAAAAAKAMwAAAAAAAAACUARgAAAAAAACAMgADAAAAAAAAlAEYAAAAAAAAgDIAAwAAAAAAAFAGYAAAAAAAAADKAAwAAAAAAABQBmAAAAAAAAAAygAMAAAAAAAAQBmAAQAAAAAAACgDMAAAAAAAAABlAAYAAAAAAAAoAzAAAAAAAAAAZQAGAAAAAAAAoAzAAAAAAAAAAJQBGAAAAAAAAKAMwAAAAAAAAAB0338EGABCM2CoPY7HzQAAAABJRU5ErkJggg==',
+};
 /* GERADO POR build.sh A PARTIR DE assets/frames/ — não edite à mão.
    As molduras vivem aqui como data URI porque um PNG carregado de
    assets/ contamina o canvas em file:// e quebraria o export. */
@@ -1875,6 +2379,146 @@ window.TD_FRAMES = {
 
 })(window);
 /* =====================================================================
+   ThumbDrop V3 · snap.js
+   ---------------------------------------------------------------------
+   As réguas magnéticas — o comportamento do Figma, do Photoshop e do
+   Canva: quando o que você arrasta encosta no alinhamento de outra
+   coisa, ele gruda e uma linha aparece mostrando por quê.
+
+   Um motor só, usado pelas imagens e pelos textos, porque um texto tem
+   que poder grudar na borda de uma imagem e vice-versa. Se fossem dois
+   motores, eles discordariam.
+
+   Tudo em pixels de export.
+   ===================================================================== */
+
+(function (window, document) {
+  'use strict';
+
+  var EXPORT_W = 1920;
+  var EXPORT_H = 1080;
+
+  /* Distância, em pixels de export, dentro da qual o arraste gruda. É
+     convertida da tela: 8px de tela em qualquer zoom, para a sensação
+     ser a mesma no desktop e no celular. */
+  var GRAB_SCREEN_PX = 8;
+
+  function createSnap(root) {
+    var layer = document.createElement('div');
+    layer.className = 'td-guides';
+    root.appendChild(layer);
+
+    function factor() { return root.clientWidth / EXPORT_W; }
+    function threshold() { return GRAB_SCREEN_PX / factor(); }
+
+    /* Os alvos são sempre os MESMOS seis de um retângulo: três no eixo X
+       (esquerda, centro, direita) e três no Y (topo, meio, base). É o que
+       as ferramentas de verdade fazem, e é o que a pessoa espera. */
+    function edgesOf(box) {
+      return {
+        x: [box.x, box.x + box.width / 2, box.x + box.width],
+        y: [box.y, box.y + box.height / 2, box.y + box.height]
+      };
+    }
+
+    /* O próprio canvas é alvo: centro e bordas. Alinhar ao centro do
+       quadro é o alinhamento mais pedido de todos. */
+    function canvasTargets() {
+      return {
+        x: [0, EXPORT_W / 2, EXPORT_W],
+        y: [0, EXPORT_H / 2, EXPORT_H]
+      };
+    }
+
+    /* Recebe o retângulo que está sendo arrastado e os retângulos
+       vizinhos. Devolve o deslocamento que faz ele grudar, e as linhas a
+       desenhar. */
+    function solve(moving, others) {
+      var limit = threshold();
+      var mine = edgesOf(moving);
+
+      var best = { x: null, y: null };
+      var lines = [];
+
+      function consider(axis, myValue, targetValue, from, to) {
+        var distance = Math.abs(myValue - targetValue);
+        if (distance > limit) return;
+        var current = best[axis];
+        if (current && current.distance <= distance) return;
+        best[axis] = {
+          distance: distance,
+          delta: targetValue - myValue,
+          at: targetValue,
+          from: from,
+          to: to
+        };
+      }
+
+      var targets = [canvasTargets()].concat(others.map(edgesOf));
+
+      targets.forEach(function (target, index) {
+        var box = index === 0 ? null : others[index - 1];
+
+        target.x.forEach(function (value) {
+          mine.x.forEach(function (value2) {
+            consider('x', value2, value,
+              box ? Math.min(box.y, moving.y) : 0,
+              box ? Math.max(box.y + box.height, moving.y + moving.height) : EXPORT_H);
+          });
+        });
+
+        target.y.forEach(function (value) {
+          mine.y.forEach(function (value2) {
+            consider('y', value2, value,
+              box ? Math.min(box.x, moving.x) : 0,
+              box ? Math.max(box.x + box.width, moving.x + moving.width) : EXPORT_W);
+          });
+        });
+      });
+
+      if (best.x) lines.push({ axis: 'x', at: best.x.at, from: best.x.from, to: best.x.to });
+      if (best.y) lines.push({ axis: 'y', at: best.y.at, from: best.y.from, to: best.y.to });
+
+      return {
+        dx: best.x ? best.x.delta : 0,
+        dy: best.y ? best.y.delta : 0,
+        lines: lines
+      };
+    }
+
+    /* As linhas só existem durante o gesto. Guia que fica na tela depois
+       de soltar vira sujeira. */
+    function draw(lines) {
+      layer.textContent = '';
+      var k = factor();
+
+      lines.forEach(function (line) {
+        var element = document.createElement('div');
+        element.className = 'td-guide td-guide--' + line.axis;
+
+        if (line.axis === 'x') {
+          element.style.left = (line.at * k) + 'px';
+          element.style.top = (Math.min(line.from, line.to) * k) + 'px';
+          element.style.height = (Math.abs(line.to - line.from) * k) + 'px';
+        } else {
+          element.style.top = (line.at * k) + 'px';
+          element.style.left = (Math.min(line.from, line.to) * k) + 'px';
+          element.style.width = (Math.abs(line.to - line.from) * k) + 'px';
+        }
+
+        layer.appendChild(element);
+      });
+    }
+
+    function clear() { layer.textContent = ''; }
+
+    return { solve: solve, draw: draw, clear: clear, threshold: threshold };
+  }
+
+  window.TD_SNAP = { create: createSnap, EXPORT_W: EXPORT_W, EXPORT_H: EXPORT_H };
+
+})(window, document);
+/* =====================================================================
    ThumbDrop V3 · canvas.js
    ---------------------------------------------------------------------
    A superfície de composição. Posicionamento absoluto, nunca flex: os
@@ -1891,6 +2535,12 @@ window.TD_FRAMES = {
    Não é o mesmo que "caber no canvas" — por isso o duplo clique
    (enquadrar) e o clique no número (voltar a 100%) são gestos
    diferentes, com resultados diferentes.
+
+   CAMADAS E TRAVAMENTO PROGRESSIVO
+   Cada imagem nova entra por cima e TRAVA as de baixo. Só a camada do
+   topo se mexe. É a regra de uma colagem: você monta o fundo, fecha o
+   fundo, monta o recorte por cima. Quem quiser mexer numa camada
+   travada volta para ela pela lista de camadas do painel.
    ===================================================================== */
 
 (function (window, document) {
@@ -1907,6 +2557,8 @@ window.TD_FRAMES = {
      volta, sem prender o enquadramento. */
   var MIN_VISIBLE = 0.25;
 
+  var seq = 0;
+
   function clamp(value, low, high) {
     return Math.min(high, Math.max(low, value));
   }
@@ -1915,126 +2567,196 @@ window.TD_FRAMES = {
     options = options || {};
     var onChange = options.onChange || function () {};
 
-    /* ── Estado da camada ───────────────────────────────────────────
-       x, y = canto superior esquerdo em pixels de export.
-       sx, sy = escala. Iguais, exceto quando alguém segura Shift numa
-       alça e libera a proporção de propósito.                          */
+    var layers = [];
+    var activeId = null;
+    var frozen = false;      /* fora da parada 1, nada se mexe */
 
-    var layer = null;
-    var selected = false;
-
-    var image = document.createElement('img');
-    image.className = 'td-layer';
-    image.alt = '';
-    image.draggable = false;
+    var snap = window.TD_SNAP.create(root);
 
     var handles = document.createElement('div');
     handles.className = 'td-handles';
     handles.hidden = true;
 
-    var CORNERS = ['nw', 'ne', 'se', 'sw'];
-    CORNERS.forEach(function (corner) {
+    ['nw', 'ne', 'se', 'sw'].forEach(function (corner) {
       var handle = document.createElement('button');
       handle.type = 'button';
       handle.className = 'td-handle td-handle--' + corner;
       handle.dataset.corner = corner;
-      handle.setAttribute('aria-label', 'Redimensionar pelo canto');
+      handle.setAttribute('aria-label', 'Redimensionar a imagem pelo canto ' + corner);
       handles.appendChild(handle);
     });
+    root.appendChild(handles);
+
+    /* ── Camadas ────────────────────────────────────────────────────── */
+
+    function active() {
+      if (frozen) return null;
+      return layers.filter(function (l) { return l.id === activeId && !l.locked; })[0] || null;
+    }
+
+    function byId(id) {
+      return layers.filter(function (l) { return l.id === id; })[0] || null;
+    }
+
+    function addImage(src, naturalWidth, naturalHeight) {
+      /* A NOVA TRAVA AS DE BAIXO. */
+      layers.forEach(function (l) { l.locked = true; });
+
+      var layer = {
+        id: 'L' + (++seq),
+        src: src,
+        natW: naturalWidth,
+        natH: naturalHeight,
+        sx: 1, sy: 1, x: 0, y: 0,
+        locked: false
+      };
+
+      var element = document.createElement('img');
+      element.className = 'td-layer';
+      element.alt = '';
+      element.draggable = false;
+      element.src = src;
+      layer.element = element;
+
+      /* Entra por cima, mas abaixo das alças e dos guias. */
+      root.insertBefore(element, handles);
+      layers.push(layer);
+      activeId = layer.id;
+
+      fill(layer);
+      draw();
+      return layer;
+    }
+
+    /* Volta a editar uma camada travada. Destravar uma camada trava
+       todas as outras: continua valendo que só uma se mexe por vez. */
+    function editLayer(id) {
+      var layer = byId(id);
+      if (!layer) return;
+      layers.forEach(function (l) { l.locked = l !== layer; });
+      activeId = layer.id;
+      frozen = false;
+      draw();
+    }
+
+    function removeLayer(id) {
+      var layer = byId(id);
+      if (!layer) return;
+      if (layer.element.parentNode) layer.element.parentNode.removeChild(layer.element);
+      layers = layers.filter(function (l) { return l !== layer; });
+      if (activeId === id) {
+        var last = layers[layers.length - 1];
+        activeId = last ? last.id : null;
+        if (last) last.locked = false;
+      }
+      draw();
+    }
+
+    /* Sair da parada 1 congela a composição inteira: da parada 2 em
+       diante as imagens não se mexem mais. */
+    function freeze(next) {
+      frozen = next;
+      if (next) layers.forEach(function (l) { l.locked = true; });
+      draw();
+    }
 
     /* ── Conversão tela ↔ export ────────────────────────────────────── */
 
-    function factor() {
-      /* Quantos pixels de tela vale um pixel de export. */
-      return root.clientWidth / EXPORT_W;
-    }
+    function factor() { return root.clientWidth / EXPORT_W; }
 
     function toExport(clientX, clientY) {
       var rect = root.getBoundingClientRect();
       var k = factor();
+      return { x: (clientX - rect.left) / k, y: (clientY - rect.top) / k };
+    }
+
+    function boxOf(layer) {
       return {
-        x: (clientX - rect.left) / k,
-        y: (clientY - rect.top) / k
+        x: layer.x, y: layer.y,
+        width: layer.natW * layer.sx,
+        height: layer.natH * layer.sy
       };
+    }
+
+    /* Os retângulos que servem de alvo para as réguas — usados aqui e
+       também pelos textos, para um texto poder grudar numa imagem. */
+    function boxes(exceptId) {
+      return layers
+        .filter(function (l) { return l.id !== exceptId; })
+        .map(boxOf);
     }
 
     /* ── Desenho ────────────────────────────────────────────────────── */
 
     function draw() {
-      if (!layer) return;
       var k = factor();
 
-      image.style.width  = (layer.natW * layer.sx * k) + 'px';
-      image.style.height = (layer.natH * layer.sy * k) + 'px';
-      image.style.transform = 'translate(' + (layer.x * k) + 'px,' + (layer.y * k) + 'px)';
+      layers.forEach(function (layer) {
+        var style = layer.element.style;
+        style.width = (layer.natW * layer.sx * k) + 'px';
+        style.height = (layer.natH * layer.sy * k) + 'px';
+        style.transform = 'translate(' + (layer.x * k) + 'px,' + (layer.y * k) + 'px)';
+        layer.element.classList.toggle('td-layer--locked', layer.locked || frozen);
+      });
 
       drawHandles(k);
-
       onChange(publicState());
     }
 
+    function publicState() {
+      var current = active();
+      return {
+        zoom: current ? current.sx : 1,
+        zoomPercent: current ? Math.round(current.sx * 100) : 100,
+        layers: layers.map(function (l, i) {
+          return { id: l.id, src: l.src, locked: l.locked || frozen, index: i };
+        }),
+        activeId: current ? current.id : null,
+        frozen: frozen
+      };
+    }
 
     /* AS ALÇAS MORAM NA PARTE VISÍVEL DA CAMADA, não nos cantos dela.
-
-       Com a imagem preenchendo o canvas — que é o enquadre de partida —
-       os cantos reais ficam fora da área visível, e no zoom de 400% ficam
-       longe dela. Alça que não dá para alcançar não é alça. Então o
-       retângulo das alças é a interseção entre a camada e o canvas,
-       recuado o suficiente para nenhuma delas ser cortada pela borda.
-
-       Quem redimensiona continua puxando o canto REAL da camada: o
-       gesto é medido por deslocamento do ponteiro, não pela posição da
-       alça. Ver resize(). */
+       Com a imagem preenchendo o canvas — o enquadre de partida — os
+       cantos reais ficam fora da área visível, e no zoom de 400% ficam
+       longe dela. Alça que não dá para alcançar não é alça. */
     var HANDLE_INSET = 9;
 
     function drawHandles(k) {
-      if (!selected) { handles.hidden = true; return; }
+      var layer = active();
+      if (!layer) { handles.hidden = true; return; }
 
       var cw = root.clientWidth;
       var ch = root.clientHeight;
 
       var left = layer.x * k;
-      var top  = layer.y * k;
-      var right  = left + layer.natW * layer.sx * k;
-      var bottom = top  + layer.natH * layer.sy * k;
+      var top = layer.y * k;
+      var right = left + layer.natW * layer.sx * k;
+      var bottom = top + layer.natH * layer.sy * k;
 
-      var x0 = clamp(left,   HANDLE_INSET, cw - HANDLE_INSET);
-      var x1 = clamp(right,  HANDLE_INSET, cw - HANDLE_INSET);
-      var y0 = clamp(top,    HANDLE_INSET, ch - HANDLE_INSET);
+      var x0 = clamp(left, HANDLE_INSET, cw - HANDLE_INSET);
+      var x1 = clamp(right, HANDLE_INSET, cw - HANDLE_INSET);
+      var y0 = clamp(top, HANDLE_INSET, ch - HANDLE_INSET);
       var y1 = clamp(bottom, HANDLE_INSET, ch - HANDLE_INSET);
 
-      /* Camada arrastada quase toda para fora: não há retângulo onde
-         pousar alça, e mostrar quatro pontos empilhados seria pior que
-         não mostrar nada. */
       if (x1 - x0 < 16 || y1 - y0 < 16) { handles.hidden = true; return; }
 
       handles.hidden = false;
-      handles.style.width  = (x1 - x0) + 'px';
+      handles.style.width = (x1 - x0) + 'px';
       handles.style.height = (y1 - y0) + 'px';
       handles.style.transform = 'translate(' + x0 + 'px,' + y0 + 'px)';
     }
 
-    function publicState() {
-      if (!layer) return null;
-      return {
-        zoom: layer.sx,
-        zoomPercent: Math.round(layer.sx * 100),
-        uniform: Math.abs(layer.sx - layer.sy) < 0.0001
-      };
-    }
+    /* ── Limites ─────────────────────────────────────────────────────
+       A imagem não pode sumir da área visível. A regra é de
+       SOBREPOSIÇÃO, não de posição: o que importa é quanto da imagem
+       ainda cruza o canvas, em cada eixo.                              */
 
-    /* ── Limites ────────────────────────────────────────────────────────
-       A imagem não pode sumir da área visível. A regra é de SOBREPOSIÇÃO,
-       não de posição: o que importa é quanto da imagem ainda cruza o
-       canvas, em cada eixo.                                              */
-
-    function clampPosition(x, y) {
+    function clampPosition(layer, x, y) {
       var w = layer.natW * layer.sx;
       var h = layer.natH * layer.sy;
-
       var needX = Math.min(w, EXPORT_W) * MIN_VISIBLE;
       var needY = Math.min(h, EXPORT_H) * MIN_VISIBLE;
-
       return {
         x: clamp(x, needX - w, EXPORT_W - needX),
         y: clamp(y, needY - h, EXPORT_H - needY)
@@ -2045,41 +2767,40 @@ window.TD_FRAMES = {
        imagem volta para dentro suavemente. Puxar e ver voltar ensina o
        limite melhor do que uma parede dura durante o gesto. */
     function settle() {
+      var layer = active();
       if (!layer) return;
-      var fixed = clampPosition(layer.x, layer.y);
+      var fixed = clampPosition(layer, layer.x, layer.y);
       if (fixed.x === layer.x && fixed.y === layer.y) return;
 
-      image.classList.add('td-layer--settling');
+      layer.element.classList.add('td-layer--settling');
       handles.classList.add('td-layer--settling');
       layer.x = fixed.x;
       layer.y = fixed.y;
       draw();
 
       window.setTimeout(function () {
-        image.classList.remove('td-layer--settling');
+        layer.element.classList.remove('td-layer--settling');
         handles.classList.remove('td-layer--settling');
       }, 220);
     }
 
-    /* ── Zoom ───────────────────────────────────────────────────────────
+    /* ── Zoom ────────────────────────────────────────────────────────
        ANCORADO NO PONTEIRO: o pixel da imagem que está sob o cursor
        continua sob o cursor depois do zoom. É isso que faz o gesto
-       parecer natural — zoom ancorado no centro parece quebrado.         */
+       parecer natural — zoom ancorado no centro parece quebrado.       */
 
     function zoomAt(nextScale, anchorX, anchorY) {
+      var layer = active();
       if (!layer) return;
 
       var target = clamp(nextScale, MIN_ZOOM, MAX_ZOOM);
       if (target === layer.sx && target === layer.sy) return;
 
-      /* Onde o ponto ancorado cai DENTRO da imagem, de 0 a 1. */
       var u = (anchorX - layer.x) / (layer.natW * layer.sx);
       var v = (anchorY - layer.y) / (layer.natH * layer.sy);
 
       layer.sx = target;
       layer.sy = target;
-
-      /* Recoloca a imagem para que aquele mesmo ponto caia sob a âncora. */
       layer.x = anchorX - u * layer.natW * layer.sx;
       layer.y = anchorY - v * layer.natH * layer.sy;
 
@@ -2087,59 +2808,52 @@ window.TD_FRAMES = {
     }
 
     function setZoom(next) {
-      if (!layer) return;
-      /* Sem ponteiro, a âncora é o centro do canvas — que é o que a
-         pessoa está olhando quando usa o controle de − e +. */
+      if (!active()) return;
       zoomAt(next, EXPORT_W / 2, EXPORT_H / 2);
       settle();
     }
 
-    /* Enquadrar: a imagem inteira cabe no canvas, centralizada. */
-    function fit() {
+    function fit(layer) {
+      layer = layer || active();
       if (!layer) return;
       var scale = Math.min(EXPORT_W / layer.natW, EXPORT_H / layer.natH);
       layer.sx = layer.sy = clamp(scale, MIN_ZOOM, MAX_ZOOM);
-      center();
+      center(layer);
       draw();
     }
 
-    /* Preencher: a imagem cobre o canvas inteiro. É o enquadre de
-       partida, porque thumb com tarja preta nas laterais não é thumb. */
-    function fill() {
+    /* Preencher é o enquadre de partida: thumb com tarja preta nas
+       laterais não é thumb. */
+    function fill(layer) {
+      layer = layer || active();
       if (!layer) return;
       var scale = Math.max(EXPORT_W / layer.natW, EXPORT_H / layer.natH);
       layer.sx = layer.sy = clamp(scale, MIN_ZOOM, MAX_ZOOM);
-      center();
+      center(layer);
       draw();
     }
 
-    function center() {
+    function center(layer) {
       layer.x = (EXPORT_W - layer.natW * layer.sx) / 2;
       layer.y = (EXPORT_H - layer.natH * layer.sy) / 2;
     }
 
-    /* ── Gestos de ponteiro ─────────────────────────────────────────────
+    /* ── Gestos de ponteiro ──────────────────────────────────────────
        Um só caminho para mouse, caneta e dedo. Dois ponteiros viram
-       pinça: zoom e pan juntos, ancorados no ponto médio entre os dedos. */
+       pinça: zoom e pan juntos, ancorados no ponto médio entre os
+       dedos.                                                          */
 
     var pointers = new Map();
-    var dragging = null;      /* arraste da imagem */
-    var resizing = null;      /* arraste de alça */
+    var dragging = null;
+    var resizing = null;
     var pinching = null;
 
-    function pointerList() {
-      return Array.from(pointers.values());
-    }
-
-    function distance(a, b) {
-      return Math.hypot(a.x - b.x, a.y - b.y);
-    }
-
-    function midpoint(a, b) {
-      return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
-    }
+    function pointerList() { return Array.from(pointers.values()); }
+    function distance(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+    function midpoint(a, b) { return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; }
 
     function onPointerDown(event) {
+      var layer = active();
       if (!layer) return;
 
       var corner = event.target.dataset && event.target.dataset.corner;
@@ -2150,13 +2864,11 @@ window.TD_FRAMES = {
       var list = pointerList();
 
       if (list.length === 2) {
-        /* Dois dedos: a pinça assume e cancela qualquer arraste em curso. */
         dragging = null;
         resizing = null;
-        var a = list[0], b = list[1];
-        var mid = toExport(midpoint(a, b).x, midpoint(a, b).y);
+        var mid = toExport(midpoint(list[0], list[1]).x, midpoint(list[0], list[1]).y);
         pinching = {
-          startDistance: distance(a, b) || 1,
+          startDistance: distance(list[0], list[1]) || 1,
           startScale: layer.sx,
           anchor: mid
         };
@@ -2164,28 +2876,22 @@ window.TD_FRAMES = {
       }
 
       if (corner) {
-        var point = toExport(event.clientX, event.clientY);
         resizing = {
           corner: corner,
-          start: point,
+          start: toExport(event.clientX, event.clientY),
           startLayer: { x: layer.x, y: layer.y, sx: layer.sx, sy: layer.sy }
         };
-        select(true);
         return;
       }
 
-      select(true);
       var origin = toExport(event.clientX, event.clientY);
-      dragging = {
-        grabX: origin.x - layer.x,
-        grabY: origin.y - layer.y
-      };
+      dragging = { grabX: origin.x - layer.x, grabY: origin.y - layer.y };
       root.classList.add('td-canvas--grabbing');
     }
 
     function onPointerMove(event) {
-      if (!layer) return;
-      if (!pointers.has(event.pointerId)) return;
+      var layer = active();
+      if (!layer || !pointers.has(event.pointerId)) return;
       pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
 
       if (pinching) {
@@ -2198,68 +2904,68 @@ window.TD_FRAMES = {
         return;
       }
 
-      if (resizing) {
-        resize(event);
-        return;
-      }
+      if (resizing) { resize(event, layer); return; }
 
       if (dragging) {
         var point = toExport(event.clientX, event.clientY);
         layer.x = point.x - dragging.grabX;
         layer.y = point.y - dragging.grabY;
+
+        /* As réguas magnéticas entram aqui: o alvo pode ser outra
+           camada, um texto, ou o próprio quadro. */
+        var result = snap.solve(boxOf(layer),
+          boxes(layer.id).concat(options.otherBoxes ? options.otherBoxes() : []));
+        layer.x += result.dx;
+        layer.y += result.dy;
+        snap.draw(result.lines);
+
         draw();
       }
     }
 
     function onPointerUp(event) {
       pointers.delete(event.pointerId);
-
       if (pointers.size < 2) pinching = null;
-
       if (pointers.size === 0) {
         if (dragging || resizing) settle();
         dragging = null;
         resizing = null;
+        snap.clear();
         root.classList.remove('td-canvas--grabbing');
       }
     }
 
-    /* ── Alças ──────────────────────────────────────────────────────────
-       Mantêm proporção; Shift libera. O canto OPOSTO ao que está sendo
-       arrastado fica parado — é o que faz a alça parecer que puxa a
-       imagem, e não que a empurra.                                       */
+    /* ── Alças ───────────────────────────────────────────────────────
+       Mantêm proporção; Shift libera. O canto OPOSTO fica parado, e o
+       gesto é medido por DESLOCAMENTO do ponteiro — é isso que
+       desacopla o redimensionamento da posição da alça, que fica
+       recuada para dentro do canvas.                                  */
 
-    function resize(event) {
+    function resize(event, layer) {
       var start = resizing.startLayer;
       var point = toExport(event.clientX, event.clientY);
 
-      var west  = resizing.corner === 'nw' || resizing.corner === 'sw';
+      var west = resizing.corner === 'nw' || resizing.corner === 'sw';
       var north = resizing.corner === 'nw' || resizing.corner === 'ne';
 
       var startW = layer.natW * start.sx;
       var startH = layer.natH * start.sy;
 
-      /* O canto que está sendo puxado e o que fica parado — os dois da
-         camada, não da alça. A alça pode estar recuada para dentro do
-         canvas; o que ela move é sempre o canto de verdade. */
-      var cornerX = west  ? start.x : start.x + startW;
+      var cornerX = west ? start.x : start.x + startW;
       var cornerY = north ? start.y : start.y + startH;
-      var anchorX = west  ? start.x + startW : start.x;
+      var anchorX = west ? start.x + startW : start.x;
       var anchorY = north ? start.y + startH : start.y;
 
-      /* Medido por DESLOCAMENTO desde o início do gesto. É isso que
-         desacopla o redimensionamento da posição da alça. */
       var movedX = point.x - resizing.start.x;
       var movedY = point.y - resizing.start.y;
 
-      var width  = Math.abs((cornerX + movedX) - anchorX);
+      var width = Math.abs((cornerX + movedX) - anchorX);
       var height = Math.abs((cornerY + movedY) - anchorY);
 
-      var sx = width  / layer.natW;
+      var sx = width / layer.natW;
       var sy = height / layer.natH;
 
       if (!event.shiftKey) {
-        /* Proporção mantida: o eixo que mais mudou manda nos dois. */
         var uniform = Math.max(sx, sy);
         sx = uniform;
         sy = uniform;
@@ -2267,103 +2973,37 @@ window.TD_FRAMES = {
 
       layer.sx = clamp(sx, MIN_ZOOM, MAX_ZOOM);
       layer.sy = clamp(sy, MIN_ZOOM, MAX_ZOOM);
-
-      layer.x = west  ? anchorX - layer.natW * layer.sx : anchorX;
+      layer.x = west ? anchorX - layer.natW * layer.sx : anchorX;
       layer.y = north ? anchorY - layer.natH * layer.sy : anchorY;
 
       draw();
     }
 
-    /* ── Roda do mouse ──────────────────────────────────────────────── */
-
     function onWheel(event) {
+      var layer = active();
       if (!layer) return;
       event.preventDefault();
-
       var anchor = toExport(event.clientX, event.clientY);
-      /* Passo multiplicativo: subir e descer a mesma quantidade de
-         cliques volta exatamente ao zoom de onde saiu. */
       var step = Math.exp(-event.deltaY * 0.0015);
       zoomAt(layer.sx * step, anchor.x, anchor.y);
     }
 
-    /* ── Duplo clique: enquadra a imagem inteira ────────────────────── */
-
     var fitOnDoubleClick = true;
 
     function onDoubleClick(event) {
-      if (!layer || !fitOnDoubleClick) return;
+      if (!active() || !fitOnDoubleClick) return;
       event.preventDefault();
       fit();
       settle();
     }
 
-    function select(next) {
-      selected = next;
-      root.classList.toggle('td-canvas--selected', next);
-      draw();
-    }
-
-    /* ── API ────────────────────────────────────────────────────────── */
-
-    function setImage(src, naturalWidth, naturalHeight) {
-      layer = {
-        src: src,
-        natW: naturalWidth,
-        natH: naturalHeight,
-        sx: 1,
-        sy: 1,
-        x: 0,
-        y: 0
-      };
-      image.src = src;
-      if (!image.parentNode) {
-        root.insertBefore(image, root.firstChild);
-        root.appendChild(handles);
-      }
-      fill();
-      select(true);
-    }
-
-    function getLayer() {
-      return layer && {
-        src: layer.src, natW: layer.natW, natH: layer.natH,
-        x: layer.x, y: layer.y, sx: layer.sx, sy: layer.sy
-      };
-    }
-
-    /* Trocar a fonte da imagem SEM mexer no enquadramento. É isto que
-       torna verdade a regra de custo: o recorte é uma chamada de API, o
-       reenquadre é local. Depois de recortado, o PNG entra no lugar do
-       original na mesma posição e escala — nenhuma chamada nova. */
-    function replaceSource(src, naturalWidth, naturalHeight) {
-      if (!layer) return;
-      /* A escala é reancorada para que o recorte ocupe o mesmo retângulo
-         que o original ocupava, mesmo que venha com outro número de
-         pixels. */
-      var displayW = layer.natW * layer.sx;
-      var displayH = layer.natH * layer.sy;
-
-      layer.src = src;
-      layer.natW = naturalWidth;
-      layer.natH = naturalHeight;
-      layer.sx = displayW / naturalWidth;
-      layer.sy = displayH / naturalHeight;
-
-      image.src = src;
-      draw();
-    }
-
-
-    /* ── Desenho do texto ───────────────────────────────────────────────
+    /* ── Desenho do texto no export ──────────────────────────────────
        Reimplementa a quebra de linha do navegador no canvas 2D, porque
-       canvas não quebra sozinho. Cada palavra carrega a cor do trecho de
-       onde veio — é assim que uma palavra amarela no meio de um título
-       branco chega inteira ao PNG.                                       */
+       canvas não quebra sozinho. Cada palavra carrega a cor do trecho
+       de onde veio — é assim que uma palavra amarela no meio de um
+       título branco chega inteira ao PNG.                             */
 
     function drawTexts(ctx, texts, scale) {
-      /* A família vem do token, e não de um nome repetido aqui: o export
-         e a tela não podem discordar sobre em que fonte o título está. */
       var family = getComputedStyle(document.documentElement)
         .getPropertyValue('--font-thumb-title').trim() || 'Barlow, sans-serif';
 
@@ -2376,7 +3016,6 @@ window.TD_FRAMES = {
         ctx.font = 'italic ' + model.weight + ' ' + size + 'px ' + family;
         ctx.textBaseline = 'top';
 
-        /* Palavras, cada uma com a cor do trecho de origem. */
         var words = [];
         model.segments.forEach(function (segment) {
           segment.text.split(/(\s+|\n)/).forEach(function (piece) {
@@ -2384,7 +3023,6 @@ window.TD_FRAMES = {
           });
         });
 
-        /* Quebra gulosa, do jeito que o navegador faz. */
         var lines = [];
         var line = [];
         var used = 0;
@@ -2429,15 +3067,11 @@ window.TD_FRAMES = {
       });
     }
 
-    /* ── Snapshot ───────────────────────────────────────────────────────
+    /* ── Snapshot ────────────────────────────────────────────────────
        Redesenha o estado num canvas de verdade e devolve um PNG. É o
-       MESMO renderizador que o export da etapa 8 vai usar — por isso ele
-       nasce aqui, mandando para a IA exatamente o que a pessoa vê, e não
-       uma segunda interpretação do estado que pode divergir.
-
-       `width` permite pedir uma versão menor: a prévia do filtro manda
-       uma entrada reduzida, porque o que ela precisa julgar é direção de
-       arte, não nitidez.                                                 */
+       MESMO renderizador que o export usa — por isso ele manda para a
+       IA exatamente o que a pessoa vê, e não uma segunda interpretação
+       do estado que pode divergir.                                    */
 
     function snapshot(options) {
       options = options || {};
@@ -2453,23 +3087,20 @@ window.TD_FRAMES = {
       ctx.fillStyle = '#000';
       ctx.fillRect(0, 0, width, height);
 
-      if (layer && image.complete && image.naturalWidth) {
+      /* As camadas, de baixo para cima — a mesma ordem da tela. */
+      layers.forEach(function (layer) {
+        if (!layer.element.complete || !layer.element.naturalWidth) return;
         ctx.drawImage(
-          image,
-          layer.x * scale,
-          layer.y * scale,
-          layer.natW * layer.sx * scale,
-          layer.natH * layer.sy * scale
+          layer.element,
+          layer.x * scale, layer.y * scale,
+          layer.natW * layer.sx * scale, layer.natH * layer.sy * scale
         );
-      }
+      });
 
-      /* O texto é desenhado pelo MESMO renderizador, a partir dos mesmos
-         trechos que a tela mostra. O guia do timer e as alças não entram
-         aqui — eles são interface, e interface não vai para o PNG. */
+      /* O guia do timer e as alças não entram: são interface, e
+         interface não tem coordenada de export. */
       if (options.texts) drawTexts(ctx, options.texts, scale);
 
-      /* A moldura é a última camada: ela emoldura tudo, inclusive o
-         texto. */
       if (options.frame) {
         ctx.drawImage(options.frame, 0, 0, width, height);
       } else if (options.frameColor) {
@@ -2477,8 +3108,6 @@ window.TD_FRAMES = {
         ctx.save();
         ctx.strokeStyle = options.frameColor;
         ctx.lineWidth = band;
-        /* Desenhada meia banda para dentro, para a borda ficar inteira
-           dentro dos 1920 x 1080 em vez de metade fora. */
         ctx.strokeRect(band / 2, band / 2, width - band, height - band);
         ctx.restore();
       }
@@ -2495,17 +3124,60 @@ window.TD_FRAMES = {
     window.addEventListener('resize', draw);
 
     return {
-      setImage: setImage,
+      addImage: addImage,
+      editLayer: editLayer,
+      removeLayer: removeLayer,
+      freeze: freeze,
       snapshot: snapshot,
+      boxes: boxes,
       setDoubleClickFit: function (next) { fitOnDoubleClick = next; },
-      replaceSource: replaceSource,
-      getLayer: getLayer,
-      hasImage: function () { return !!layer; },
+      getLayer: function () {
+        var l = active() || layers[layers.length - 1];
+        return l && { src: l.src, natW: l.natW, natH: l.natH,
+                      x: l.x, y: l.y, sx: l.sx, sy: l.sy };
+      },
+      count: function () { return layers.length; },
+      hasImage: function () { return layers.length > 0; },
       fit: fit,
       fill: fill,
       setZoom: setZoom,
-      getZoom: function () { return layer ? layer.sx : 1; },
-      select: select,
+      getZoom: function () { var l = active(); return l ? l.sx : 1; },
+      state: publicState,
+      draw: draw,
+
+      /* Trocar a fonte da camada ativa SEM mexer no enquadramento. É o
+         que torna verdade a regra de que o recorte é uma chamada de API
+         e o reenquadre é local. */
+      replaceSource: function (src, naturalWidth, naturalHeight) {
+        var layer = active() || layers[layers.length - 1];
+        if (!layer) return;
+        var displayW = layer.natW * layer.sx;
+        var displayH = layer.natH * layer.sy;
+        layer.src = src;
+        layer.natW = naturalWidth;
+        layer.natH = naturalHeight;
+        layer.sx = displayW / naturalWidth;
+        layer.sy = displayH / naturalHeight;
+        layer.element.src = src;
+        draw();
+      },
+
+      /* A entrega do filtro substitui a composição inteira por uma
+         imagem só: o filtro devolve o quadro já renderizado. */
+      replaceAll: function (src, naturalWidth, naturalHeight) {
+        layers.forEach(function (l) {
+          if (l.element.parentNode) l.element.parentNode.removeChild(l.element);
+        });
+        layers = [];
+        activeId = null;
+        var wasFrozen = frozen;
+        frozen = false;
+        addImage(src, naturalWidth, naturalHeight);
+        frozen = wasFrozen;
+        if (wasFrozen) layers.forEach(function (l) { l.locked = true; });
+        draw();
+      },
+
       MIN_ZOOM: MIN_ZOOM,
       MAX_ZOOM: MAX_ZOOM,
       EXPORT_W: EXPORT_W,
@@ -2519,23 +3191,28 @@ window.TD_FRAMES = {
 /* =====================================================================
    ThumbDrop V3 · text.js
    ---------------------------------------------------------------------
-   As caixas de texto da parada 3.
+   As caixas de texto da parada 3, com a gramática de um editor de
+   verdade — a mesma do Figma, do Canva e do Photoshop:
 
-   O gesto principal não tem botão: DUPLO CLIQUE em qualquer ponto vazio
-   do canvas cria uma caixa ali e já entra em edição, com o cursor
-   piscando. Existe um botão de "adicionar texto" no painel, mas ele é a
-   porta de serviço — para quem não descobriu o gesto, e para quem navega
-   por teclado.
+     clique        seleciona, e mostra a caixa com oito alças
+     duplo clique  entra em edição, com o conteúdo selecionado
+     arraste       move, com réguas magnéticas grudando no alinhamento
+     alça de canto ESCALA o texto inteiro, corpo da fonte junto
+     alça de lado  muda só a largura da caixa, sem mexer no corpo
+     Esc           sai da edição; de novo, desseleciona
+     Delete        apaga o texto selecionado
+
+   Duplo clique em ponto vazio do canvas cria uma caixa ali e já entra
+   em edição. É o gesto principal e não tem botão.
 
    O DESTAQUE EM AMARELO É GESTO DE SELEÇÃO, não controle separado:
    selecionar uma palavra dentro da edição e clicar no amarelo pinta só
    ela. É a assinatura visual das thumbs da casa.
 
-   Por que contentEditable e não índices de caractere: o destaque precisa
-   sobreviver à edição. Se a pessoa pinta a terceira palavra e depois
-   insere uma palavra antes dela, um destaque guardado por índice
-   escorrega para o lugar errado. Guardado como span no DOM, ele anda
-   junto com o texto, porque é o próprio navegador que cuida disso.
+   Por que contentEditable e não índices de caractere: o destaque
+   precisa sobreviver à edição. Guardado por índice, ele escorrega
+   quando alguém insere texto antes dele. Guardado como span no DOM,
+   anda junto, porque quem cuida disso passa a ser o navegador.
    ===================================================================== */
 
 (function (window, document) {
@@ -2544,41 +3221,73 @@ window.TD_FRAMES = {
   var EXPORT_W = 1920;
   var EXPORT_H = 1080;
 
-  /* Padrão do título: Barlow Black Italic. */
-  var DEFAULT = {
-    size: 108,          /* px de export */
-    width: 1150,
-    weight: 900,
-    align: 'left',
-    color: '#ffffff',
-    shadow: true
-  };
+  var DEFAULT = { size: 96, width: 900, weight: 900, align: 'left',
+                  color: '#ffffff', shadow: true };
 
+  var MIN_SIZE = 16;
+  var MAX_SIZE = 400;
+
+  /* Peso: Regular, Bold, Extra Bold e Black, sempre em itálico — o
+     padrão de título da casa, como o Controle/Seletor do Figma. */
   var WEIGHTS = [
-    { value: 400, label: 'Regular' },
-    { value: 700, label: 'Bold' },
-    { value: 800, label: 'Extra Bold' },
-    { value: 900, label: 'Black' }
+    { value: 400, label: 'Regular Italic' },
+    { value: 700, label: 'Bold Italic' },
+    { value: 800, label: 'Extra Bold Italic' },
+    { value: 900, label: 'Black Italic' }
   ];
 
-  function clamp(value, low, high) {
-    return Math.min(high, Math.max(low, value));
-  }
+  /* Quatro cantos escalam tudo; quatro lados mudam só a largura. */
+  var CORNERS = ['nw', 'ne', 'se', 'sw'];
+  var SIDES = ['n', 'e', 's', 'w'];
+
+  function clamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
 
   function createTexts(root, options) {
     options = options || {};
     var onChange = options.onChange || function () {};
+    var otherBoxes = options.otherBoxes || function () { return []; };
 
     var boxes = [];
     var selected = null;
     var editing = null;
     var enabled = false;
 
+    var snap = window.TD_SNAP.create(root);
+
     var container = document.createElement('div');
     container.className = 'td-texts';
     root.appendChild(container);
 
+    /* A moldura de seleção é UMA, reaproveitada — ela segue o texto
+       selecionado. Uma moldura por caixa multiplicaria nós à toa. */
+    var frame = document.createElement('div');
+    frame.className = 'td-textframe';
+    frame.hidden = true;
+
+    CORNERS.concat(SIDES).forEach(function (spot) {
+      var handle = document.createElement('button');
+      handle.type = 'button';
+      handle.className = 'td-thandle td-thandle--' + spot +
+        (CORNERS.indexOf(spot) >= 0 ? ' td-thandle--corner' : ' td-thandle--side');
+      handle.dataset.spot = spot;
+      handle.setAttribute('aria-label', CORNERS.indexOf(spot) >= 0
+        ? 'Redimensionar o texto' : 'Mudar a largura da caixa');
+      frame.appendChild(handle);
+    });
+    /* A MOLDURA FICA ATRÁS DOS TEXTOS. Por cima, a área de pegada das
+       alças cobre o conteúdo e rouba o clique da própria palavra — foi o
+       que aconteceu com a alça de baixo num texto de uma linha. Atrás, o
+       texto sempre ganha o clique no miolo, e as alças continuam
+       pegáveis porque moram na borda, quase todas para fora. */
+    container.appendChild(frame);
+
     function factor() { return root.clientWidth / EXPORT_W; }
+
+    function toExport(clientX, clientY) {
+      var rect = root.getBoundingClientRect();
+      var k = factor();
+      return { x: (clientX - rect.left) / k, y: (clientY - rect.top) / k };
+    }
 
     /* ── Criar ─────────────────────────────────────────────────────── */
 
@@ -2586,7 +3295,7 @@ window.TD_FRAMES = {
       options = options || {};
 
       var model = {
-        id: 't' + Date.now() + Math.random().toString(36).slice(2, 6),
+        id: 't' + Date.now() + Math.random().toString(36).slice(2, 5),
         x: clamp(exportX, 0, EXPORT_W - 200),
         y: clamp(exportY, 0, EXPORT_H - 80),
         width: DEFAULT.width,
@@ -2601,16 +3310,14 @@ window.TD_FRAMES = {
       element.className = 'td-text';
       element.dataset.id = model.id;
       element.spellcheck = false;
-      /* Alcançável por Tab: sem isto, quem navega por teclado consegue
-         criar um texto pelo painel e nunca mais voltar a ele. */
       element.tabIndex = 0;
       element.setAttribute('role', 'textbox');
-      element.setAttribute('aria-label', 'Caixa de texto da thumb. ' +
-        'Enter edita, Delete apaga, setas movem.');
+      element.setAttribute('aria-label',
+        'Texto da thumb. Enter edita, Delete apaga, setas movem.');
       element.textContent = options.content || '';
 
       model.element = element;
-      container.appendChild(element);
+      container.appendChild(element);   /* depois da moldura: fica por cima */
       boxes.push(model);
 
       layout(model);
@@ -2625,42 +3332,69 @@ window.TD_FRAMES = {
 
     function layout(model) {
       var k = factor();
-      var style = model.element.style;
-
-      style.transform = 'translate(' + (model.x * k) + 'px,' + (model.y * k) + 'px)';
-      style.width = (model.width * k) + 'px';
-      style.fontSize = (model.size * k) + 'px';
-      style.fontWeight = model.weight;
-      style.textAlign = model.align;
-      style.color = model.color;
-      /* A sombra escala junto com o texto, senão ela some no mobile e
-         vira borrão no desktop. */
-      style.textShadow = model.shadow
+      var s = model.element.style;
+      s.transform = 'translate(' + (model.x * k) + 'px,' + (model.y * k) + 'px)';
+      s.width = (model.width * k) + 'px';
+      s.fontSize = (model.size * k) + 'px';
+      s.fontWeight = model.weight;
+      s.textAlign = model.align;
+      s.color = model.color;
+      /* A sombra escala junto com o texto, senão some no mobile e vira
+         borrão no desktop. */
+      s.textShadow = model.shadow
         ? '0 ' + (model.size * k * 0.06) + 'px ' + (model.size * k * 0.14) + 'px rgba(0,0,0,.75)'
         : 'none';
+
+      if (model === selected) placeFrame(model);
     }
 
-    function layoutAll() {
-      boxes.forEach(layout);
+    function placeFrame(model) {
+      var k = factor();
+      var rect = model.element.getBoundingClientRect();
+      var host = root.getBoundingClientRect();
+      frame.hidden = false;
+      frame.style.transform = 'translate(' + (model.x * k) + 'px,' + (model.y * k) + 'px)';
+      frame.style.width = (model.width * k) + 'px';
+      frame.style.height = (rect.height) + 'px';
+      frame.classList.toggle('td-textframe--editing', editing === model);
+    }
+
+    function layoutAll() { boxes.forEach(layout); }
+
+    function boxOf(model) {
+      var k = factor();
+      return {
+        x: model.x, y: model.y,
+        width: model.width,
+        height: model.element.getBoundingClientRect().height / k
+      };
+    }
+
+    /* Os retângulos dos textos, para as imagens poderem grudar neles. */
+    function textBoxes(exceptId) {
+      return boxes
+        .filter(function (b) { return b.id !== exceptId; })
+        .map(boxOf);
     }
 
     /* ── Selecionar e editar ───────────────────────────────────────── */
 
     function select(model) {
       model = model || null;
-      /* Idempotente de propósito: render() chama setEnabled() a cada
-         desenho, e setEnabled desseleciona. Sem esta saída, o par
-         select → onChange → render → setEnabled → select se chamava até
-         estourar a pilha. Operação que não muda nada não avisa ninguém. */
+      /* Idempotente: render() chama setEnabled a cada desenho, e
+         setEnabled desseleciona. Sem esta saída, select → onChange →
+         render → setEnabled → select se chamava até estourar a pilha. */
       if (model === selected && !editing) return;
 
-      /* Clicar num texto seleciona ele e DESSELECIONA os outros. */
       if (selected && selected !== model) blur(selected);
       selected = model;
 
-      boxes.forEach(function (box) {
-        box.element.classList.toggle('td-text--on', box === selected);
+      boxes.forEach(function (b) {
+        b.element.classList.toggle('td-text--on', b === selected);
       });
+
+      if (selected) placeFrame(selected);
+      else frame.hidden = true;
 
       onChange();
     }
@@ -2672,17 +3406,18 @@ window.TD_FRAMES = {
       model.element.classList.add('td-text--editing');
       model.element.focus();
 
-      /* Numa caixa que já tem conteúdo, o duplo clique entra em edição
-         COM O CONTEÚDO SELECIONADO — quem entra ali quase sempre quer
-         trocar o que está escrito, não emendar. */
+      /* Numa caixa com conteúdo, o duplo clique entra em edição COM O
+         CONTEÚDO SELECIONADO — quem entra ali quase sempre quer trocar
+         o que está escrito, não emendar. */
       if (model.element.textContent.length) {
         var range = document.createRange();
         range.selectNodeContents(model.element);
-        var selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(range);
+        var sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
       }
 
+      placeFrame(model);
       onChange();
     }
 
@@ -2690,79 +3425,77 @@ window.TD_FRAMES = {
       if (!model || model.element.contentEditable !== 'true') return;
       model.element.contentEditable = 'false';
       model.element.classList.remove('td-text--editing');
+
+      /* Sai da edição, some o realce azul de seleção do navegador. Sem
+         isto a palavra recém-pintada fica com a tarja azul por cima e
+         parece que alguma coisa travou. */
+      var live = window.getSelection();
+      if (live && live.rangeCount && model.element.contains(live.anchorNode)) {
+        live.removeAllRanges();
+      }
       if (editing === model) editing = null;
 
       /* CAIXA VAZIA SE APAGA SOZINHA. Ninguém quer caixa fantasma. */
       if (!model.element.textContent.trim()) remove(model);
+      else placeFrame(model);
 
       onChange();
     }
 
-    function stopEditing() {
-      if (editing) blur(editing);
-    }
+    function stopEditing() { if (editing) blur(editing); }
 
     function deselectQuiet() {
       if (editing) blur(editing);
       if (!selected) return;
       selected.element.classList.remove('td-text--on');
       selected = null;
+      frame.hidden = true;
     }
 
     function remove(model) {
       if (!model) return;
       if (model.element.parentNode) model.element.parentNode.removeChild(model.element);
-      boxes = boxes.filter(function (box) { return box !== model; });
-      if (selected === model) selected = null;
+      boxes = boxes.filter(function (b) { return b !== model; });
+      if (selected === model) { selected = null; frame.hidden = true; }
       if (editing === model) editing = null;
       onChange();
     }
 
-    function deselect() {
-      stopEditing();
-      select(null);
-    }
+    function deselect() { stopEditing(); select(null); }
 
-    /* ── O destaque em amarelo ───────────────────────────────────────────
-       Gesto de seleção: com um trecho selecionado dentro da edição,
-       pinta só aquele trecho. Sem seleção, pinta a caixa inteira.        */
+    /* ── O destaque em amarelo ───────────────────────────────────────
+       Com um trecho selecionado dentro da edição, pinta só ele. Sem
+       seleção, pinta a caixa inteira.                                 */
 
     function paint(color) {
       if (!selected) return;
 
-      var selection = window.getSelection();
-      var inside = editing && selection.rangeCount &&
-                   selected.element.contains(selection.anchorNode) &&
-                   !selection.isCollapsed;
+      var sel = window.getSelection();
+      var inside = editing && sel.rangeCount &&
+                   selected.element.contains(sel.anchorNode) && !sel.isCollapsed;
 
       if (!inside) {
-        /* Sem trecho selecionado: a cor é da caixa. Os destaques que já
-           existem dentro dela continuam valendo — é isso que faz um
-           título branco com uma palavra amarela continuar possível. */
         selected.color = color;
         layout(selected);
         onChange();
         return;
       }
 
-      var range = selection.getRangeAt(0);
+      var range = sel.getRangeAt(0);
       var run = document.createElement('span');
       run.className = 'td-run';
       run.style.color = color;
       run.appendChild(range.extractContents());
 
-      /* Um trecho pintado por cima de outro não deve empilhar spans: o
-         de fora manda, os de dentro somem. */
+      /* Um trecho pintado por cima de outro não empilha spans: o de
+         fora manda, os de dentro somem. */
       Array.prototype.slice.call(run.querySelectorAll('span')).forEach(unwrap);
-
       range.insertNode(run);
 
-      /* A seleção continua onde estava, para a pessoa poder repintar sem
-         ter que selecionar de novo. */
       var after = document.createRange();
       after.selectNodeContents(run);
-      selection.removeAllRanges();
-      selection.addRange(after);
+      sel.removeAllRanges();
+      sel.addRange(after);
 
       onChange();
     }
@@ -2776,30 +3509,25 @@ window.TD_FRAMES = {
     /* ── Gestos ──────────────────────────────────────────────────────── */
 
     var dragging = null;
-    var resizing = null;
-
-    function toExport(clientX, clientY) {
-      var rect = root.getBoundingClientRect();
-      var k = factor();
-      return { x: (clientX - rect.left) / k, y: (clientY - rect.top) / k };
-    }
+    var sizing = null;
 
     function boxFrom(target) {
       var element = target && target.closest && target.closest('.td-text');
       if (!element) return null;
-      return boxes.filter(function (box) { return box.element === element; })[0] || null;
+      return boxes.filter(function (b) { return b.element === element; })[0] || null;
     }
 
     container.addEventListener('pointerdown', function (event) {
       if (!enabled) return;
 
-      var handle = event.target.dataset && event.target.dataset.textCorner;
-      if (handle && selected) {
+      var spot = event.target.dataset && event.target.dataset.spot;
+      if (spot && selected) {
         event.stopPropagation();
-        resizing = {
-          corner: handle,
+        event.preventDefault();
+        sizing = {
+          spot: spot,
           start: toExport(event.clientX, event.clientY),
-          startModel: { x: selected.x, y: selected.y, width: selected.width, size: selected.size }
+          model: { x: selected.x, y: selected.y, width: selected.width, size: selected.size }
         };
         try { event.target.setPointerCapture(event.pointerId); } catch (e) {}
         return;
@@ -2811,8 +3539,8 @@ window.TD_FRAMES = {
       event.stopPropagation();
       select(box);
 
-      /* Em modo de edição o ponteiro é do cursor de texto, não do
-         arraste — senão não dá para selecionar uma palavra. */
+      /* Em edição o ponteiro é do cursor de texto, não do arraste —
+         senão não dá para selecionar uma palavra. */
       if (editing === box) return;
 
       var point = toExport(event.clientX, event.clientY);
@@ -2822,63 +3550,82 @@ window.TD_FRAMES = {
     });
 
     container.addEventListener('pointermove', function (event) {
-      if (resizing && selected) {
-        var point = toExport(event.clientX, event.clientY);
-        var start = resizing.startModel;
-        var movedX = point.x - resizing.start.x;
-
-        /* A alça escala a caixa inteira, mantendo a proporção entre
-           largura e corpo da fonte. Texto esticado num eixo só deforma a
-           letra, e isso nunca é o que a pessoa queria — por isso não há
-           Shift aqui. */
-        var west = resizing.corner === 'nw' || resizing.corner === 'sw';
-        var width = clamp(west ? start.width - movedX : start.width + movedX, 120, EXPORT_W * 1.5);
-        var ratio = width / start.width;
-
-        selected.width = width;
-        selected.size = clamp(start.size * ratio, 16, 400);
-        if (west) selected.x = start.x + (start.width - width);
-
-        layout(selected);
-        onChange();
-        return;
-      }
-
+      if (sizing && selected) { resize(event); return; }
       if (!dragging) return;
-      var spot = toExport(event.clientX, event.clientY);
-      dragging.model.x = clamp(spot.x - dragging.grabX, -dragging.model.width * 0.5, EXPORT_W - 40);
-      dragging.model.y = clamp(spot.y - dragging.grabY, -dragging.model.size, EXPORT_H - 20);
-      layout(dragging.model);
+
+      var point = toExport(event.clientX, event.clientY);
+      var model = dragging.model;
+      model.x = point.x - dragging.grabX;
+      model.y = point.y - dragging.grabY;
+
+      /* AS RÉGUAS MAGNÉTICAS. O alvo é qualquer outro texto, qualquer
+         imagem, e o próprio quadro. */
+      var result = snap.solve(boxOf(model), textBoxes(model.id).concat(otherBoxes()));
+      model.x += result.dx;
+      model.y += result.dy;
+      snap.draw(result.lines);
+
+      layout(model);
       onChange();
     });
 
     function endGesture() {
       if (dragging) dragging.model.element.classList.remove('td-text--moving');
       dragging = null;
-      resizing = null;
+      sizing = null;
+      snap.clear();
     }
 
     container.addEventListener('pointerup', endGesture);
     container.addEventListener('pointercancel', endGesture);
 
-    /* Foco por teclado seleciona, Enter entra em edição — o par do
-       clique e do duplo clique, para quem não usa ponteiro. */
+    /* CANTO escala o texto inteiro; LADO muda só a largura da caixa.
+       Essa separação é o que torna o gesto previsível: quem quer texto
+       maior puxa o canto, quem quer a linha quebrando noutro lugar puxa
+       o lado. */
+    function resize(event) {
+      var start = sizing.model;
+      var point = toExport(event.clientX, event.clientY);
+      var movedX = point.x - sizing.start.x;
+      var movedY = point.y - sizing.start.y;
+      var spot = sizing.spot;
+
+      var west = spot === 'nw' || spot === 'sw' || spot === 'w';
+      var north = spot === 'nw' || spot === 'ne' || spot === 'n';
+
+      if (spot === 'e' || spot === 'w') {
+        var width = clamp(west ? start.width - movedX : start.width + movedX, 120, EXPORT_W * 1.5);
+        selected.width = width;
+        if (west) selected.x = start.x + (start.width - width);
+
+      } else if (spot === 'n' || spot === 's') {
+        /* Puxar topo ou base de uma caixa de texto muda o corpo da
+           fonte: é o que a pessoa espera ao esticar o texto no eixo
+           vertical, e evita a deformação de esticar a letra. */
+        var byHeight = clamp(start.size + (north ? -movedY : movedY) * 0.6, MIN_SIZE, MAX_SIZE);
+        selected.size = byHeight;
+
+      } else {
+        var w2 = clamp(west ? start.width - movedX : start.width + movedX, 120, EXPORT_W * 1.5);
+        var ratio = w2 / start.width;
+        selected.width = w2;
+        selected.size = clamp(start.size * ratio, MIN_SIZE, MAX_SIZE);
+        if (west) selected.x = start.x + (start.width - w2);
+        if (north) selected.y = start.y + (start.size - selected.size) * 0.5;
+      }
+
+      layout(selected);
+      onChange();
+    }
+
+    /* Foco por teclado seleciona, Enter edita — o par do clique e do
+       duplo clique, para quem não usa ponteiro. */
     container.addEventListener('focusin', function (event) {
       if (!enabled) return;
       var box = boxFrom(event.target);
       if (box && box !== selected) select(box);
     });
 
-    container.addEventListener('keydown', function (event) {
-      if (!enabled || editing) return;
-      if (event.key !== 'Enter') return;
-      var box = boxFrom(event.target);
-      if (!box) return;
-      event.preventDefault();
-      edit(box);
-    });
-
-    /* Duplo clique num texto existente entra em edição daquele texto. */
     container.addEventListener('dblclick', function (event) {
       if (!enabled) return;
       var box = boxFrom(event.target);
@@ -2888,55 +3635,39 @@ window.TD_FRAMES = {
       edit(box);
     });
 
-    /* ── Teclado ─────────────────────────────────────────────────────── */
-
     document.addEventListener('keydown', function (event) {
       if (!enabled || !selected) return;
 
-      /* Dentro da edição, Delete e Backspace são do texto. */
       if (editing) {
-        if (event.key === 'Escape') {
-          event.preventDefault();
-          stopEditing();
-        }
+        if (event.key === 'Escape') { event.preventDefault(); stopEditing(); }
         return;
       }
 
-      var active = document.activeElement;
-      if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) return;
+      var live = document.activeElement;
+      if (live && (live.tagName === 'INPUT' || live.tagName === 'TEXTAREA' ||
+                   live.tagName === 'SELECT')) return;
 
+      if (event.key === 'Enter') { event.preventDefault(); edit(selected); return; }
       if (event.key === 'Delete' || event.key === 'Backspace') {
-        event.preventDefault();
-        remove(selected);
-        return;
+        event.preventDefault(); remove(selected); return;
       }
+      if (event.key === 'Escape') { event.preventDefault(); deselect(); return; }
 
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        deselect();
-        return;
-      }
-
-      /* Setas movem o texto: 1px de export por toque, 10 com Shift. */
       var step = event.shiftKey ? 10 : 1;
-      if (event.key === 'ArrowLeft')  { event.preventDefault(); selected.x -= step; }
+      if (event.key === 'ArrowLeft') { event.preventDefault(); selected.x -= step; }
       else if (event.key === 'ArrowRight') { event.preventDefault(); selected.x += step; }
-      else if (event.key === 'ArrowUp')    { event.preventDefault(); selected.y -= step; }
-      else if (event.key === 'ArrowDown')  { event.preventDefault(); selected.y += step; }
+      else if (event.key === 'ArrowUp') { event.preventDefault(); selected.y -= step; }
+      else if (event.key === 'ArrowDown') { event.preventDefault(); selected.y += step; }
       else return;
 
       layout(selected);
       onChange();
     });
 
-    /* ── Serializar, para o export ───────────────────────────────────────
-       Cada caixa vira uma lista de trechos com a cor de cada um. É o que
-       o renderizador do canvas consome — o mesmo, para o que sai no PNG
-       ser o que está na tela.                                            */
+    /* ── Serializar, para o export ──────────────────────────────────── */
 
     function segmentsOf(model) {
       var segments = [];
-
       (function walk(node, inherited) {
         Array.prototype.slice.call(node.childNodes).forEach(function (child) {
           if (child.nodeType === 3) {
@@ -2944,33 +3675,24 @@ window.TD_FRAMES = {
           } else if (child.nodeName === 'BR') {
             segments.push({ text: '\n', color: inherited });
           } else {
-            var color = (child.style && child.style.color) || inherited;
-            walk(child, color);
+            walk(child, (child.style && child.style.color) || inherited);
           }
         });
       })(model.element, model.color);
-
       return segments;
     }
 
     function serialize() {
-      return boxes.map(function (model) {
-        return {
-          x: model.x, y: model.y,
-          width: model.width, size: model.size,
-          weight: model.weight, align: model.align,
-          color: model.color, shadow: model.shadow,
-          segments: segmentsOf(model)
-        };
+      return boxes.map(function (m) {
+        return { x: m.x, y: m.y, width: m.width, size: m.size, weight: m.weight,
+                 align: m.align, color: m.color, shadow: m.shadow,
+                 segments: segmentsOf(m) };
       });
     }
-
-    /* ── Estado ──────────────────────────────────────────────────────── */
 
     function setEnabled(next) {
       if (enabled === next) return;
       enabled = next;
-      container.hidden = !next && boxes.length === 0;
       container.classList.toggle('td-texts--live', next);
       if (!next) deselectQuiet();
     }
@@ -2978,27 +3700,34 @@ window.TD_FRAMES = {
     window.addEventListener('resize', layoutAll);
 
     return {
-      create: create,
-      remove: remove,
-      select: select,
-      edit: edit,
-      deselect: deselect,
-      stopEditing: stopEditing,
-      paint: paint,
-      serialize: serialize,
-      setEnabled: setEnabled,
-      layoutAll: layoutAll,
+      create: create, remove: remove, select: select, edit: edit,
+      deselect: deselect, stopEditing: stopEditing, paint: paint,
+      serialize: serialize, setEnabled: setEnabled, layoutAll: layoutAll,
+      boxes: textBoxes,
       count: function () { return boxes.length; },
       selected: function () { return selected; },
       isEditing: function () { return !!editing; },
-      update: function (changes) {
+      /* O texto puro da caixa selecionada, para o campo do painel. */
+      plain: function () { return selected ? selected.element.textContent : ''; },
+      setPlain: function (value) {
         if (!selected) return;
-        Object.keys(changes).forEach(function (key) { selected[key] = changes[key]; });
+        selected.element.textContent = value;
         layout(selected);
         onChange();
       },
-      WEIGHTS: WEIGHTS,
-      DEFAULT: DEFAULT
+      update: function (changes) {
+        if (!selected) return;
+        Object.keys(changes).forEach(function (k) { selected[k] = changes[k]; });
+        layout(selected);
+        onChange();
+      },
+      nudgeSize: function (delta) {
+        if (!selected) return;
+        selected.size = clamp(selected.size + delta, MIN_SIZE, MAX_SIZE);
+        layout(selected);
+        onChange();
+      },
+      WEIGHTS: WEIGHTS, MIN_SIZE: MIN_SIZE, MAX_SIZE: MAX_SIZE
     };
   }
 
@@ -3736,7 +4465,10 @@ window.TD_FRAMES = {
   var surface = window.TD_CANVAS.create(canvas, {
     onChange: function (info) {
       if (info) zoomValue.textContent = info.zoomPercent + '%';
-    }
+    },
+    /* As imagens grudam nos textos, e os textos nas imagens. Um motor de
+       régua só, dois clientes. */
+    otherBoxes: function () { return texts ? texts.boxes() : []; }
   });
 
   /* O passo do − e do + é multiplicativo, igual ao da roda: clicar quatro
@@ -3751,8 +4483,9 @@ window.TD_FRAMES = {
 
   /* ── Render ────────────────────────────────────────────────────────── */
 
-  function icon(id) {
-    return '<svg class="td-icon" aria-hidden="true"><use href="#' + id + '"></use></svg>';
+  function icon(id, size) {
+    var style = size ? ' style="width:' + size + 'px;height:' + size + 'px"' : '';
+    return '<svg class="td-icon"' + style + ' aria-hidden="true"><use href="#' + id + '"></use></svg>';
   }
 
   function renderTrack() {
@@ -3788,12 +4521,17 @@ window.TD_FRAMES = {
       name.className = 'td-step__name';
       name.textContent = stop.name;
 
-      var note = document.createElement('span');
-      note.className = 'td-step__note';
-      note.textContent = status === 'done' ? stop.noteDone : stop.note;
-
       labels.appendChild(name);
-      labels.appendChild(note);
+
+      /* Só a parada ATUAL abre a linha de apoio. É o que o Figma
+         desenha — 40px nos outros passos, 57 no atual — e é o que faz a
+         trilha caber sem empurrar o resto do painel para fora. */
+      if (status === 'current') {
+        var note = document.createElement('span');
+        note.className = 'td-step__note';
+        note.textContent = stop.note;
+        labels.appendChild(note);
+      }
       button.appendChild(marker);
       button.appendChild(labels);
 
@@ -3811,30 +4549,12 @@ window.TD_FRAMES = {
 
     stopBody.textContent = '';
 
-    var title = document.createElement('h2');
-    title.className = 'td-stop__title';
-    title.textContent = stop.title;
-
-    var text = document.createElement('p');
-    text.className = 'td-stop__text';
-    text.textContent = stop.text;
-
-    stopBody.appendChild(title);
-    stopBody.appendChild(text);
-
-    /* Os controles de cada parada entram aqui nas etapas 4 a 8. Por ora
-       a parada 1 tem o que ela precisa para existir: uma imagem. */
-    if (state.step === 0) stopBody.appendChild(buildStopOne());
-    if (state.step === 1) stopBody.appendChild(buildStopTwo());
-    if (state.step === 2) stopBody.appendChild(buildStopThree());
-    if (state.step === 3) stopBody.appendChild(buildStopFour());
-
-    if (stop.cost) {
-      var cost = document.createElement('p');
-      cost.className = 'td-stop__cost';
-      cost.textContent = stop.cost;
-      stopBody.appendChild(cost);
-    }
+    /* CADA PARADA MONTA O QUE O FIGMA DESENHA PARA ELA. Um título e um
+       parágrafo genéricos em todas era invenção minha, e era o que
+       estourava a altura do painel: a parada 2 e a 3 não têm parágrafo
+       nenhum no desenho. */
+    var builders = [buildStopOne, buildStopTwo, buildStopThree, buildStopFour];
+    stopBody.appendChild(builders[state.step]());
 
     var ready = stop.ready();
     advance.disabled = !ready;
@@ -3861,15 +4581,20 @@ window.TD_FRAMES = {
        de zoom saem: oferecer um gesto que vai ser descartado é pior do
        que não oferecer. */
     var busy = ai && (ai.phase === 'working' || ai.phase === 'preview');
-    if (busy) surface.select(false);
     zoomBar.hidden = !state.image || busy;
 
     /* Um gesto, um significado por vez: o duplo clique enquadra a imagem
        na parada 1 e escreve na parada 3. */
     surface.setDoubleClickFit(state.step === 0);
+
+    /* DA PARADA 2 EM DIANTE A COMPOSIÇÃO CONGELA. As imagens deixam de
+       aceitar arraste, zoom e alça: o que foi montado na parada 1 está
+       fechado, e o filtro roda em cima dele. Voltar para a parada 1
+       descongela. */
+    surface.freeze(state.step !== 0);
     if (texts) {
       texts.setEnabled(state.step === 2);
-      timerGuide.hidden = !(state.step === 2 && timerOn);
+      timerGuide.hidden = state.step !== 2;
     }
 
     if (typeof announce === 'function') {
@@ -3914,6 +4639,17 @@ window.TD_FRAMES = {
 
   function buildStopOne() {
     var wrap = document.createElement('div');
+    wrap.className = 'td-stop';
+    var title = document.createElement('h2');
+    title.className = 'td-stop__title';
+    title.textContent = 'Comece pela imagem';
+    wrap.appendChild(title);
+
+    var lede = document.createElement('p');
+    lede.className = 'td-stop__text';
+    lede.textContent = 'Sem imagem não há thumb. Nenhuma ferramenta aparece ' +
+      'antes de existir conteúdo no canvas.';
+    wrap.appendChild(lede);
 
     var input = document.createElement('input');
     input.type = 'file';
@@ -3922,31 +4658,111 @@ window.TD_FRAMES = {
     input.className = 'td-sr';
     input.addEventListener('change', function () {
       if (input.files && input.files[0]) loadImage(input.files[0]);
+      input.value = '';          /* deixa subir a mesma imagem de novo */
     });
 
+    /* Botão/Upload do Figma: fundo Ink, BORDA TRACEJADA, 40 de altura,
+       raio de input, ícone de 14 e rótulo em Body Bold. */
     var label = document.createElement('label');
-    label.className = 'td-btn td-btn--ghost td-btn--block';
+    label.className = 'td-upload';
     label.htmlFor = 'image-input';
-    label.innerHTML = icon('i-upload') + ' ' +
-      (state.image ? 'Trocar a imagem' : 'Escolher imagem');
+    label.innerHTML = icon('i-upload', 14) + '<span>' +
+      (surface.count() ? 'Adicionar outra imagem' : 'Escolher imagem') + '</span>';
 
     wrap.appendChild(input);
     wrap.appendChild(label);
 
-    /* Nenhuma ferramenta aparece antes de existir conteúdo no canvas. */
+    /* A LISTA DE CAMADAS. Cada imagem nova trava as de baixo; é aqui que
+       se volta para uma travada, e é aqui que se vê a ordem da pilha. */
+    if (surface.count()) wrap.appendChild(buildLayers());
+
     if (state.image) wrap.appendChild(buildRemoveBackground());
+
+    var note = document.createElement('p');
+    note.className = 'td-stop__legal';
+    note.textContent = surface.count() > 1
+      ? 'A imagem do topo é a que se mexe. As de baixo ficam travadas — ' +
+        'clique numa delas para destravar.'
+      : 'Uma cobrança por confirmação, não por tentativa: reenquadrar o ' +
+        'recorte é local e não gasta crédito.';
+    wrap.appendChild(note);
 
     return wrap;
   }
 
+  function buildLayers() {
+    var state_ = surface.state();
 
-  /* Saldo insuficiente nunca é só um botão morto: o caminho de volta
-     aparece junto. */
+    var box = document.createElement('div');
+    box.className = 'td-layers';
+
+    var caption = document.createElement('p');
+    caption.className = 'td-label';
+    caption.textContent = 'Camadas';
+    box.appendChild(caption);
+
+    var strip = document.createElement('div');
+    strip.className = 'td-layers__strip';
+
+    /* De cima para baixo, como a pilha é vista. */
+    state_.layers.slice().reverse().forEach(function (entry, position) {
+      var chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'td-chip' + (entry.locked ? '' : ' td-chip--on');
+      chip.title = entry.locked ? 'Travada — clique para destravar' : 'Em edição';
+      chip.setAttribute('aria-pressed', entry.locked ? 'false' : 'true');
+
+      var art = document.createElement('span');
+      art.className = 'td-chip__art';
+      art.style.backgroundImage = 'url("' + entry.src + '")';
+
+      var tag = document.createElement('span');
+      tag.className = 'td-chip__tag';
+      tag.textContent = position === 0 ? 'topo' : String(state_.layers.length - position);
+
+      chip.appendChild(art);
+      chip.appendChild(tag);
+      chip.addEventListener('click', function () {
+        surface.editLayer(entry.id);
+        render();
+      });
+
+      var drop = document.createElement('button');
+      drop.type = 'button';
+      drop.className = 'td-chip__drop';
+      drop.setAttribute('aria-label', 'Remover esta camada');
+      drop.innerHTML = icon('i-close', 12);
+      drop.addEventListener('click', function (event) {
+        event.stopPropagation();
+        surface.removeLayer(entry.id);
+        if (!surface.count()) {
+          state.image = null;
+          canvasEmpty.hidden = false;
+          zoomBar.hidden = true;
+        }
+        render();
+      });
+
+      var cell = document.createElement('div');
+      cell.className = 'td-layers__cell';
+      cell.appendChild(chip);
+      cell.appendChild(drop);
+      strip.appendChild(cell);
+    });
+
+    box.appendChild(strip);
+    return box;
+  }
+
+  function costPill(amount) {
+    return '<span class="td-cost">' + amount + ' ✦</span>';
+  }
+
   function budgetWay() {
     var button = document.createElement('button');
     button.type = 'button';
-    button.className = 'td-btn td-btn--ghost td-btn--block td-stack';
-    button.textContent = 'Ajustar o meu teto de gasto';
+    button.className = 'td-action td-action--secondary td-stack';
+    button.textContent = 'Ajustar o meu teto';
     button.addEventListener('click', function () { openBudget(); });
     return button;
   }
@@ -3957,7 +4773,7 @@ window.TD_FRAMES = {
 
     var button = document.createElement('button');
     button.type = 'button';
-    button.className = 'td-btn td-btn--ghost td-btn--block';
+    button.className = 'td-action td-action--secondary';
 
     var enough = state.credits >= COST.removeBackground;
 
@@ -3973,8 +4789,12 @@ window.TD_FRAMES = {
       box.appendChild(budgetWay());
       return box;
     } else {
-      button.textContent = (state.bgRemoved ? 'Remover fundo de novo' : 'Remover fundo') +
-        ' · ' + COST.removeBackground + ' ✦';
+      /* O custo vive DENTRO do botão, numa pílula — como o Botão/Ação
+         'Primária IA' do Figma. O preço aparece antes do clique, e não
+         numa linha separada. */
+      button.innerHTML = '<span>' +
+        (state.bgRemoved ? 'Remover fundo de novo' : 'Remover fundo') +
+        '</span>' + costPill(COST.removeBackground);
       button.addEventListener('click', removeBackground);
     }
 
@@ -4037,7 +4857,7 @@ window.TD_FRAMES = {
     if (action) {
       var button = document.createElement('button');
       button.type = 'button';
-      button.className = 'td-btn td-btn--ghost td-btn--block';
+      button.className = 'td-action td-action--secondary';
       button.textContent = action.label;
       button.addEventListener('click', action.run);
       box.appendChild(button);
@@ -4098,7 +4918,8 @@ window.TD_FRAMES = {
         };
         canvasEmpty.hidden = true;
         zoomBar.hidden = false;
-        surface.setImage(reader.result, probe.naturalWidth, probe.naturalHeight);
+        /* CADA IMAGEM NOVA ENTRA POR CIMA E TRAVA AS DE BAIXO. */
+        surface.addImage(reader.result, probe.naturalWidth, probe.naturalHeight);
         render();
       };
       probe.src = reader.result;
@@ -4178,10 +4999,18 @@ window.TD_FRAMES = {
       return wrap;
     }
 
+    var title = document.createElement('h2');
+    title.className = 'td-stop__title';
+    title.textContent = 'Escolha a direção de arte';
+    wrap.appendChild(title);
+
     var grid = document.createElement('div');
     grid.className = 'td-filters';
 
     window.TD_AI.FILTERS.forEach(function (filter) {
+      /* Filtro/Amostra do Figma: a própria foto já filtrada, com o custo
+         numa pílula no canto e o nome em Label 12 com tracking. Escolher
+         com os olhos, sem gastar geração para descobrir. */
       var card = document.createElement('button');
       card.type = 'button';
       card.className = 'td-filter';
@@ -4192,25 +5021,22 @@ window.TD_FRAMES = {
 
       var art = document.createElement('span');
       art.className = 'td-filter__art';
-      /* A amostra é decoração: se o arquivo não estiver em assets/
-         samples/, o card continua funcionando e legível. */
       art.style.backgroundImage = 'url("' + filter.sample + '")';
 
-      var name = document.createElement('span');
-      name.className = 'td-filter__name';
-      name.textContent = filter.name;
+      var cost = document.createElement('span');
+      cost.className = 'td-filter__cost';
+      cost.textContent = COST.filterPreview + ' ✦';
+      art.appendChild(cost);
 
-      var note = document.createElement('span');
-      note.className = 'td-filter__note';
-      note.textContent = filter.note;
+      var info = document.createElement('span');
+      info.className = 'td-filter__info';
+      info.textContent = filter.name;
 
       card.appendChild(art);
-      card.appendChild(name);
-      card.appendChild(note);
+      card.appendChild(info);
 
       /* CLICAR NÃO GERA NADA. Abre a confirmação. */
       card.addEventListener('click', function () { askConfirm(filter, card); });
-
       grid.appendChild(card);
     });
 
@@ -4333,7 +5159,9 @@ window.TD_FRAMES = {
         ai.result = null;
         state.filter = filter;
         state.image = result;
-        surface.setImage(result.src, result.width, result.height);
+        /* O filtro devolve o QUADRO INTEIRO já renderizado: ele passa a
+           ser a nova base, no lugar da pilha de camadas que o gerou. */
+        surface.replaceAll(result.src, result.width, result.height);
         clearCompare();
         render();
       }
@@ -4399,7 +5227,7 @@ window.TD_FRAMES = {
 
     var cancel = document.createElement('button');
     cancel.type = 'button';
-    cancel.className = 'td-btn td-btn--ghost td-btn--block';
+    cancel.className = 'td-action td-action--secondary';
     cancel.textContent = 'Cancelar a espera';
     cancel.addEventListener('click', cancelFilter);
 
@@ -4431,10 +5259,10 @@ window.TD_FRAMES = {
 
     var approve = document.createElement('button');
     approve.type = 'button';
-    approve.className = 'td-btn td-btn--primary td-btn--block';
+    approve.className = 'td-action td-action--primary';
 
     if (state.credits >= COST.filterDelivery) {
-      approve.textContent = 'Aprovar em 2K · ' + COST.filterDelivery + ' ✦';
+      approve.innerHTML = '<span>Aprovar em 2K</span>' + costPill(COST.filterDelivery);
       approve.addEventListener('click', function () { runFilter(ai.filter, 'delivery'); });
     } else {
       approve.disabled = true;
@@ -4448,13 +5276,12 @@ window.TD_FRAMES = {
 
     var discard = document.createElement('button');
     discard.type = 'button';
-    discard.className = 'td-btn td-btn--ghost td-btn--block td-stack';
+    discard.className = 'td-action td-action--secondary td-stack';
     discard.textContent = 'Descartar a prévia';
     discard.addEventListener('click', function () {
       ai.phase = 'idle';
       ai.result = null;
       clearCompare();
-      surface.select(true);
       render();
     });
 
@@ -4566,13 +5393,13 @@ window.TD_FRAMES = {
 
     var again = document.createElement('button');
     again.type = 'button';
-    again.className = 'td-btn td-btn--ghost td-btn--block';
-    again.textContent = 'Tentar de novo · ' + COST.filterPreview + ' ✦';
+    again.className = 'td-action td-action--secondary';
+    again.innerHTML = '<span>Tentar de novo</span>' + costPill(COST.filterPreview);
     again.addEventListener('click', function () { runFilter(ai.filter, 'preview'); });
 
     var skip = document.createElement('button');
     skip.type = 'button';
-    skip.className = 'td-btn td-btn--ghost td-btn--block td-stack';
+    skip.className = 'td-action td-action--secondary td-stack';
     skip.textContent = 'Seguir sem filtro · 0 ✦';
     skip.addEventListener('click', function () {
       ai.phase = 'idle';
@@ -4592,7 +5419,10 @@ window.TD_FRAMES = {
      PARADA 3 · O TEXTO
      ===================================================================== */
 
-  var texts = window.TD_TEXT.create(canvas, { onChange: function () { render(); } });
+  var texts = window.TD_TEXT.create(canvas, {
+    onChange: function () { render(); },
+    otherBoxes: function () { return surface.boxes(); }
+  });
 
   /* O guia do timer. A faixa que o YouTube cobre com a duração do vídeo:
      ninguém deve escrever embaixo dela. Ligado por padrão na parada 3,
@@ -4602,7 +5432,6 @@ window.TD_FRAMES = {
   timerGuide.innerHTML = '<span>16:20</span>';
   timerGuide.hidden = true;
   canvas.appendChild(timerGuide);
-  var timerOn = true;
 
   /* DUPLO CLIQUE EM PONTO VAZIO CRIA UMA CAIXA ALI e já entra em edição.
      Na parada 1 o mesmo gesto enquadra a imagem; por isso cada parada
@@ -4626,153 +5455,158 @@ window.TD_FRAMES = {
 
   function buildStopThree() {
     var wrap = document.createElement('div');
-    var selected = texts.selected();
+    wrap.className = 'td-stop';
+    var chosen = texts.selected();
 
-    if (!selected) {
-      /* Sem nada selecionado, o painel ensina o gesto que não tem botão. */
-      var hint = document.createElement('p');
-      hint.className = 'td-stop__text';
-      hint.textContent = texts.count()
-        ? 'Clique num texto para editar as opções dele.'
-        : 'Dê um duplo clique em qualquer ponto do canvas para escrever.';
-      wrap.appendChild(hint);
+    /* ── Campo/Área · o título ────────────────────────────────────────
+       O Figma põe um campo de texto no painel, e ele existe por um
+       motivo: dá para escrever sem mirar no canvas, e é o caminho de
+       quem usa teclado. O canvas continua sendo o caminho principal. */
 
+    var field = document.createElement('div');
+    field.className = 'td-field2';
+
+    var heading = document.createElement('h2');
+    heading.className = 'td-stop__title';
+    heading.textContent = 'Escreva o título';
+    field.appendChild(heading);
+
+    var caption = document.createElement('p');
+    caption.className = 'td-label';
+    caption.textContent = 'Título';
+
+    var area = document.createElement('textarea');
+    area.className = 'td-area';
+    area.rows = 2;
+    area.placeholder = chosen ? '' : 'Dê um duplo clique no canvas para escrever';
+    area.value = chosen ? texts.plain() : '';
+    area.disabled = !chosen;
+    area.addEventListener('input', function () { texts.setPlain(area.value); });
+
+    field.appendChild(caption);
+    field.appendChild(area);
+    wrap.appendChild(field);
+
+    if (!chosen) {
       var add = document.createElement('button');
       add.type = 'button';
-      add.className = 'td-btn td-btn--ghost td-btn--block';
+      add.className = 'td-action td-action--secondary';
       add.textContent = 'Adicionar um texto';
       add.addEventListener('click', function () {
-        texts.create(surface.EXPORT_W * 0.08, surface.EXPORT_H * 0.6);
+        texts.create(surface.EXPORT_W * 0.06, surface.EXPORT_H * 0.62);
       });
       wrap.appendChild(add);
-
-      wrap.appendChild(buildTimerToggle());
       return wrap;
     }
 
-    /* ── Cor ──────────────────────────────────────────────────────────
-       O amarelo aqui é o destaque: com um trecho selecionado dentro da
-       edição, pinta só ele. Sem seleção, pinta a caixa. É o mesmo botão
-       porque é o mesmo conceito — não há um "modo destaque". */
+    /* ── Cor do texto · Estilo do texto ──────────────────────────────
+       Duas colunas, como no Figma. O amarelo é o destaque: com uma
+       palavra selecionada dentro da edição, pinta só ela. */
 
-    wrap.appendChild(group('Cor', function (row) {
-      row.appendChild(swatch('#ffffff', 'Branco', selected.color === '#ffffff'));
-      row.appendChild(swatch('#ffd400', 'Amarelo · destaque', selected.color === '#ffd400'));
+    var row = document.createElement('div');
+    row.className = 'td-duo';
 
-      var picker = document.createElement('input');
-      picker.type = 'color';
-      picker.className = 'td-swatch td-swatch--pick';
-      picker.value = /^#[0-9a-f]{6}$/i.test(selected.color) ? selected.color : '#ffffff';
-      picker.setAttribute('aria-label', 'Escolher outra cor');
-      picker.addEventListener('input', function () { texts.paint(picker.value); });
-      row.appendChild(picker);
+    var colors = column('Cor do texto');
+    var swatches = document.createElement('div');
+    swatches.className = 'td-swatches';
+    swatches.appendChild(swatch('#ffffff', 'Branco', chosen.color === '#ffffff'));
+    swatches.appendChild(swatch('#ffd400', 'Amarelo · destaque', chosen.color === '#ffd400'));
+
+    var custom = document.createElement('label');
+    custom.className = 'td-swatch td-swatch--pick' +
+      (['#ffffff', '#ffd400'].indexOf(chosen.color) < 0 ? ' td-swatch--on' : '');
+    custom.title = 'Escolher outra cor';
+    var picker = document.createElement('input');
+    picker.type = 'color';
+    picker.className = 'td-sr';
+    picker.value = /^#[0-9a-f]{6}$/i.test(chosen.color) ? chosen.color : '#ffffff';
+    picker.setAttribute('aria-label', 'Escolher outra cor do texto');
+    picker.addEventListener('input', function () { texts.paint(picker.value); });
+    custom.appendChild(picker);
+    swatches.appendChild(custom);
+
+    colors.appendChild(swatches);
+
+    var alignment = column('Estilo do texto');
+    var aligns = document.createElement('div');
+    aligns.className = 'td-aligns';
+    [['left', 'i-align-left', 'Alinhar à esquerda'],
+     ['center', 'i-align-center', 'Centralizar'],
+     ['right', 'i-align-right', 'Alinhar à direita']].forEach(function (item) {
+      var button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'td-align' + (chosen.align === item[0] ? ' td-align--on' : '');
+      button.innerHTML = icon(item[1], 20);
+      button.setAttribute('aria-label', item[2]);
+      if (chosen.align === item[0]) button.setAttribute('aria-pressed', 'true');
+      button.addEventListener('click', function () { texts.update({ align: item[0] }); });
+      aligns.appendChild(button);
+    });
+    alignment.appendChild(aligns);
+
+    row.appendChild(colors);
+    row.appendChild(alignment);
+    wrap.appendChild(row);
+
+    /* ── Peso da fonte · Controle/Seletor ────────────────────────────
+       Um seletor, não quatro botões: são quatro pesos e o painel tem
+       320 de largura. Sempre em itálico — o padrão de título da casa. */
+
+    var weightBox = column('Peso da fonte');
+    var select = document.createElement('div');
+    select.className = 'td-select';
+
+    var picker2 = document.createElement('select');
+    picker2.setAttribute('aria-label', 'Peso da fonte do título');
+    texts.WEIGHTS.forEach(function (weight) {
+      var option = document.createElement('option');
+      option.value = weight.value;
+      option.textContent = weight.label;
+      if (chosen.weight === weight.value) option.selected = true;
+      picker2.appendChild(option);
+    });
+    picker2.addEventListener('change', function () {
+      texts.update({ weight: parseInt(picker2.value, 10) });
+    });
+
+    select.appendChild(picker2);
+    select.insertAdjacentHTML('beforeend', icon('i-caret', 20));
+    weightBox.appendChild(select);
+    wrap.appendChild(weightBox);
+
+    /* ── Sombra abaixo do texto ─────────────────────────────────────── */
+
+    var shadowBox = column('Sombra abaixo do texto');
+    var pair = document.createElement('div');
+    pair.className = 'td-pair';
+    pair.appendChild(toggle('Com sombra', chosen.shadow, function () {
+      texts.update({ shadow: true });
     }));
-
-    var painted = document.createElement('p');
-    painted.className = 'td-stop__cost';
-    painted.textContent = 'Selecione uma palavra dentro do texto e clique no amarelo ' +
-      'para destacar só ela.';
-    wrap.appendChild(painted);
-
-    /* ── Alinhamento ─────────────────────────────────────────────────── */
-
-    wrap.appendChild(group('Alinhamento', function (row) {
-      [['left', 'Esquerda'], ['center', 'Centro'], ['right', 'Direita']].forEach(function (pair) {
-        row.appendChild(choice(pair[1], selected.align === pair[0], function () {
-          texts.update({ align: pair[0] });
-        }));
-      });
+    pair.appendChild(toggle('Sem sombra', !chosen.shadow, function () {
+      texts.update({ shadow: false });
     }));
+    shadowBox.appendChild(pair);
+    wrap.appendChild(shadowBox);
 
-    /* ── Peso ─────────────────────────────────────────────────────────
-       Sempre em itálico: o padrão da casa é Barlow Black Italic. */
-
-    wrap.appendChild(group('Peso', function (row) {
-      texts.WEIGHTS.forEach(function (weight) {
-        row.appendChild(choice(weight.label, selected.weight === weight.value, function () {
-          texts.update({ weight: weight.value });
-        }));
-      });
-    }));
-
-    /* ── Sombra ───────────────────────────────────────────────────────── */
-
-    wrap.appendChild(group('Sombra', function (row) {
-      row.appendChild(choice('Com sombra', selected.shadow, function () {
-        texts.update({ shadow: true });
-      }));
-      row.appendChild(choice('Sem sombra', !selected.shadow, function () {
-        texts.update({ shadow: false });
-      }));
-    }));
-
-    var remove = document.createElement('button');
-    remove.type = 'button';
-    remove.className = 'td-btn td-btn--ghost td-btn--block td-stack';
-    remove.textContent = 'Apagar este texto';
-    remove.addEventListener('click', function () { texts.remove(texts.selected()); });
-    wrap.appendChild(remove);
-
-    var keys = document.createElement('p');
-    keys.className = 'td-stop__cost';
-    keys.textContent = 'Delete apaga · Esc desseleciona · setas movem um pixel, ' +
-      'dez com Shift.';
-    wrap.appendChild(keys);
-
-    wrap.appendChild(buildTimerToggle());
     return wrap;
   }
 
-  function buildTimerToggle() {
-    var box = document.createElement('label');
-    box.className = 'td-check';
-
-    var input = document.createElement('input');
-    input.type = 'checkbox';
-    input.checked = timerOn;
-    input.addEventListener('change', function () {
-      timerOn = input.checked;
-      render();
-    });
-
-    var text = document.createElement('span');
-    text.textContent = 'Mostrar a faixa do timer do YouTube';
-
-    var note = document.createElement('span');
-    note.className = 'td-check__note';
-    note.textContent = 'Some no export.';
-
-    box.appendChild(input);
-    box.appendChild(text);
-    box.appendChild(note);
-    return box;
-  }
-
-  /* ── Peças do painel ───────────────────────────────────────────────── */
-
-  function group(label, fill) {
+  function column(label) {
     var box = document.createElement('div');
-    box.className = 'td-group';
-
+    box.className = 'td-col';
     var caption = document.createElement('p');
-    caption.className = 'td-group__label';
+    caption.className = 'td-label';
     caption.textContent = label;
-
-    var row = document.createElement('div');
-    row.className = 'td-group__row';
-    fill(row);
-
     box.appendChild(caption);
-    box.appendChild(row);
     return box;
   }
 
-  /* AZUL MARCA O CONTROLE ATIVO — nunca laranja, porque escolher peso
-     não avança a parada. */
-  function choice(label, active, run) {
+  /* Botão/Ação secundário com estado ligado: AZUL MARCA O CONTROLE
+     ATIVO — nunca laranja, porque escolher sombra não avança a parada. */
+  function toggle(label, active, run) {
     var button = document.createElement('button');
     button.type = 'button';
-    button.className = 'td-choice' + (active ? ' td-choice--on' : '');
+    button.className = 'td-action td-action--secondary' + (active ? ' td-action--on' : '');
     button.textContent = label;
     if (active) button.setAttribute('aria-pressed', 'true');
     button.addEventListener('click', run);
@@ -4794,6 +5628,7 @@ window.TD_FRAMES = {
     return button;
   }
 
+  /* ── Peças do painel ───────────────────────────────────────────────── */
 
   /* =====================================================================
      PARADA 4 · MOLDURA E EXPORT
@@ -4913,8 +5748,7 @@ window.TD_FRAMES = {
     if (anyMissing) {
       var note = document.createElement('p');
       note.className = 'td-stop__cost';
-      note.textContent = 'As molduras da marca são PNG 1920 × 1080 com fundo ' +
-        'transparente. O README lista os nomes exatos que o código procura.';
+      note.textContent = 'Falta o PNG da moldura. Veja os nomes no README.';
       wrap.appendChild(note);
     }
 

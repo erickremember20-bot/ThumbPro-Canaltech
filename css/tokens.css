@@ -54,6 +54,12 @@
                                       aconteceu. Nunca anuncia. */
   --feedback-danger:    #ff4d6d;   /* VERMELHO SÓ PARA FALHA. */
 
+  /* Fundo de controle ligado. Vem do Figma (Botão/Ação e
+     Controle/Seletor no estado ativo), onde é um preenchimento fixo e
+     não uma variável da coleção — por isso está escrito aqui e não sai
+     de um token de cor. */
+  --control-on:         #182538;
+
   /* Foco */
   --focus-ring:         #5cb2ff;   /* anel de 2px em todo controle
                                       interativo. Ver app.css. */
@@ -138,7 +144,7 @@
      TopBar/Height e TopBar/Padding X são variáveis. A largura do painel
      é medida das telas: o painel ocupa x=1120..1440 num frame de 1440.  */
 
-  --topbar-height:    54px;
+  --topbar-height:    88px;
   --topbar-padding-x: 10px;
   --panel-width:      320px;
 
@@ -198,5 +204,11 @@
        largura cheia, com o canvas fixo no topo.                        */
 
     --panel-width: 100%;
+
+    /* Mobile, medido nas telas do Figma: barra 64, palco fixo 233 com o
+       canvas de 358 × 201, trilha compacta de 49 e o dock com o resto. */
+    --topbar-height: 64px;
+    --stage-height:  233px;
+    --track-height:  49px;
   }
 }

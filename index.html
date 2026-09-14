@@ -34,10 +34,10 @@
     </form>
 
     <div class="td-setup__actions">
-      <button type="button" class="td-btn td-btn--danger" id="setup-clear" hidden>
+      <button type="button" class="td-action td-action--danger" id="setup-clear" hidden>
         Apagar chaves
       </button>
-      <button type="submit" class="td-btn td-btn--primary" id="setup-save" form="setup-form">
+      <button type="submit" class="td-action td-action--primary" id="setup-save" form="setup-form">
         Salvar e abrir o editor
       </button>
     </div>
@@ -73,10 +73,10 @@
     </p>
 
     <div class="td-modal__actions">
-      <button type="button" class="td-btn td-btn--ghost" id="confirm-discard">Descartar</button>
-      <button type="button" class="td-btn td-btn--ghost" id="confirm-skip">Seguir sem filtro · 0 ✦</button>
-      <button type="button" class="td-btn td-btn--ghost" id="confirm-budget" hidden>Ajustar o meu teto</button>
-      <button type="button" class="td-btn td-btn--primary" id="confirm-go">Ver prévia · 1 ✦</button>
+      <button type="button" class="td-action td-action--secondary" id="confirm-discard">Descartar</button>
+      <button type="button" class="td-action td-action--secondary" id="confirm-skip">Seguir sem filtro</button>
+      <button type="button" class="td-action td-action--secondary" id="confirm-budget" hidden>Ajustar o meu teto</button>
+      <button type="button" class="td-action td-action--primary" id="confirm-go">Ver prévia · 1 ✦</button>
     </div>
   </div>
 </div>
@@ -96,8 +96,8 @@
     <dl class="td-ledger" id="receipt-ledger"></dl>
 
     <div class="td-modal__actions">
-      <button type="button" class="td-btn td-btn--primary" id="receipt-go">Baixar PNG 1920 × 1080</button>
-      <button type="button" class="td-btn td-btn--ghost" id="receipt-back">Voltar a editar</button>
+      <button type="button" class="td-action td-action--primary" id="receipt-go">Baixar PNG 1920 × 1080</button>
+      <button type="button" class="td-action td-action--secondary" id="receipt-back">Voltar a editar</button>
     </div>
   </div>
 </div>
@@ -121,8 +121,8 @@
     </div>
 
     <div class="td-modal__actions">
-      <button type="button" class="td-btn td-btn--primary" id="budget-save">Salvar o teto</button>
-      <button type="button" class="td-btn td-btn--ghost" id="budget-cancel">Cancelar</button>
+      <button type="button" class="td-action td-action--primary" id="budget-save">Salvar o teto</button>
+      <button type="button" class="td-action td-action--secondary" id="budget-cancel">Cancelar</button>
     </div>
   </div>
 </div>
@@ -154,6 +154,18 @@
       <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor"
               stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M5 13l4 4L19 7"/></symbol>
+      <symbol id="i-align-left" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round">
+        <path d="M4 6h16M4 11h10M4 16h13M4 21h8"/></symbol>
+      <symbol id="i-align-center" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round">
+        <path d="M4 6h16M7 11h10M5 16h14M8 21h8"/></symbol>
+      <symbol id="i-align-right" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round">
+        <path d="M4 6h16M10 11h10M7 16h13M12 21h8"/></symbol>
+      <symbol id="i-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M6 9l6 6 6-6"/></symbol>
     </defs>
   </svg>
 
@@ -224,7 +236,7 @@
       <div class="td-panel__stop" id="stop-body"></div>
 
       <div class="td-panel__foot">
-        <button type="button" class="td-btn td-btn--primary td-btn--block" id="advance" disabled>
+        <button type="button" class="td-action td-action--primary" id="advance" disabled>
           Continuar
         </button>
       </div>
@@ -235,6 +247,7 @@
 
 <script src="js/frames.js"></script>
 <script src="js/config.js"></script>
+<script src="js/snap.js"></script>
 <script src="js/canvas.js"></script>
 <script src="js/text.js"></script>
 <script src="js/ai.js"></script>

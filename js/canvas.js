@@ -15,6 +15,12 @@
    Não é o mesmo que "caber no canvas" — por isso o duplo clique
    (enquadrar) e o clique no número (voltar a 100%) são gestos
    diferentes, com resultados diferentes.
+
+   CAMADAS E TRAVAMENTO PROGRESSIVO
+   Cada imagem nova entra por cima e TRAVA as de baixo. Só a camada do
+   topo se mexe. É a regra de uma colagem: você monta o fundo, fecha o
+   fundo, monta o recorte por cima. Quem quiser mexer numa camada
+   travada volta para ela pela lista de camadas do painel.
    ===================================================================== */
 
 (function (window, document) {
@@ -31,6 +37,8 @@
      volta, sem prender o enquadramento. */
   var MIN_VISIBLE = 0.25;
 
+  var seq = 0;
+
   function clamp(value, low, high) {
     return Math.min(high, Math.max(low, value));
   }
@@ -39,126 +47,196 @@
     options = options || {};
     var onChange = options.onChange || function () {};
 
-    /* ── Estado da camada ───────────────────────────────────────────
-       x, y = canto superior esquerdo em pixels de export.
-       sx, sy = escala. Iguais, exceto quando alguém segura Shift numa
-       alça e libera a proporção de propósito.                          */
+    var layers = [];
+    var activeId = null;
+    var frozen = false;      /* fora da parada 1, nada se mexe */
 
-    var layer = null;
-    var selected = false;
-
-    var image = document.createElement('img');
-    image.className = 'td-layer';
-    image.alt = '';
-    image.draggable = false;
+    var snap = window.TD_SNAP.create(root);
 
     var handles = document.createElement('div');
     handles.className = 'td-handles';
     handles.hidden = true;
 
-    var CORNERS = ['nw', 'ne', 'se', 'sw'];
-    CORNERS.forEach(function (corner) {
+    ['nw', 'ne', 'se', 'sw'].forEach(function (corner) {
       var handle = document.createElement('button');
       handle.type = 'button';
       handle.className = 'td-handle td-handle--' + corner;
       handle.dataset.corner = corner;
-      handle.setAttribute('aria-label', 'Redimensionar pelo canto');
+      handle.setAttribute('aria-label', 'Redimensionar a imagem pelo canto ' + corner);
       handles.appendChild(handle);
     });
+    root.appendChild(handles);
+
+    /* ── Camadas ────────────────────────────────────────────────────── */
+
+    function active() {
+      if (frozen) return null;
+      return layers.filter(function (l) { return l.id === activeId && !l.locked; })[0] || null;
+    }
+
+    function byId(id) {
+      return layers.filter(function (l) { return l.id === id; })[0] || null;
+    }
+
+    function addImage(src, naturalWidth, naturalHeight) {
+      /* A NOVA TRAVA AS DE BAIXO. */
+      layers.forEach(function (l) { l.locked = true; });
+
+      var layer = {
+        id: 'L' + (++seq),
+        src: src,
+        natW: naturalWidth,
+        natH: naturalHeight,
+        sx: 1, sy: 1, x: 0, y: 0,
+        locked: false
+      };
+
+      var element = document.createElement('img');
+      element.className = 'td-layer';
+      element.alt = '';
+      element.draggable = false;
+      element.src = src;
+      layer.element = element;
+
+      /* Entra por cima, mas abaixo das alças e dos guias. */
+      root.insertBefore(element, handles);
+      layers.push(layer);
+      activeId = layer.id;
+
+      fill(layer);
+      draw();
+      return layer;
+    }
+
+    /* Volta a editar uma camada travada. Destravar uma camada trava
+       todas as outras: continua valendo que só uma se mexe por vez. */
+    function editLayer(id) {
+      var layer = byId(id);
+      if (!layer) return;
+      layers.forEach(function (l) { l.locked = l !== layer; });
+      activeId = layer.id;
+      frozen = false;
+      draw();
+    }
+
+    function removeLayer(id) {
+      var layer = byId(id);
+      if (!layer) return;
+      if (layer.element.parentNode) layer.element.parentNode.removeChild(layer.element);
+      layers = layers.filter(function (l) { return l !== layer; });
+      if (activeId === id) {
+        var last = layers[layers.length - 1];
+        activeId = last ? last.id : null;
+        if (last) last.locked = false;
+      }
+      draw();
+    }
+
+    /* Sair da parada 1 congela a composição inteira: da parada 2 em
+       diante as imagens não se mexem mais. */
+    function freeze(next) {
+      frozen = next;
+      if (next) layers.forEach(function (l) { l.locked = true; });
+      draw();
+    }
 
     /* ── Conversão tela ↔ export ────────────────────────────────────── */
 
-    function factor() {
-      /* Quantos pixels de tela vale um pixel de export. */
-      return root.clientWidth / EXPORT_W;
-    }
+    function factor() { return root.clientWidth / EXPORT_W; }
 
     function toExport(clientX, clientY) {
       var rect = root.getBoundingClientRect();
       var k = factor();
+      return { x: (clientX - rect.left) / k, y: (clientY - rect.top) / k };
+    }
+
+    function boxOf(layer) {
       return {
-        x: (clientX - rect.left) / k,
-        y: (clientY - rect.top) / k
+        x: layer.x, y: layer.y,
+        width: layer.natW * layer.sx,
+        height: layer.natH * layer.sy
       };
+    }
+
+    /* Os retângulos que servem de alvo para as réguas — usados aqui e
+       também pelos textos, para um texto poder grudar numa imagem. */
+    function boxes(exceptId) {
+      return layers
+        .filter(function (l) { return l.id !== exceptId; })
+        .map(boxOf);
     }
 
     /* ── Desenho ────────────────────────────────────────────────────── */
 
     function draw() {
-      if (!layer) return;
       var k = factor();
 
-      image.style.width  = (layer.natW * layer.sx * k) + 'px';
-      image.style.height = (layer.natH * layer.sy * k) + 'px';
-      image.style.transform = 'translate(' + (layer.x * k) + 'px,' + (layer.y * k) + 'px)';
+      layers.forEach(function (layer) {
+        var style = layer.element.style;
+        style.width = (layer.natW * layer.sx * k) + 'px';
+        style.height = (layer.natH * layer.sy * k) + 'px';
+        style.transform = 'translate(' + (layer.x * k) + 'px,' + (layer.y * k) + 'px)';
+        layer.element.classList.toggle('td-layer--locked', layer.locked || frozen);
+      });
 
       drawHandles(k);
-
       onChange(publicState());
     }
 
+    function publicState() {
+      var current = active();
+      return {
+        zoom: current ? current.sx : 1,
+        zoomPercent: current ? Math.round(current.sx * 100) : 100,
+        layers: layers.map(function (l, i) {
+          return { id: l.id, src: l.src, locked: l.locked || frozen, index: i };
+        }),
+        activeId: current ? current.id : null,
+        frozen: frozen
+      };
+    }
 
     /* AS ALÇAS MORAM NA PARTE VISÍVEL DA CAMADA, não nos cantos dela.
-
-       Com a imagem preenchendo o canvas — que é o enquadre de partida —
-       os cantos reais ficam fora da área visível, e no zoom de 400% ficam
-       longe dela. Alça que não dá para alcançar não é alça. Então o
-       retângulo das alças é a interseção entre a camada e o canvas,
-       recuado o suficiente para nenhuma delas ser cortada pela borda.
-
-       Quem redimensiona continua puxando o canto REAL da camada: o
-       gesto é medido por deslocamento do ponteiro, não pela posição da
-       alça. Ver resize(). */
+       Com a imagem preenchendo o canvas — o enquadre de partida — os
+       cantos reais ficam fora da área visível, e no zoom de 400% ficam
+       longe dela. Alça que não dá para alcançar não é alça. */
     var HANDLE_INSET = 9;
 
     function drawHandles(k) {
-      if (!selected) { handles.hidden = true; return; }
+      var layer = active();
+      if (!layer) { handles.hidden = true; return; }
 
       var cw = root.clientWidth;
       var ch = root.clientHeight;
 
       var left = layer.x * k;
-      var top  = layer.y * k;
-      var right  = left + layer.natW * layer.sx * k;
-      var bottom = top  + layer.natH * layer.sy * k;
+      var top = layer.y * k;
+      var right = left + layer.natW * layer.sx * k;
+      var bottom = top + layer.natH * layer.sy * k;
 
-      var x0 = clamp(left,   HANDLE_INSET, cw - HANDLE_INSET);
-      var x1 = clamp(right,  HANDLE_INSET, cw - HANDLE_INSET);
-      var y0 = clamp(top,    HANDLE_INSET, ch - HANDLE_INSET);
+      var x0 = clamp(left, HANDLE_INSET, cw - HANDLE_INSET);
+      var x1 = clamp(right, HANDLE_INSET, cw - HANDLE_INSET);
+      var y0 = clamp(top, HANDLE_INSET, ch - HANDLE_INSET);
       var y1 = clamp(bottom, HANDLE_INSET, ch - HANDLE_INSET);
 
-      /* Camada arrastada quase toda para fora: não há retângulo onde
-         pousar alça, e mostrar quatro pontos empilhados seria pior que
-         não mostrar nada. */
       if (x1 - x0 < 16 || y1 - y0 < 16) { handles.hidden = true; return; }
 
       handles.hidden = false;
-      handles.style.width  = (x1 - x0) + 'px';
+      handles.style.width = (x1 - x0) + 'px';
       handles.style.height = (y1 - y0) + 'px';
       handles.style.transform = 'translate(' + x0 + 'px,' + y0 + 'px)';
     }
 
-    function publicState() {
-      if (!layer) return null;
-      return {
-        zoom: layer.sx,
-        zoomPercent: Math.round(layer.sx * 100),
-        uniform: Math.abs(layer.sx - layer.sy) < 0.0001
-      };
-    }
+    /* ── Limites ─────────────────────────────────────────────────────
+       A imagem não pode sumir da área visível. A regra é de
+       SOBREPOSIÇÃO, não de posição: o que importa é quanto da imagem
+       ainda cruza o canvas, em cada eixo.                              */
 
-    /* ── Limites ────────────────────────────────────────────────────────
-       A imagem não pode sumir da área visível. A regra é de SOBREPOSIÇÃO,
-       não de posição: o que importa é quanto da imagem ainda cruza o
-       canvas, em cada eixo.                                              */
-
-    function clampPosition(x, y) {
+    function clampPosition(layer, x, y) {
       var w = layer.natW * layer.sx;
       var h = layer.natH * layer.sy;
-
       var needX = Math.min(w, EXPORT_W) * MIN_VISIBLE;
       var needY = Math.min(h, EXPORT_H) * MIN_VISIBLE;
-
       return {
         x: clamp(x, needX - w, EXPORT_W - needX),
         y: clamp(y, needY - h, EXPORT_H - needY)
@@ -169,41 +247,40 @@
        imagem volta para dentro suavemente. Puxar e ver voltar ensina o
        limite melhor do que uma parede dura durante o gesto. */
     function settle() {
+      var layer = active();
       if (!layer) return;
-      var fixed = clampPosition(layer.x, layer.y);
+      var fixed = clampPosition(layer, layer.x, layer.y);
       if (fixed.x === layer.x && fixed.y === layer.y) return;
 
-      image.classList.add('td-layer--settling');
+      layer.element.classList.add('td-layer--settling');
       handles.classList.add('td-layer--settling');
       layer.x = fixed.x;
       layer.y = fixed.y;
       draw();
 
       window.setTimeout(function () {
-        image.classList.remove('td-layer--settling');
+        layer.element.classList.remove('td-layer--settling');
         handles.classList.remove('td-layer--settling');
       }, 220);
     }
 
-    /* ── Zoom ───────────────────────────────────────────────────────────
+    /* ── Zoom ────────────────────────────────────────────────────────
        ANCORADO NO PONTEIRO: o pixel da imagem que está sob o cursor
        continua sob o cursor depois do zoom. É isso que faz o gesto
-       parecer natural — zoom ancorado no centro parece quebrado.         */
+       parecer natural — zoom ancorado no centro parece quebrado.       */
 
     function zoomAt(nextScale, anchorX, anchorY) {
+      var layer = active();
       if (!layer) return;
 
       var target = clamp(nextScale, MIN_ZOOM, MAX_ZOOM);
       if (target === layer.sx && target === layer.sy) return;
 
-      /* Onde o ponto ancorado cai DENTRO da imagem, de 0 a 1. */
       var u = (anchorX - layer.x) / (layer.natW * layer.sx);
       var v = (anchorY - layer.y) / (layer.natH * layer.sy);
 
       layer.sx = target;
       layer.sy = target;
-
-      /* Recoloca a imagem para que aquele mesmo ponto caia sob a âncora. */
       layer.x = anchorX - u * layer.natW * layer.sx;
       layer.y = anchorY - v * layer.natH * layer.sy;
 
@@ -211,59 +288,52 @@
     }
 
     function setZoom(next) {
-      if (!layer) return;
-      /* Sem ponteiro, a âncora é o centro do canvas — que é o que a
-         pessoa está olhando quando usa o controle de − e +. */
+      if (!active()) return;
       zoomAt(next, EXPORT_W / 2, EXPORT_H / 2);
       settle();
     }
 
-    /* Enquadrar: a imagem inteira cabe no canvas, centralizada. */
-    function fit() {
+    function fit(layer) {
+      layer = layer || active();
       if (!layer) return;
       var scale = Math.min(EXPORT_W / layer.natW, EXPORT_H / layer.natH);
       layer.sx = layer.sy = clamp(scale, MIN_ZOOM, MAX_ZOOM);
-      center();
+      center(layer);
       draw();
     }
 
-    /* Preencher: a imagem cobre o canvas inteiro. É o enquadre de
-       partida, porque thumb com tarja preta nas laterais não é thumb. */
-    function fill() {
+    /* Preencher é o enquadre de partida: thumb com tarja preta nas
+       laterais não é thumb. */
+    function fill(layer) {
+      layer = layer || active();
       if (!layer) return;
       var scale = Math.max(EXPORT_W / layer.natW, EXPORT_H / layer.natH);
       layer.sx = layer.sy = clamp(scale, MIN_ZOOM, MAX_ZOOM);
-      center();
+      center(layer);
       draw();
     }
 
-    function center() {
+    function center(layer) {
       layer.x = (EXPORT_W - layer.natW * layer.sx) / 2;
       layer.y = (EXPORT_H - layer.natH * layer.sy) / 2;
     }
 
-    /* ── Gestos de ponteiro ─────────────────────────────────────────────
+    /* ── Gestos de ponteiro ──────────────────────────────────────────
        Um só caminho para mouse, caneta e dedo. Dois ponteiros viram
-       pinça: zoom e pan juntos, ancorados no ponto médio entre os dedos. */
+       pinça: zoom e pan juntos, ancorados no ponto médio entre os
+       dedos.                                                          */
 
     var pointers = new Map();
-    var dragging = null;      /* arraste da imagem */
-    var resizing = null;      /* arraste de alça */
+    var dragging = null;
+    var resizing = null;
     var pinching = null;
 
-    function pointerList() {
-      return Array.from(pointers.values());
-    }
-
-    function distance(a, b) {
-      return Math.hypot(a.x - b.x, a.y - b.y);
-    }
-
-    function midpoint(a, b) {
-      return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
-    }
+    function pointerList() { return Array.from(pointers.values()); }
+    function distance(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+    function midpoint(a, b) { return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; }
 
     function onPointerDown(event) {
+      var layer = active();
       if (!layer) return;
 
       var corner = event.target.dataset && event.target.dataset.corner;
@@ -274,13 +344,11 @@
       var list = pointerList();
 
       if (list.length === 2) {
-        /* Dois dedos: a pinça assume e cancela qualquer arraste em curso. */
         dragging = null;
         resizing = null;
-        var a = list[0], b = list[1];
-        var mid = toExport(midpoint(a, b).x, midpoint(a, b).y);
+        var mid = toExport(midpoint(list[0], list[1]).x, midpoint(list[0], list[1]).y);
         pinching = {
-          startDistance: distance(a, b) || 1,
+          startDistance: distance(list[0], list[1]) || 1,
           startScale: layer.sx,
           anchor: mid
         };
@@ -288,28 +356,22 @@
       }
 
       if (corner) {
-        var point = toExport(event.clientX, event.clientY);
         resizing = {
           corner: corner,
-          start: point,
+          start: toExport(event.clientX, event.clientY),
           startLayer: { x: layer.x, y: layer.y, sx: layer.sx, sy: layer.sy }
         };
-        select(true);
         return;
       }
 
-      select(true);
       var origin = toExport(event.clientX, event.clientY);
-      dragging = {
-        grabX: origin.x - layer.x,
-        grabY: origin.y - layer.y
-      };
+      dragging = { grabX: origin.x - layer.x, grabY: origin.y - layer.y };
       root.classList.add('td-canvas--grabbing');
     }
 
     function onPointerMove(event) {
-      if (!layer) return;
-      if (!pointers.has(event.pointerId)) return;
+      var layer = active();
+      if (!layer || !pointers.has(event.pointerId)) return;
       pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
 
       if (pinching) {
@@ -322,68 +384,68 @@
         return;
       }
 
-      if (resizing) {
-        resize(event);
-        return;
-      }
+      if (resizing) { resize(event, layer); return; }
 
       if (dragging) {
         var point = toExport(event.clientX, event.clientY);
         layer.x = point.x - dragging.grabX;
         layer.y = point.y - dragging.grabY;
+
+        /* As réguas magnéticas entram aqui: o alvo pode ser outra
+           camada, um texto, ou o próprio quadro. */
+        var result = snap.solve(boxOf(layer),
+          boxes(layer.id).concat(options.otherBoxes ? options.otherBoxes() : []));
+        layer.x += result.dx;
+        layer.y += result.dy;
+        snap.draw(result.lines);
+
         draw();
       }
     }
 
     function onPointerUp(event) {
       pointers.delete(event.pointerId);
-
       if (pointers.size < 2) pinching = null;
-
       if (pointers.size === 0) {
         if (dragging || resizing) settle();
         dragging = null;
         resizing = null;
+        snap.clear();
         root.classList.remove('td-canvas--grabbing');
       }
     }
 
-    /* ── Alças ──────────────────────────────────────────────────────────
-       Mantêm proporção; Shift libera. O canto OPOSTO ao que está sendo
-       arrastado fica parado — é o que faz a alça parecer que puxa a
-       imagem, e não que a empurra.                                       */
+    /* ── Alças ───────────────────────────────────────────────────────
+       Mantêm proporção; Shift libera. O canto OPOSTO fica parado, e o
+       gesto é medido por DESLOCAMENTO do ponteiro — é isso que
+       desacopla o redimensionamento da posição da alça, que fica
+       recuada para dentro do canvas.                                  */
 
-    function resize(event) {
+    function resize(event, layer) {
       var start = resizing.startLayer;
       var point = toExport(event.clientX, event.clientY);
 
-      var west  = resizing.corner === 'nw' || resizing.corner === 'sw';
+      var west = resizing.corner === 'nw' || resizing.corner === 'sw';
       var north = resizing.corner === 'nw' || resizing.corner === 'ne';
 
       var startW = layer.natW * start.sx;
       var startH = layer.natH * start.sy;
 
-      /* O canto que está sendo puxado e o que fica parado — os dois da
-         camada, não da alça. A alça pode estar recuada para dentro do
-         canvas; o que ela move é sempre o canto de verdade. */
-      var cornerX = west  ? start.x : start.x + startW;
+      var cornerX = west ? start.x : start.x + startW;
       var cornerY = north ? start.y : start.y + startH;
-      var anchorX = west  ? start.x + startW : start.x;
+      var anchorX = west ? start.x + startW : start.x;
       var anchorY = north ? start.y + startH : start.y;
 
-      /* Medido por DESLOCAMENTO desde o início do gesto. É isso que
-         desacopla o redimensionamento da posição da alça. */
       var movedX = point.x - resizing.start.x;
       var movedY = point.y - resizing.start.y;
 
-      var width  = Math.abs((cornerX + movedX) - anchorX);
+      var width = Math.abs((cornerX + movedX) - anchorX);
       var height = Math.abs((cornerY + movedY) - anchorY);
 
-      var sx = width  / layer.natW;
+      var sx = width / layer.natW;
       var sy = height / layer.natH;
 
       if (!event.shiftKey) {
-        /* Proporção mantida: o eixo que mais mudou manda nos dois. */
         var uniform = Math.max(sx, sy);
         sx = uniform;
         sy = uniform;
@@ -391,103 +453,37 @@
 
       layer.sx = clamp(sx, MIN_ZOOM, MAX_ZOOM);
       layer.sy = clamp(sy, MIN_ZOOM, MAX_ZOOM);
-
-      layer.x = west  ? anchorX - layer.natW * layer.sx : anchorX;
+      layer.x = west ? anchorX - layer.natW * layer.sx : anchorX;
       layer.y = north ? anchorY - layer.natH * layer.sy : anchorY;
 
       draw();
     }
 
-    /* ── Roda do mouse ──────────────────────────────────────────────── */
-
     function onWheel(event) {
+      var layer = active();
       if (!layer) return;
       event.preventDefault();
-
       var anchor = toExport(event.clientX, event.clientY);
-      /* Passo multiplicativo: subir e descer a mesma quantidade de
-         cliques volta exatamente ao zoom de onde saiu. */
       var step = Math.exp(-event.deltaY * 0.0015);
       zoomAt(layer.sx * step, anchor.x, anchor.y);
     }
 
-    /* ── Duplo clique: enquadra a imagem inteira ────────────────────── */
-
     var fitOnDoubleClick = true;
 
     function onDoubleClick(event) {
-      if (!layer || !fitOnDoubleClick) return;
+      if (!active() || !fitOnDoubleClick) return;
       event.preventDefault();
       fit();
       settle();
     }
 
-    function select(next) {
-      selected = next;
-      root.classList.toggle('td-canvas--selected', next);
-      draw();
-    }
-
-    /* ── API ────────────────────────────────────────────────────────── */
-
-    function setImage(src, naturalWidth, naturalHeight) {
-      layer = {
-        src: src,
-        natW: naturalWidth,
-        natH: naturalHeight,
-        sx: 1,
-        sy: 1,
-        x: 0,
-        y: 0
-      };
-      image.src = src;
-      if (!image.parentNode) {
-        root.insertBefore(image, root.firstChild);
-        root.appendChild(handles);
-      }
-      fill();
-      select(true);
-    }
-
-    function getLayer() {
-      return layer && {
-        src: layer.src, natW: layer.natW, natH: layer.natH,
-        x: layer.x, y: layer.y, sx: layer.sx, sy: layer.sy
-      };
-    }
-
-    /* Trocar a fonte da imagem SEM mexer no enquadramento. É isto que
-       torna verdade a regra de custo: o recorte é uma chamada de API, o
-       reenquadre é local. Depois de recortado, o PNG entra no lugar do
-       original na mesma posição e escala — nenhuma chamada nova. */
-    function replaceSource(src, naturalWidth, naturalHeight) {
-      if (!layer) return;
-      /* A escala é reancorada para que o recorte ocupe o mesmo retângulo
-         que o original ocupava, mesmo que venha com outro número de
-         pixels. */
-      var displayW = layer.natW * layer.sx;
-      var displayH = layer.natH * layer.sy;
-
-      layer.src = src;
-      layer.natW = naturalWidth;
-      layer.natH = naturalHeight;
-      layer.sx = displayW / naturalWidth;
-      layer.sy = displayH / naturalHeight;
-
-      image.src = src;
-      draw();
-    }
-
-
-    /* ── Desenho do texto ───────────────────────────────────────────────
+    /* ── Desenho do texto no export ──────────────────────────────────
        Reimplementa a quebra de linha do navegador no canvas 2D, porque
-       canvas não quebra sozinho. Cada palavra carrega a cor do trecho de
-       onde veio — é assim que uma palavra amarela no meio de um título
-       branco chega inteira ao PNG.                                       */
+       canvas não quebra sozinho. Cada palavra carrega a cor do trecho
+       de onde veio — é assim que uma palavra amarela no meio de um
+       título branco chega inteira ao PNG.                             */
 
     function drawTexts(ctx, texts, scale) {
-      /* A família vem do token, e não de um nome repetido aqui: o export
-         e a tela não podem discordar sobre em que fonte o título está. */
       var family = getComputedStyle(document.documentElement)
         .getPropertyValue('--font-thumb-title').trim() || 'Barlow, sans-serif';
 
@@ -500,7 +496,6 @@
         ctx.font = 'italic ' + model.weight + ' ' + size + 'px ' + family;
         ctx.textBaseline = 'top';
 
-        /* Palavras, cada uma com a cor do trecho de origem. */
         var words = [];
         model.segments.forEach(function (segment) {
           segment.text.split(/(\s+|\n)/).forEach(function (piece) {
@@ -508,7 +503,6 @@
           });
         });
 
-        /* Quebra gulosa, do jeito que o navegador faz. */
         var lines = [];
         var line = [];
         var used = 0;
@@ -553,15 +547,11 @@
       });
     }
 
-    /* ── Snapshot ───────────────────────────────────────────────────────
+    /* ── Snapshot ────────────────────────────────────────────────────
        Redesenha o estado num canvas de verdade e devolve um PNG. É o
-       MESMO renderizador que o export da etapa 8 vai usar — por isso ele
-       nasce aqui, mandando para a IA exatamente o que a pessoa vê, e não
-       uma segunda interpretação do estado que pode divergir.
-
-       `width` permite pedir uma versão menor: a prévia do filtro manda
-       uma entrada reduzida, porque o que ela precisa julgar é direção de
-       arte, não nitidez.                                                 */
+       MESMO renderizador que o export usa — por isso ele manda para a
+       IA exatamente o que a pessoa vê, e não uma segunda interpretação
+       do estado que pode divergir.                                    */
 
     function snapshot(options) {
       options = options || {};
@@ -577,23 +567,20 @@
       ctx.fillStyle = '#000';
       ctx.fillRect(0, 0, width, height);
 
-      if (layer && image.complete && image.naturalWidth) {
+      /* As camadas, de baixo para cima — a mesma ordem da tela. */
+      layers.forEach(function (layer) {
+        if (!layer.element.complete || !layer.element.naturalWidth) return;
         ctx.drawImage(
-          image,
-          layer.x * scale,
-          layer.y * scale,
-          layer.natW * layer.sx * scale,
-          layer.natH * layer.sy * scale
+          layer.element,
+          layer.x * scale, layer.y * scale,
+          layer.natW * layer.sx * scale, layer.natH * layer.sy * scale
         );
-      }
+      });
 
-      /* O texto é desenhado pelo MESMO renderizador, a partir dos mesmos
-         trechos que a tela mostra. O guia do timer e as alças não entram
-         aqui — eles são interface, e interface não vai para o PNG. */
+      /* O guia do timer e as alças não entram: são interface, e
+         interface não tem coordenada de export. */
       if (options.texts) drawTexts(ctx, options.texts, scale);
 
-      /* A moldura é a última camada: ela emoldura tudo, inclusive o
-         texto. */
       if (options.frame) {
         ctx.drawImage(options.frame, 0, 0, width, height);
       } else if (options.frameColor) {
@@ -601,8 +588,6 @@
         ctx.save();
         ctx.strokeStyle = options.frameColor;
         ctx.lineWidth = band;
-        /* Desenhada meia banda para dentro, para a borda ficar inteira
-           dentro dos 1920 x 1080 em vez de metade fora. */
         ctx.strokeRect(band / 2, band / 2, width - band, height - band);
         ctx.restore();
       }
@@ -619,17 +604,60 @@
     window.addEventListener('resize', draw);
 
     return {
-      setImage: setImage,
+      addImage: addImage,
+      editLayer: editLayer,
+      removeLayer: removeLayer,
+      freeze: freeze,
       snapshot: snapshot,
+      boxes: boxes,
       setDoubleClickFit: function (next) { fitOnDoubleClick = next; },
-      replaceSource: replaceSource,
-      getLayer: getLayer,
-      hasImage: function () { return !!layer; },
+      getLayer: function () {
+        var l = active() || layers[layers.length - 1];
+        return l && { src: l.src, natW: l.natW, natH: l.natH,
+                      x: l.x, y: l.y, sx: l.sx, sy: l.sy };
+      },
+      count: function () { return layers.length; },
+      hasImage: function () { return layers.length > 0; },
       fit: fit,
       fill: fill,
       setZoom: setZoom,
-      getZoom: function () { return layer ? layer.sx : 1; },
-      select: select,
+      getZoom: function () { var l = active(); return l ? l.sx : 1; },
+      state: publicState,
+      draw: draw,
+
+      /* Trocar a fonte da camada ativa SEM mexer no enquadramento. É o
+         que torna verdade a regra de que o recorte é uma chamada de API
+         e o reenquadre é local. */
+      replaceSource: function (src, naturalWidth, naturalHeight) {
+        var layer = active() || layers[layers.length - 1];
+        if (!layer) return;
+        var displayW = layer.natW * layer.sx;
+        var displayH = layer.natH * layer.sy;
+        layer.src = src;
+        layer.natW = naturalWidth;
+        layer.natH = naturalHeight;
+        layer.sx = displayW / naturalWidth;
+        layer.sy = displayH / naturalHeight;
+        layer.element.src = src;
+        draw();
+      },
+
+      /* A entrega do filtro substitui a composição inteira por uma
+         imagem só: o filtro devolve o quadro já renderizado. */
+      replaceAll: function (src, naturalWidth, naturalHeight) {
+        layers.forEach(function (l) {
+          if (l.element.parentNode) l.element.parentNode.removeChild(l.element);
+        });
+        layers = [];
+        activeId = null;
+        var wasFrozen = frozen;
+        frozen = false;
+        addImage(src, naturalWidth, naturalHeight);
+        frozen = wasFrozen;
+        if (wasFrozen) layers.forEach(function (l) { l.locked = true; });
+        draw();
+      },
+
       MIN_ZOOM: MIN_ZOOM,
       MAX_ZOOM: MAX_ZOOM,
       EXPORT_W: EXPORT_W,
