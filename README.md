@@ -4,7 +4,17 @@ Editor guiado de thumbnails 16:9 para Canaltech e CT Eletro. Quatro paradas:
 imagem → filtro de IA → texto → moldura e export. Saída em PNG 1920×1080.
 
 HTML, CSS e JavaScript vanilla. **Sem build, sem framework, sem npm, sem servidor.**
-Abre com duplo clique em `index.html`.
+
+Duas formas de abrir, as duas com duplo clique e nenhuma precisando de nada:
+
+- **`thumbdrop.html`** — tudo num arquivo só. É a entrega.
+- **`index.html`** — os oito arquivos separados. É onde se mexe no código.
+
+`./build.sh` gera o primeiro a partir do segundo. É `sh` puro, sem npm e sem
+bundler: não é uma etapa de build do projeto, é só a maneira de empacotar.
+Os dois passam pelo mesmo teste de aceite.
+
+A pasta `assets/` precisa ficar ao lado do HTML que você abrir.
 
 ---
 
@@ -23,6 +33,29 @@ Abre com duplo clique em `index.html`.
 | 8 | Parada 4: molduras e export 1920×1080 | ✅ feito |
 | 9 | Recibo, contagem de créditos, saldo insuficiente | ✅ feito |
 | 10 | Passada de acessibilidade | ✅ feito |
+
+### Critério de aceite
+
+Os doze itens da seção 14 do briefing, verificados em Chromium sobre `file://`,
+nos dois empacotamentos:
+
+```
+ ✓  1  Abre pedindo as duas chaves e explica onde ficam salvas
+ ✓  2  Arrasto e dou zoom com scroll sem estranhar
+ ✓  3  Removo o fundo e é cobrado uma vez só, mesmo reenquadrando
+ ✓  4  Clico num filtro e ele pergunta antes de gastar
+ ✓  5  Vejo a prévia em comparação com divisória arrastável
+ ✓  6  Aprovo e recebo a imagem em 2K
+ ✓  7  Duplo clique, escrevo, clico fora, arrasto e apago com Delete
+ ✓  8  Destaco uma palavra em amarelo
+ ✓  9  Escolho moldura, vejo o recibo e baixo um PNG 1920×1080 limpo
+ ✓ 10  Navego pelo teclado enxergando onde estou
+ ✓ 11  Abro em 390px e continua utilizável
+ ✓ 12  Nenhuma chave aparece no código-fonte
+```
+
+O recibo do percurso completo fecha em **4 ✦ · R$ 0,91**, que é o número que o
+briefing prometia.
 
 ---
 

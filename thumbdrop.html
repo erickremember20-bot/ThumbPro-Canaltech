@@ -1,0 +1,5115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ThumbDrop — thumb que performa, pronta em minutos</title>
+<meta name="description" content="Editor guiado de thumbnails 16:9 em quatro paradas: imagem, filtro de IA, texto, moldura e export.">
+<style>
+/* =====================================================================
+   ThumbDrop V3 · tokens.css
+   ---------------------------------------------------------------------
+   GERADO A PARTIR DAS VARIÁVEIS DO FIGMA — não edite valores à mão.
+   Arquivo de origem: Thumbdrop-Handoff (byiakiUNISoGO9TGT17jz1)
+
+   Nenhum hex é escrito à mão em nenhum outro arquivo do projeto. Se um
+   valor precisar mudar, ele muda no Figma e volta para cá.
+
+   A troca Desktop/Mobile é MODO DE COLEÇÃO no Figma. Aqui ela vira um
+   bloco :root e um @media (max-width: 880px) que redefine as MESMAS
+   variáveis com outros valores. Os nomes nunca mudam entre os blocos —
+   é isso que faz um componente não precisar saber em que modo está.
+   ===================================================================== */
+
+:root {
+
+  /* ── Coleção ThumbDrop · 22 cores · modo Dark ──────────────────────
+     Não há modo Light. O editor é escuro porque a thumbnail é o objeto
+     brilhante na tela, e a interface não disputa atenção com ela.      */
+
+  /* Superfícies — da mais funda para a mais próxima */
+  --surface-ink:        #0b0d14;   /* fundo da aplicação */
+  --surface-mirage:     #181a21;   /* barra superior, palco */
+  --surface-card:       #171a22;   /* painel, cartões */
+  --surface-card-2:     #1e2230;   /* cartão elevado, campo de entrada */
+
+  /* Traços */
+  --border-line:        #252836;   /* divisória padrão */
+  --border-line-2:      #2c3142;   /* divisória de contraste */
+
+  /* Texto */
+  --text-primary:       #ffffff;   /* títulos */
+  --text-body:          #c7cddb;   /* corpo */
+  --text-mute:          #7c8497;   /* legendas, texto desabilitado */
+
+  /* Marca */
+  --brand-white:        #ffffff;
+  --brand-blue:         #1c8cfe;   /* AZUL MARCA ONDE VOCÊ ESTÁ.
+                                      Parada atual, opção escolhida,
+                                      controle ativo. NUNCA em ação que
+                                      avança. */
+  --brand-orange-cta:   #b85829;   /* FUNDO de CTA. Branco por cima dá
+                                      4,7:1 e passa AA. */
+  --brand-orange:       #f87737;   /* Laranja da marca. Só TEXTO e ÍCONE
+                                      sobre fundo escuro, onde dá 7,1:1.
+                                      Como fundo de botão dá 2,73:1 e
+                                      reprova AA — por isso existe o
+                                      token de cima. */
+
+  /* Feedback — cada cor tem um trabalho só */
+  --feedback-yellow:    #ffd400;   /* destaque de trecho no título */
+  --feedback-success:   #22d3a8;   /* VERDE SÓ CONFIRMA o que já
+                                      aconteceu. Nunca anuncia. */
+  --feedback-danger:    #ff4d6d;   /* VERMELHO SÓ PARA FALHA. */
+
+  /* Foco */
+  --focus-ring:         #5cb2ff;   /* anel de 2px em todo controle
+                                      interativo. Ver app.css. */
+
+  /* Véus — cor sobre cor, com alfa no próprio token */
+  --tint-white-2:       #ffffff05;
+  --tint-white-6:       #ffffff0f;
+  --tint-blue-10:       #1c8cfe1a;
+  --tint-yellow-16:     #ffd40029;
+  --tint-ink-86:        #0b0d14db;  /* véu do modal */
+
+  /* Sombra (estilo de efeito ThumbDrop/Glow laranja) */
+  --shadow-glow-orange: 0 8px 24px 0 #f8773752;
+
+
+  /* ── Coleção Typography · 9 tamanhos · MODO DESKTOP ────────────────
+     Só números pares. Nenhum tamanho quebrado em lugar nenhum.         */
+
+  --font-size-h2:         32px;
+  --font-size-h3:         24px;
+  --font-size-title:      18px;
+  --font-size-body:       16px;
+  --font-size-body-bold:  16px;
+  --font-size-small:      14px;
+  --font-size-small-bold: 14px;
+  --font-size-label:      12px;
+  --font-size-legal:      12px;
+
+  /* Peso, entrelinha e tracking dos 9 estilos de texto do Figma.
+     O tamanho vem das variáveis acima e troca sozinho no modo Mobile. */
+  --font-weight-h2:         800;   --line-height-h2:         1.15;
+  --font-weight-h3:         700;   --line-height-h3:         1.15;
+  --font-weight-title:      700;   --line-height-title:      1.5;
+  --font-weight-body:       400;   --line-height-body:       1.5;
+  --font-weight-body-bold:  700;   --line-height-body-bold:  1.5;
+  --font-weight-small:      500;   --line-height-small:      1.5;
+  --font-weight-small-bold: 700;   --line-height-small-bold: 1.5;
+  --font-weight-label:      700;   --line-height-label:      1.5;
+  --font-weight-legal:      400;   --line-height-legal:      1.5;
+  --letter-spacing-label:   1.2px; /* único estilo com tracking */
+
+  /* Famílias. Os arquivos são auto-hospedados em assets/fonts/ com
+     @font-face — nunca CDN do Google. Ver README. */
+  --font-ui:            'Barlow', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-thumb-title:   'Barlow', system-ui, sans-serif;   /* Black Italic é o padrão */
+  --font-thumb-display: 'Anton', 'Barlow', system-ui, sans-serif;
+
+
+  /* ── Coleção Spacing · 8 passos confirmados ────────────────────────
+     O handoff fala em 10 passos. Estes 8 são os que aparecem amarrados
+     a algum nó do arquivo; os outros 2 não são usados por nenhuma tela,
+     então não têm valor legível pelo MCP. Quando aparecerem, entram
+     aqui — não vou inventar dois números para fechar a conta.          */
+
+  --space-2:   2px;
+  --space-4:   4px;
+  --space-8:   8px;
+  --space-12:  12px;
+  --space-16:  16px;
+  --space-24:  24px;
+  --space-32:  32px;
+  --space-40:  40px;
+
+
+  /* ── Coleção Radius ───────────────────────────────────────────────
+     Três vêm das variáveis; --radius-canvas é medido do nó
+     Editor/Canvas, que é desenhado com 12px. O quinto valor não é
+     usado por nenhum nó legível — provavelmente o pill de créditos.
+     Confirmo na etapa 3, quando montar o pill.                        */
+
+  --radius-input:   9px;
+  --radius-button:  10px;
+  --radius-canvas:  12px;
+  --radius-card:    16px;
+
+
+  /* ── Coleção Layout · MODO DESKTOP ─────────────────────────────────
+     TopBar/Height e TopBar/Padding X são variáveis. A largura do painel
+     é medida das telas: o painel ocupa x=1120..1440 num frame de 1440.  */
+
+  --topbar-height:    54px;
+  --topbar-padding-x: 10px;
+  --panel-width:      320px;
+
+
+  /* ── Geometria do canvas e do guia do timer ────────────────────────
+     Derivado do nó timer-guide do Figma: x=868 y=494 128×56 dentro de
+     um canvas de 1024×576. Em porcentagem para escalar sozinho até os
+     1920×1080 do export.
+
+     "16:20" nunca foi proporção: é o texto de duração falsa que o mock
+     desenha dentro do guia. O guia marca a faixa que o YouTube cobre
+     com o tempo do vídeo — ninguém deve escrever embaixo dela. Ele
+     aparece na parada 3 e SOME NO EXPORT.                              */
+
+  --canvas-aspect:        16 / 9;
+  --timer-guide-width:    12.5%;     /* 128/1024  → 240px em 1920 */
+  --timer-guide-height:   9.7222%;   /*  56/576   → 105px em 1080 */
+  --timer-guide-right:    2.7344%;   /*  28/1024  →  52.5px em 1920 */
+  --timer-guide-bottom:   4.5139%;   /*  26/576   →  48.75px em 1080 */
+
+
+  /* ── Movimento ─────────────────────────────────────────────────────
+     Desligado inteiro sob prefers-reduced-motion. Ver app.css.         */
+
+  --duration-fast:   120ms;
+  --duration-base:   200ms;
+  --duration-slow:   320ms;
+  --ease-out:        cubic-bezier(0.2, 0, 0, 1);
+}
+
+
+/* =====================================================================
+   MODO MOBILE — o mesmo que trocar o modo da coleção no Figma.
+   Só os valores mudam; os nomes das variáveis são idênticos.
+   O corte em 880px é onde o painel de 320 deixa de caber ao lado do
+   canvas e vira dock embaixo.
+   ===================================================================== */
+
+@media (max-width: 880px) {
+  :root {
+
+    /* Typography · MODO MOBILE
+       32→24 · 24→22 · 18→16 · 16→14 · 14→12 · 12→12                    */
+
+    --font-size-h2:         24px;
+    --font-size-h3:         22px;
+    --font-size-title:      16px;
+    --font-size-body:       14px;
+    --font-size-body-bold:  14px;
+    --font-size-small:      12px;
+    --font-size-small-bold: 12px;
+    --font-size-label:      12px;
+    --font-size-legal:      12px;
+
+    /* Layout · MODO MOBILE
+       O painel deixa de ser coluna de 320 e vira dock rolável de
+       largura cheia, com o canvas fixo no topo.                        */
+
+    --panel-width: 100%;
+  }
+}
+/* =====================================================================
+   ThumbDrop V3 · app.css
+   ---------------------------------------------------------------------
+   Consome só as variáveis de tokens.css. Nenhum hex escrito aqui.
+   ===================================================================== */
+
+/* ── Fontes ────────────────────────────────────────────────────────────
+   Auto-hospedadas em assets/fonts/, nunca CDN do Google. Os arquivos
+   ainda não estão no repositório — enquanto não estiverem, o navegador
+   cai na pilha de sistema e a interface continua legível. Ver README
+   para a lista exata de nomes.                                          */
+
+@font-face { font-family:'Barlow'; font-style:normal; font-weight:400; font-display:swap;
+             src:url('assets/fonts/barlow-400.woff2') format('woff2'); }
+@font-face { font-family:'Barlow'; font-style:normal; font-weight:500; font-display:swap;
+             src:url('assets/fonts/barlow-500.woff2') format('woff2'); }
+@font-face { font-family:'Barlow'; font-style:normal; font-weight:700; font-display:swap;
+             src:url('assets/fonts/barlow-700.woff2') format('woff2'); }
+@font-face { font-family:'Barlow'; font-style:normal; font-weight:800; font-display:swap;
+             src:url('assets/fonts/barlow-800.woff2') format('woff2'); }
+@font-face { font-family:'Barlow'; font-style:normal; font-weight:900; font-display:swap;
+             src:url('assets/fonts/barlow-900.woff2') format('woff2'); }
+@font-face { font-family:'Barlow'; font-style:italic; font-weight:400; font-display:swap;
+             src:url('assets/fonts/barlow-400-italic.woff2') format('woff2'); }
+@font-face { font-family:'Barlow'; font-style:italic; font-weight:700; font-display:swap;
+             src:url('assets/fonts/barlow-700-italic.woff2') format('woff2'); }
+@font-face { font-family:'Barlow'; font-style:italic; font-weight:800; font-display:swap;
+             src:url('assets/fonts/barlow-800-italic.woff2') format('woff2'); }
+@font-face { font-family:'Barlow'; font-style:italic; font-weight:900; font-display:swap;
+             src:url('assets/fonts/barlow-900-italic.woff2') format('woff2'); }
+@font-face { font-family:'Anton';  font-style:normal; font-weight:400; font-display:swap;
+             src:url('assets/fonts/anton-400.woff2') format('woff2'); }
+
+
+/* ── Base ──────────────────────────────────────────────────────────── */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+/* O atributo hidden precisa ganhar de qualquer display que um componente
+   declare. Sem isto, .td-btn { display: inline-flex } mostra um botão que
+   o JS mandou esconder. */
+[hidden] { display: none !important; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--surface-ink);
+  color: var(--text-body);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-body);
+  line-height: var(--line-height-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, p { margin: 0; }
+
+
+/* ── REGRA DE CONTRASTE ────────────────────────────────────────────────
+   Text/Mute (#7c8497) só pode pousar em Surface/Ink (5,18:1),
+   Surface/Mirage (4,64:1) e Surface/Card (4,64:1).
+
+   Sobre Surface/Card 2 ele dá 4,22:1 e REPROVA AA. Onde o fundo é
+   Card 2, o texto de apoio usa Text/Body, que dá 9,94:1. A única
+   exceção é texto de controle desabilitado, que a norma dispensa — e
+   ali o motivo está escrito no próprio botão.
+
+   E o laranja da marca nunca é fundo de texto: branco sobre #F87737 dá
+   2,73:1. Para fundo existe Brand/Orange CTA, com 4,70:1.             */
+
+/* ── Foco ──────────────────────────────────────────────────────────────
+   A V2 não tinha um único estado de foco. Esta regra é a dívida sendo
+   paga: todo controle interativo ganha anel de 2px em Focus/Ring.
+   :focus-visible, não :focus — o anel aparece para quem navega por
+   teclado e não pisca no clique de mouse.                               */
+
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-input);
+}
+
+/* Nenhum controle perde o foco por decisão de estilo. */
+:focus:not(:focus-visible) { outline: none; }
+
+
+/* ── Movimento ─────────────────────────────────────────────────────────
+   Animação de espera é justamente a que mais incomoda quem pediu para
+   reduzir movimento — e ela roda por 20 segundos enquanto a IA trabalha. */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+
+/* ── Controles ─────────────────────────────────────────────────────────
+   Alvo de toque de 44px no mobile, em tudo que é clicável.              */
+
+button, input, select, textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: 0;
+  background: none;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+@media (max-width: 880px) {
+  button, .td-field input, [role='button'] { min-height: 44px; }
+}
+
+
+/* ── Botões ────────────────────────────────────────────────────────────
+   UM LARANJA POR TELA, sempre na ação que avança. O secundário é neutro
+   de propósito: se ele competisse, o laranja pararia de significar
+   "é por aqui".                                                         */
+
+.td-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
+  min-height: 44px;
+  padding: 0 var(--space-16);
+  border-radius: var(--radius-button);
+  font-size: var(--font-size-body-bold);
+  font-weight: var(--font-weight-body-bold);
+  line-height: var(--line-height-body-bold);
+  transition: filter var(--duration-fast) var(--ease-out),
+              background-color var(--duration-fast) var(--ease-out);
+}
+
+.td-btn--primary {
+  background: var(--brand-orange-cta);
+  color: var(--brand-white);
+  box-shadow: var(--shadow-glow-orange);
+}
+.td-btn--primary:hover:not(:disabled) { filter: brightness(1.12); }
+
+/* Um laranja por tela, e ele pertence à ação que AVANÇA. Um botão
+   desabilitado não avança nada — se continuasse laranja, gastaria o
+   destaque da tela num lugar onde não há saída. Fica neutro, com o
+   motivo escrito nele mesmo. */
+.td-btn--primary:disabled {
+  background: var(--surface-card-2);
+  color: var(--text-mute);
+  box-shadow: none;
+  border: 1px solid var(--border-line-2);
+}
+
+.td-btn--ghost {
+  background: transparent;
+  color: var(--text-body);
+  border: 1px solid var(--border-line-2);
+}
+.td-btn--ghost:hover:not(:disabled) { background: var(--tint-white-6); }
+
+.td-btn--danger {
+  background: transparent;
+  color: var(--feedback-danger);
+  border: 1px solid var(--border-line-2);
+}
+.td-btn--danger:hover:not(:disabled) { background: var(--tint-white-6); }
+
+
+/* ── Tela de configuração das chaves ───────────────────────────────────
+   Não existe no Figma. Construída a partir dos tokens, seguindo as
+   mesmas regras de cor das telas que existem.                           */
+
+.td-setup {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: var(--space-24) var(--space-16);
+  background: var(--surface-ink);
+  overflow-y: auto;
+}
+
+.td-setup[hidden] { display: none; }
+
+.td-setup__card {
+  width: 100%;
+  max-width: 520px;
+  padding: var(--space-32);
+  border: 1px solid var(--border-line);
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+}
+
+@media (max-width: 880px) {
+  .td-setup__card { padding: var(--space-24) var(--space-16); }
+}
+
+.td-setup__eyebrow {
+  margin-bottom: var(--space-8);
+  color: var(--brand-orange);           /* laranja da marca como TEXTO:
+                                           7,1:1 sobre fundo escuro */
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-label);
+  letter-spacing: var(--letter-spacing-label);
+  text-transform: uppercase;
+}
+
+.td-setup__title {
+  margin-bottom: var(--space-12);
+  color: var(--text-primary);
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-h3);
+  line-height: var(--line-height-h3);
+}
+
+.td-setup__lede {
+  margin-bottom: var(--space-24);
+  color: var(--text-body);
+  font-size: var(--font-size-small);
+  line-height: var(--line-height-small);
+}
+
+/* O aviso honesto sobre onde as chaves ficam. Amarelo, não vermelho:
+   não é uma falha, é uma condição do produto que a pessoa precisa
+   entender antes de digitar. */
+.td-setup__warning {
+  margin-bottom: var(--space-24);
+  padding: var(--space-12) var(--space-16);
+  border-left: 3px solid var(--feedback-yellow);
+  border-radius: var(--radius-input);
+  background: var(--tint-yellow-16);
+  color: var(--text-body);
+  font-size: var(--font-size-small);
+  line-height: var(--line-height-small);
+}
+
+.td-field { margin-bottom: var(--space-16); }
+
+.td-field__label {
+  display: block;
+  margin-bottom: var(--space-4);
+  color: var(--text-primary);
+  font-size: var(--font-size-small-bold);
+  font-weight: var(--font-weight-small-bold);
+}
+
+.td-field__optional {
+  margin-left: var(--space-8);
+  color: var(--text-mute);
+  font-size: var(--font-size-legal);
+  font-weight: var(--font-weight-legal);
+}
+
+.td-field__hint {
+  margin-bottom: var(--space-8);
+  color: var(--text-mute);
+  font-size: var(--font-size-legal);
+  line-height: var(--line-height-legal);
+}
+
+.td-field input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 var(--space-12);
+  border: 1px solid var(--border-line-2);
+  border-radius: var(--radius-input);
+  /* Recuado para Ink, e não Card 2, para o placeholder em Text/Mute
+     passar de 4,22:1 para 5,18:1. */
+  background: var(--surface-ink);
+  color: var(--text-primary);
+  font-size: var(--font-size-body);
+  transition: border-color var(--duration-fast) var(--ease-out);
+}
+
+.td-field input::placeholder { color: var(--text-mute); }
+
+/* Azul marca onde você está — inclusive o campo em edição. */
+.td-field input:focus { border-color: var(--brand-blue); }
+
+/* Vermelho só para falha: o campo cuja chave o servidor recusou. */
+.td-field--invalid input { border-color: var(--feedback-danger); }
+
+.td-field__error {
+  display: none;
+  margin-top: var(--space-4);
+  color: var(--feedback-danger);
+  font-size: var(--font-size-legal);
+}
+.td-field--invalid .td-field__error { display: block; }
+
+.td-setup__actions {
+  display: flex;
+  gap: var(--space-8);
+  margin-top: var(--space-24);
+}
+
+.td-setup__actions .td-btn--primary { flex: 1; }
+
+@media (max-width: 880px) {
+  .td-setup__actions { flex-direction: column-reverse; }
+}
+
+.td-setup__note {
+  margin-top: var(--space-16);
+  color: var(--text-mute);
+  font-size: var(--font-size-legal);
+  line-height: var(--line-height-legal);
+}
+
+/* Acessível a leitor de tela, invisível na tela. */
+.td-sr {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+
+/* =====================================================================
+   O SHELL DO EDITOR
+   Barra superior · palco · painel. Três peças e nada mais.
+   ===================================================================== */
+
+.td-app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* ── Barra superior ────────────────────────────────────────────────────
+   A descrição do componente diz "Desktop 1440×56, mobile 390×54", mas a
+   instância nas telas tem 88 de altura: 24 de padding + 40 de conteúdo +
+   24. Os 88 são o que está desenhado, então são o que vale aqui; o token
+   TopBar/Height (54) governa o mobile.                                  */
+
+.td-topbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  flex-shrink: 0;
+  padding: var(--space-24) 48px;
+  border-bottom: 1px solid var(--border-line);
+  background: var(--surface-mirage);
+}
+
+.td-topbar__title {
+  color: var(--brand-white);
+  font-size: var(--font-size-body-bold);
+  font-weight: var(--font-weight-body-bold);
+  line-height: var(--line-height-body-bold);
+  white-space: nowrap;
+}
+
+.td-topbar__spacer { flex: 1 0 0; min-width: 1px; }
+
+@media (max-width: 880px) {
+  .td-topbar {
+    height: var(--topbar-height);
+    gap: var(--space-8);
+    padding: 0 var(--topbar-padding-x);
+  }
+  /* No mobile o título e o formato saem: o saldo e as ações é que
+     precisam do espaço. O nome da thumb reaparece na parada 4. */
+  .td-topbar__title,
+  .td-pill--format { display: none; }
+}
+
+.td-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.td-iconbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border: 1px solid var(--border-line);
+  border-radius: var(--radius-button);
+  background: var(--surface-card);
+  color: var(--text-body);
+}
+.td-iconbtn:hover { background: var(--surface-card-2); }
+
+@media (max-width: 880px) {
+  .td-iconbtn { width: 44px; height: 44px; }
+}
+
+/* ── Pills ─────────────────────────────────────────────────────────── */
+
+.td-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.td-pill--format {
+  padding: 5px var(--space-12);
+  border: 1px solid var(--border-line);
+  border-radius: 8px;
+  color: var(--text-mute);
+  font-size: var(--font-size-legal);
+}
+
+.td-pill--credits {
+  padding: 6px var(--space-12);
+  border: 1px solid var(--border-line-2);
+  border-radius: 999px;
+  background: linear-gradient(to right, var(--tint-blue-10), rgb(248 119 55 / 0.18));
+  color: var(--brand-white);
+  font-size: var(--font-size-body-bold);
+  font-weight: var(--font-weight-body-bold);
+}
+
+.td-pill__spark {
+  color: var(--feedback-yellow);
+  font-size: var(--font-size-small-bold);
+  font-weight: var(--font-weight-small-bold);
+}
+
+/* ── Corpo: palco + painel ─────────────────────────────────────────── */
+
+.td-body {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.td-stage {
+  display: grid;
+  place-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 48px;
+}
+
+/* O CANVAS.
+   Superfície de composição com posicionamento absoluto — nunca flex.
+   Isso é proposital: os elementos dentro dele têm coordenadas, não
+   ordem. Ele não muda de posição nem de tamanho entre as paradas. */
+.td-canvas {
+  position: relative;
+  width: 100%;
+  max-width: 1024px;
+  aspect-ratio: var(--canvas-aspect);
+  overflow: hidden;
+  border: 1px solid var(--border-line);
+  border-radius: var(--radius-canvas);
+  background: #000;                 /* preto real: é a cor de vídeo, não
+                                       uma superfície da interface */
+  container-type: inline-size;      /* o guia do timer mede o texto dele
+                                       contra a largura do canvas */
+  box-shadow: 0 20px 50px 0 rgb(0 0 0 / 0.5);
+}
+
+/* O estado vazio É a dropzone. O canvas inteiro é a área de arraste —
+   não existe painel de ferramentas antes de haver imagem. */
+.td-canvas__empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
+  padding: var(--space-24);
+  text-align: center;
+}
+
+.td-canvas__headline {
+  color: var(--text-primary);
+  font-size: var(--font-size-title);
+  font-weight: var(--font-weight-title);
+}
+.td-canvas__sub   { color: var(--text-body); font-size: var(--font-size-small); }
+.td-canvas__meta  { color: var(--text-mute); font-size: var(--font-size-legal); }
+
+/* ── Painel ────────────────────────────────────────────────────────── */
+
+.td-panel {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  width: var(--panel-width);
+  padding: 0 var(--space-24);
+  border-left: 1px solid var(--border-line);
+  background: var(--surface-card);
+  overflow-y: auto;
+}
+
+.td-panel__head { padding: var(--space-12) 0; }
+
+.td-panel__eyebrow {
+  color: var(--text-mute);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-label);
+  letter-spacing: var(--letter-spacing-label);
+  text-transform: uppercase;
+}
+
+.td-panel__counter {
+  margin-top: var(--space-4);
+  color: var(--text-body);
+  font-size: var(--font-size-small);
+}
+
+.td-panel__rule {
+  height: 1px;
+  margin: var(--space-16) 0;
+  border: 0;
+  background: var(--border-line);
+}
+
+.td-panel__stop { flex: 1 1 auto; }
+
+.td-panel__foot {
+  padding: var(--space-16) 0 var(--space-24);
+}
+
+.td-btn--block { width: 100%; }
+
+/* Abaixo de 880 o painel vira dock rolável embaixo, com o palco fixo no
+   topo. O canvas continua sendo o mesmo elemento — ele não é remontado. */
+@media (max-width: 880px) {
+  .td-body { flex-direction: column; }
+
+  .td-stage {
+    flex: 0 0 auto;
+    padding: var(--space-12);
+  }
+
+  .td-panel {
+    flex: 1 1 auto;
+    width: 100%;
+    min-height: 0;
+    padding: 0 var(--space-16);
+    border-left: 0;
+    border-top: 1px solid var(--border-line);
+  }
+}
+
+/* ── A trilha ──────────────────────────────────────────────────────────
+   Três estados, e a regra que os governa está na descrição do componente
+   no Figma: Feito = verde (só confirma o que já aconteceu), Atual = azul
+   (marca onde você está), Próximo = mute. NUNCA laranja aqui — laranja é
+   só ação que avança.                                                    */
+
+.td-track {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.td-step {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  width: 100%;
+  padding: var(--space-8) var(--space-12);
+  border: 1px solid transparent;
+  border-radius: var(--radius-input);
+  text-align: left;
+}
+
+.td-step__marker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-label);
+  letter-spacing: var(--letter-spacing-label);
+}
+
+.td-step__labels {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 1px;
+  flex: 1 0 0;
+}
+
+.td-step__name {
+  font-size: var(--font-size-small-bold);
+  font-weight: var(--font-weight-small-bold);
+}
+
+.td-step__note {
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-label);
+  letter-spacing: var(--letter-spacing-label);
+  color: var(--text-mute);
+}
+
+/* Próximo — ainda não feito */
+.td-step--next .td-step__marker { border: 1px solid var(--border-line-2); color: var(--text-mute); }
+.td-step--next .td-step__name   { color: var(--text-mute); }
+
+/* Atual — azul marca onde você está */
+.td-step--current {
+  border-color: var(--brand-blue);
+  background: var(--tint-blue-10);
+}
+.td-step--current .td-step__marker { background: var(--brand-blue); color: var(--brand-white); }
+.td-step--current .td-step__name   { color: var(--text-primary); }
+
+/* Feito — verde só confirma */
+.td-step--done .td-step__marker { border: 1.5px solid var(--feedback-success); color: var(--feedback-success); }
+.td-step--done .td-step__name   { color: var(--text-primary); }
+.td-step--done .td-step__marker .td-icon { width: 14px; height: 14px; }
+
+/* Uma parada já visitada é clicável para voltar; a que ainda não chegou,
+   não. Ninguém perde trabalho feito ao navegar para trás. */
+.td-step[disabled] { cursor: default; }
+.td-step:not([disabled]):hover { background: var(--tint-white-6); }
+.td-step--current:not([disabled]):hover { background: var(--tint-blue-10); }
+
+/* ── Conteúdo da parada ────────────────────────────────────────────── */
+
+.td-stop__title {
+  margin-bottom: var(--space-8);
+  color: var(--text-primary);
+  font-size: var(--font-size-title);
+  font-weight: var(--font-weight-title);
+}
+
+.td-stop__text {
+  margin-bottom: var(--space-16);
+  color: var(--text-body);
+  font-size: var(--font-size-small);
+  line-height: var(--line-height-small);
+}
+
+/* A nota de custo, que explica a regra antes de ela custar dinheiro. */
+.td-stop__cost {
+  margin-top: var(--space-16);
+  color: var(--text-mute);
+  font-size: var(--font-size-legal);
+  line-height: var(--line-height-legal);
+}
+
+/* O canvas inteiro é a dropzone enquanto não há imagem. */
+.td-canvas:not(:has(.td-canvas__image)) { cursor: pointer; }
+
+.td-canvas--over {
+  border-color: var(--brand-blue);
+  box-shadow: 0 0 0 2px var(--brand-blue), 0 20px 50px 0 rgb(0 0 0 / 0.5);
+}
+
+/* Um <label> que faz papel de botão precisa se comportar como botão. */
+label.td-btn { cursor: pointer; }
+
+/* No mobile a barra superior não tem largura para rótulos: dois botões
+   escritos por extenso empurravam a página para fora dos 390px e criavam
+   rolagem horizontal. Vira ícone, com o nome preservado em aria-label —
+   quem usa leitor de tela continua ouvindo "Baixar a thumb". */
+@media (max-width: 880px) {
+  .td-topbar__action {
+    width: 44px;
+    padding: 0;
+  }
+  .td-topbar__action .td-btn__label { display: none; }
+  .td-topbar { min-width: 0; }
+  .td-pill--credits { padding: 6px var(--space-8); }
+}
+
+/* =====================================================================
+   A SUPERFÍCIE DE COMPOSIÇÃO (etapa 4)
+   Quem posiciona a camada é canvas.js, em pixels de export. O CSS aqui
+   só cuida da aparência e do cursor — nenhuma medida de layout.
+   ===================================================================== */
+
+.td-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  max-width: none;          /* a camada é maior que o canvas de propósito */
+  transform-origin: 0 0;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* A volta suave quando o arraste passou do limite. Puxar e ver voltar
+   ensina o limite melhor do que uma parede dura durante o gesto. */
+.td-layer--settling {
+  transition: transform var(--duration-base) var(--ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .td-layer--settling { transition: none; }
+}
+
+/* Cursor: grab em repouso, grabbing durante o arraste. */
+.td-canvas--selected { cursor: grab; }
+.td-canvas--grabbing,
+.td-canvas--grabbing .td-layer { cursor: grabbing; }
+
+/* ── Alças ───────────────────────────────────────────────────────────── */
+
+.td-handles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  pointer-events: none;      /* o retângulo não intercepta o arraste;
+                                só as alças, que reativam abaixo */
+  outline: 1px solid var(--brand-blue);
+  outline-offset: 0;
+}
+
+.td-handles.td-layer--settling {
+  transition: transform var(--duration-base) var(--ease-out);
+}
+
+.td-handle {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border: 2px solid var(--brand-blue);
+  border-radius: 3px;
+  background: var(--brand-white);
+  pointer-events: auto;
+}
+
+/* Alvo de toque de 44px sem alça visualmente gorda: a área invisível
+   ao redor é que cresce. */
+.td-handle::before {
+  content: '';
+  position: absolute;
+  inset: -15px;
+}
+
+.td-handle--nw { top: -7px;    left: -7px;    cursor: nwse-resize; }
+.td-handle--ne { top: -7px;    right: -7px;   cursor: nesw-resize; }
+.td-handle--se { bottom: -7px; right: -7px;   cursor: nwse-resize; }
+.td-handle--sw { bottom: -7px; left: -7px;    cursor: nesw-resize; }
+
+/* ── Controle de zoom ────────────────────────────────────────────────── */
+
+/* Centralizado na borda de baixo, e não num canto: os cantos são das
+   alças, e um controle encostado na alça do canto é um clique errado
+   esperando para acontecer. */
+.td-zoom {
+  position: absolute;
+  left: 50%;
+  bottom: var(--space-12);
+  transform: translateX(-50%);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--border-line-2);
+  border-radius: 999px;
+  background: var(--tint-ink-86);
+  backdrop-filter: blur(8px);
+}
+
+.td-zoom__btn,
+.td-zoom__value {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  border-radius: 999px;
+  color: var(--text-body);
+  font-size: var(--font-size-small-bold);
+  font-weight: var(--font-weight-small-bold);
+}
+
+.td-zoom__btn { width: 32px; font-size: var(--font-size-title); }
+.td-zoom__value { min-width: 56px; color: var(--text-primary); }
+
+.td-zoom__btn:hover,
+.td-zoom__value:hover { background: var(--tint-white-6); }
+
+@media (max-width: 880px) {
+  .td-zoom__btn, .td-zoom__value { height: 44px; }
+  .td-zoom__btn { width: 44px; }
+}
+
+/* ── Ferramentas da parada e estados de falha ─────────────────────────── */
+
+.td-tool { margin-top: var(--space-12); }
+
+.td-tool__ok {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-8);
+  margin-top: var(--space-8);
+  color: var(--feedback-success);   /* VERDE SÓ CONFIRMA o que já
+                                       aconteceu — nunca anuncia nem
+                                       convida a clicar */
+  font-size: var(--font-size-legal);
+  line-height: var(--line-height-legal);
+}
+.td-tool__ok .td-icon { margin-top: 2px; }
+
+/* Falha nunca é beco sem saída: o bloco sempre carrega uma saída. */
+.td-error {
+  margin-top: var(--space-12);
+  padding: var(--space-12);
+  border-left: 3px solid var(--feedback-danger);   /* VERMELHO SÓ PARA
+                                                      FALHA */
+  border-radius: var(--radius-input);
+  background: var(--surface-card-2);
+}
+
+.td-error__text {
+  color: var(--text-body);
+  font-size: var(--font-size-small);
+  line-height: var(--line-height-small);
+}
+
+.td-error__kept {
+  margin: var(--space-8) 0 var(--space-12);
+  color: var(--feedback-success);
+  font-size: var(--font-size-legal);
+  line-height: var(--line-height-legal);
+}
+
+/* =====================================================================
+   PARADA 2 · FILTROS, CONFIRMAÇÃO E OS TRÊS ESTADOS DE IA
+   ===================================================================== */
+
+.td-filters {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-8);
+}
+
+.td-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-8);
+  border: 1px solid var(--border-line-2);
+  border-radius: var(--radius-input);
+  background: var(--surface-card-2);
+  text-align: left;
+  transition: border-color var(--duration-fast) var(--ease-out);
+}
+
+.td-filter:hover { border-color: var(--text-mute); }
+
+/* AZUL MARCA A OPÇÃO ESCOLHIDA. Nunca laranja num card de filtro:
+   escolher o filtro não é a ação que avança a parada. */
+.td-filter--on {
+  border-color: var(--brand-blue);
+  background: var(--tint-blue-10);
+}
+
+.td-filter__art {
+  display: block;
+  aspect-ratio: 16 / 9;
+  margin-bottom: var(--space-4);
+  border-radius: 6px;
+  background: var(--surface-mirage) center / cover no-repeat;
+}
+
+.td-filter__name {
+  color: var(--text-primary);
+  font-size: var(--font-size-small-bold);
+  font-weight: var(--font-weight-small-bold);
+}
+
+.td-filter__note {
+  /* O card é Surface/Card 2: aqui Text/Mute reprovaria. */
+  color: var(--text-body);
+  font-size: var(--font-size-legal);
+  line-height: 1.3;
+}
+
+.td-stack { margin-top: var(--space-8); }
+
+/* ── Processando e prévia ────────────────────────────────────────────── */
+
+.td-working__title {
+  margin-bottom: var(--space-8);
+  color: var(--text-primary);
+  font-size: var(--font-size-body-bold);
+  font-weight: var(--font-weight-body-bold);
+}
+
+.td-working__text {
+  margin-bottom: var(--space-8);
+  color: var(--text-body);
+  font-size: var(--font-size-small);
+  line-height: var(--line-height-small);
+}
+
+.td-working__time {
+  margin-bottom: var(--space-16);
+  color: var(--brand-blue);      /* azul marca o que está acontecendo
+                                    agora, não convida a clicar */
+  font-size: var(--font-size-small);
+}
+
+.td-working__warn {
+  margin-top: var(--space-8);
+  color: var(--text-mute);
+  font-size: var(--font-size-legal);
+  line-height: var(--line-height-legal);
+}
+
+/* ── O modal ─────────────────────────────────────────────────────────── */
+
+.td-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: var(--space-24) var(--space-16);
+  overflow-y: auto;
+}
+
+.td-modal__veil {
+  position: fixed;
+  inset: 0;
+  background: var(--tint-ink-86);
+}
+
+.td-modal__card {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  padding: var(--space-24);
+  border: 1px solid var(--border-line-2);
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+}
+
+.td-modal__eyebrow {
+  margin-bottom: var(--space-4);
+  color: var(--brand-orange);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-label);
+  letter-spacing: var(--letter-spacing-label);
+  text-transform: uppercase;
+}
+
+.td-modal__title {
+  margin-bottom: var(--space-8);
+  color: var(--text-primary);
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-h3);
+  line-height: var(--line-height-h3);
+}
+
+.td-modal__text {
+  margin-bottom: var(--space-16);
+  color: var(--text-body);
+  font-size: var(--font-size-small);
+  line-height: var(--line-height-small);
+}
+
+/* A conta, à vista antes de custar. */
+.td-ledger {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--space-4) var(--space-12);
+  margin: 0 0 var(--space-16);
+  padding: var(--space-12);
+  border-radius: var(--radius-input);
+  background: var(--surface-card-2);
+  font-size: var(--font-size-small);
+}
+
+.td-ledger dt { color: var(--text-body); }
+.td-ledger dd { margin: 0; color: var(--text-primary); text-align: right; }
+.td-ledger__strong { font-weight: var(--font-weight-body-bold); }
+
+/* O aviso do crédito vem ANTES, nunca depois. */
+.td-modal__warning {
+  margin-bottom: var(--space-16);
+  padding: var(--space-8) var(--space-12);
+  border-left: 3px solid var(--feedback-yellow);
+  border-radius: var(--radius-input);
+  background: var(--tint-yellow-16);
+  color: var(--text-body);
+  font-size: var(--font-size-legal);
+  line-height: var(--line-height-legal);
+}
+
+.td-modal__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}
+
+.td-modal__actions .td-btn--primary { flex: 1 1 100%; order: -1; }
+
+@media (max-width: 880px) {
+  .td-modal__actions .td-btn { flex: 1 1 100%; }
+}
+
+/* ── A comparação antes/depois ───────────────────────────────────────── */
+
+.td-compare {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  --split: 50%;
+}
+
+/* O "depois" é revelado da divisória para a direita. O "antes" é a
+   composição que já está no canvas, por baixo — não uma segunda cópia. */
+.td-compare__after {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  clip-path: inset(0 0 0 var(--split));
+}
+
+.td-compare__bar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--split);
+  width: 2px;
+  margin-left: -1px;
+  background: var(--brand-white);
+  cursor: ew-resize;
+  touch-action: none;
+}
+
+.td-compare__grip {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 44px;
+  height: 44px;
+  transform: translate(-50%, -50%);
+  border: 2px solid var(--brand-white);
+  border-radius: 999px;
+  background: var(--tint-ink-86);
+  cursor: ew-resize;
+}
+
+.td-compare__grip::before {
+  content: '‹ ›';
+  color: var(--brand-white);
+  font-size: var(--font-size-small-bold);
+  letter-spacing: 2px;
+}
+
+.td-compare__tag {
+  position: absolute;
+  top: var(--space-12);
+  padding: var(--space-4) var(--space-8);
+  border-radius: 6px;
+  background: var(--tint-ink-86);
+  color: var(--brand-white);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-label);
+  letter-spacing: var(--letter-spacing-label);
+}
+
+.td-compare__tag--before { left: var(--space-12); }
+.td-compare__tag--after  { right: var(--space-12); }
+
+/* =====================================================================
+   PARADA 3 · TEXTO
+   ===================================================================== */
+
+.td-texts {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;          /* só valem cliques na parada 3 */
+}
+
+.td-texts--live { pointer-events: auto; }
+
+.td-text {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  /* Padrão do título: Barlow Black Italic. */
+  font-family: var(--font-thumb-title);
+  font-style: italic;
+  line-height: 1.1;
+  outline: none;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  cursor: grab;
+}
+
+.td-text--moving { cursor: grabbing; }
+
+/* AZUL MARCA A SELEÇÃO. As alças são os quatro cantos da caixa. */
+.td-text--on { outline: 1px solid var(--brand-blue); }
+
+.td-text--editing {
+  outline: 2px solid var(--brand-blue);
+  cursor: text;
+}
+
+/* As quatro alças da caixa de texto, desenhadas em ::before/::after dos
+   cantos via elementos filhos seria mais código do que vale — aqui o
+   próprio contorno azul mais os pontos abaixo bastam. */
+.td-text--on::after,
+.td-text--on::before {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--brand-blue);
+  border-radius: 3px;
+  background: var(--brand-white);
+}
+.td-text--on::before { top: -6px;    left: -6px; }
+.td-text--on::after  { bottom: -6px; right: -6px; }
+
+.td-text--editing::before,
+.td-text--editing::after { display: none; }
+
+/* O guia do timer do YouTube. Interface, não conteúdo: some no export. */
+.td-timer {
+  position: absolute;
+  right: var(--timer-guide-right);
+  bottom: var(--timer-guide-bottom);
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  width: var(--timer-guide-width);
+  height: var(--timer-guide-height);
+  border: 1px dashed var(--feedback-yellow);
+  border-radius: 4px;
+  background: rgb(0 0 0 / 0.55);
+  color: var(--feedback-yellow);
+  font-size: clamp(10px, 1.6cqw, 16px);
+  font-weight: var(--font-weight-body-bold);
+  pointer-events: none;
+}
+
+/* ── Controles do painel ─────────────────────────────────────────────── */
+
+.td-group { margin-bottom: var(--space-16); }
+
+.td-group__label {
+  margin-bottom: var(--space-4);
+  color: var(--text-mute);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-label);
+  letter-spacing: var(--letter-spacing-label);
+  text-transform: uppercase;
+}
+
+.td-group__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.td-choice {
+  min-height: 32px;
+  padding: 0 var(--space-8);
+  border: 1px solid var(--border-line-2);
+  border-radius: var(--radius-input);
+  background: var(--surface-card-2);
+  color: var(--text-body);
+  font-size: var(--font-size-legal);
+  font-weight: var(--font-weight-small-bold);
+}
+
+/* AZUL MARCA O CONTROLE ATIVO. Escolher peso não avança a parada, então
+   nunca laranja aqui. */
+.td-choice--on {
+  border-color: var(--brand-blue);
+  background: var(--tint-blue-10);
+  color: var(--text-primary);
+}
+
+.td-swatch {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--border-line-2);
+  border-radius: var(--radius-input);
+}
+
+.td-swatch--on {
+  outline: 2px solid var(--brand-blue);
+  outline-offset: 2px;
+}
+
+.td-swatch--pick {
+  background: var(--surface-card-2);
+  cursor: pointer;
+}
+
+.td-check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  margin-top: var(--space-16);
+  color: var(--text-body);
+  font-size: var(--font-size-legal);
+  cursor: pointer;
+}
+
+.td-check input { accent-color: var(--brand-blue); }
+.td-check__note { color: var(--text-mute); }
+
+@media (max-width: 880px) {
+  .td-choice, .td-swatch { min-height: 44px; }
+  .td-swatch { width: 44px; height: 44px; }
+}
+
+/* ── Parada 4 · molduras ─────────────────────────────────────────────── */
+
+.td-frames {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-8);
+}
+
+.td-frameopt {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-8);
+  border: 1px solid var(--border-line-2);
+  border-radius: var(--radius-input);
+  background: var(--surface-card-2);
+  text-align: left;
+}
+
+.td-frameopt:hover:not(:disabled) { border-color: var(--text-mute); }
+
+/* AZUL MARCA A OPÇÃO ESCOLHIDA. */
+.td-frameopt--on {
+  border-color: var(--brand-blue);
+  background: var(--tint-blue-10);
+}
+
+.td-frameopt__art {
+  display: block;
+  aspect-ratio: 16 / 9;
+  border-radius: 6px;
+  background: var(--surface-mirage) center / cover no-repeat;
+}
+
+/* "Sem moldura" mostra o que é: nada por cima. */
+.td-frameopt__art--none {
+  background-image:
+    linear-gradient(45deg, var(--border-line) 25%, transparent 25%, transparent 75%, var(--border-line) 75%),
+    linear-gradient(45deg, var(--border-line) 25%, transparent 25%, transparent 75%, var(--border-line) 75%);
+  background-size: 12px 12px;
+  background-position: 0 0, 6px 6px;
+}
+
+.td-frameopt__name {
+  color: var(--text-primary);
+  font-size: var(--font-size-small-bold);
+  font-weight: var(--font-weight-small-bold);
+}
+
+/* Opção indisponível diz QUAL arquivo falta, em vez de só não funcionar. */
+.td-frameopt__missing {
+  color: var(--feedback-danger);
+  font-size: var(--font-size-legal);
+  line-height: 1.3;
+}
+
+/* A prévia da moldura no canvas. Não é ela que vira PNG — o export
+   redesenha a moldura em 1920 × 1080. */
+.td-frameview {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  background: center / 100% 100% no-repeat;
+  pointer-events: none;
+}
+
+/* O pill de créditos é clicável: é por onde se ajusta o teto de gasto. */
+button.td-pill--credits { cursor: pointer; }
+button.td-pill--credits:hover { border-color: var(--text-mute); }
+
+.td-modal .td-field input[type='number'] { margin-bottom: var(--space-8); }
+</style>
+</head>
+<body>
+
+<!-- A tela de configuração das chaves. Abre sozinha na primeira visita e
+     sempre que uma chamada voltar 401 ou 403. Fica no HTML em vez de ser
+     montada por JS para aparecer mesmo se algo quebrar depois. -->
+<div class="td-setup" id="setup" role="dialog" aria-modal="true" aria-labelledby="setup-title" hidden>
+  <div class="td-setup__card">
+
+    <p class="td-setup__eyebrow" id="setup-eyebrow">Antes de começar</p>
+    <h1 class="td-setup__title" id="setup-title">Duas chaves e você está dentro</h1>
+    <p class="td-setup__lede" id="setup-lede">
+      O ThumbDrop conversa direto com o Google AI e com a PhotoRoom, do seu
+      navegador. Não há servidor no meio, então as chaves precisam ser suas.
+    </p>
+
+    <p class="td-setup__warning">
+      As chaves ficam salvas neste navegador e são visíveis para quem tiver
+      acesso a ele. Use só em máquina sua.
+    </p>
+
+    <form id="setup-form" novalidate>
+      <!-- Os campos são montados a partir de TD_CONFIG.FIELDS, para que
+           exista um lugar só definindo o que cada chave faz. -->
+    </form>
+
+    <div class="td-setup__actions">
+      <button type="button" class="td-btn td-btn--danger" id="setup-clear" hidden>
+        Apagar chaves
+      </button>
+      <button type="submit" class="td-btn td-btn--primary" id="setup-save" form="setup-form">
+        Salvar e abrir o editor
+      </button>
+    </div>
+
+    <p class="td-setup__note">
+      Para tirar as chaves do navegador de vez, o README descreve o worker que
+      as guarda do lado do servidor.
+    </p>
+
+    <p class="td-sr" role="status" aria-live="polite" id="setup-status"></p>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     PARADA 2a · CONFIRMAR A PRÉVIA
+     Clicar num filtro não gera nada e não cobra nada: abre isto. A
+     geração só acontece depois do OK, e o crédito é debitado nesse
+     instante. Três saídas, nenhuma delas escondida.
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="td-modal" id="confirm" role="dialog" aria-modal="true" aria-labelledby="confirm-title" hidden>
+  <div class="td-modal__veil" data-close></div>
+  <div class="td-modal__card">
+    <p class="td-modal__eyebrow" id="confirm-eyebrow">Confirmar</p>
+    <h2 class="td-modal__title" id="confirm-title">Ver a prévia do filtro</h2>
+    <p class="td-modal__text" id="confirm-text"></p>
+
+    <dl class="td-ledger" id="confirm-ledger"></dl>
+
+    <p class="td-modal__warning">
+      O crédito sai no instante em que a IA começa a rodar e não volta —
+      nem se você cancelar a espera no meio.
+    </p>
+
+    <div class="td-modal__actions">
+      <button type="button" class="td-btn td-btn--ghost" id="confirm-discard">Descartar</button>
+      <button type="button" class="td-btn td-btn--ghost" id="confirm-skip">Seguir sem filtro · 0 ✦</button>
+      <button type="button" class="td-btn td-btn--ghost" id="confirm-budget" hidden>Ajustar o meu teto</button>
+      <button type="button" class="td-btn td-btn--primary" id="confirm-go">Ver prévia · 1 ✦</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     O RECIBO
+     Aparece ANTES do download, não depois. Quem está prestes a baixar
+     ainda pode decidir alguma coisa; quem já baixou, não.
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="td-modal" id="receipt" role="dialog" aria-modal="true" aria-labelledby="receipt-title" hidden>
+  <div class="td-modal__veil" data-close></div>
+  <div class="td-modal__card">
+    <p class="td-modal__eyebrow">Pronta</p>
+    <h2 class="td-modal__title" id="receipt-title">Sua thumb está pronta</h2>
+    <p class="td-modal__text">Confira a conta antes de baixar. Baixar não cobra crédito.</p>
+
+    <dl class="td-ledger" id="receipt-ledger"></dl>
+
+    <div class="td-modal__actions">
+      <button type="button" class="td-btn td-btn--primary" id="receipt-go">Baixar PNG 1920 × 1080</button>
+      <button type="button" class="td-btn td-btn--ghost" id="receipt-back">Voltar a editar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Ajustar o teto de gasto. Ver o README: o saldo é um limite que a
+     pessoa dá a si mesma, porque as chaves são dela. -->
+<div class="td-modal" id="budget" role="dialog" aria-modal="true" aria-labelledby="budget-title" hidden>
+  <div class="td-modal__veil" data-close></div>
+  <div class="td-modal__card">
+    <p class="td-modal__eyebrow">Saldo</p>
+    <h2 class="td-modal__title" id="budget-title">Ajustar o seu teto de gasto</h2>
+    <p class="td-modal__text">
+      As chaves são suas, então o ✦ não é uma moeda que você compra de alguém:
+      é um teto que você dá a si mesmo, para a conta da API não surpreender no
+      fim do mês. Um crédito custa por volta de <strong>R$ 0,23</strong>.
+    </p>
+
+    <label class="td-field__label" for="budget-input">Créditos disponíveis</label>
+    <div class="td-field">
+      <input type="number" id="budget-input" min="0" step="1" inputmode="numeric">
+    </div>
+
+    <div class="td-modal__actions">
+      <button type="button" class="td-btn td-btn--primary" id="budget-save">Salvar o teto</button>
+      <button type="button" class="td-btn td-btn--ghost" id="budget-cancel">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     O EDITOR
+     Barra superior fixa · palco com o canvas 16:9 que NUNCA muda de
+     posição nem de tamanho entre as paradas · painel de 320 à direita no
+     desktop, dock rolável embaixo abaixo de 880px.
+     O que troca entre as paradas é só o conteúdo do painel.
+     ═══════════════════════════════════════════════════════════════════ -->
+<div id="app" class="td-app" hidden>
+
+  <!-- Ícones stand-in, 24px em traço, até os SVGs do Figma chegarem.
+       Trocar cada um é substituir o conteúdo de um <symbol>. -->
+  <svg class="td-sr" aria-hidden="true" focusable="false">
+    <defs>
+      <symbol id="i-close" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+      <symbol id="i-save" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 3h11l3 3v15H5z"/><path d="M9 3v6h6V3M8 21v-6h8v6"/></symbol>
+      <symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 3v12m0 0l-4-4m4 4l4-4M4 19h16"/></symbol>
+      <symbol id="i-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 19V7m0 0l-4 4m4-4l4 4M4 3h16"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 13l4 4L19 7"/></symbol>
+    </defs>
+  </svg>
+
+  <header class="td-topbar">
+    <button type="button" class="td-iconbtn" id="bar-close" aria-label="Fechar o editor">
+      <svg class="td-icon" aria-hidden="true"><use href="#i-close"></use></svg>
+    </button>
+
+    <h1 class="td-topbar__title" id="thumb-title">Thumb sem título</h1>
+
+    <span class="td-pill td-pill--format">1920 × 1080</span>
+
+    <div class="td-topbar__spacer"></div>
+
+    <!-- Saldo, sempre à vista. O número muda; o ✦ é parte do componente. -->
+    <button type="button" class="td-pill td-pill--credits" id="credits"
+            aria-label="Saldo de créditos. Clique para ajustar o seu teto de gasto">
+      <span id="credits-count">100</span>
+      <span class="td-pill__spark" aria-hidden="true">✦</span>
+    </button>
+
+    <button type="button" class="td-btn td-btn--ghost td-topbar__action" id="open-setup" aria-label="Trocar ou apagar as chaves">
+      <svg class="td-icon" aria-hidden="true"><use href="#i-save"></use></svg>
+      <span class="td-btn__label">Chaves</span>
+    </button>
+
+    <!-- BAIXAR FICA NEUTRO NAS PARADAS 1 A 3. Só acende na 4, que é onde
+         baixar passa a ser a ação que avança. -->
+    <button type="button" class="td-btn td-btn--ghost td-topbar__action" id="bar-download" aria-label="Baixar a thumb" disabled>
+      <svg class="td-icon" aria-hidden="true"><use href="#i-download"></use></svg>
+      <span class="td-btn__label">Baixar Thumb</span>
+    </button>
+  </header>
+
+  <div class="td-body">
+
+    <!-- O PALCO. O canvas é filho único e não se mexe daqui. -->
+    <main class="td-stage">
+      <div class="td-canvas" id="canvas">
+        <!-- Zoom por controle visível, além do scroll: nem todo mundo
+             descobre a roda do mouse. Clicar no número volta para 100%. -->
+        <div class="td-zoom" id="zoom" hidden>
+          <button type="button" class="td-zoom__btn" id="zoom-out" aria-label="Diminuir o zoom">−</button>
+          <button type="button" class="td-zoom__value" id="zoom-value"
+                  aria-label="Zoom atual. Clique para voltar a 100%">100%</button>
+          <button type="button" class="td-zoom__btn" id="zoom-in" aria-label="Aumentar o zoom">+</button>
+        </div>
+
+        <div class="td-canvas__empty" id="canvas-empty">
+          <p class="td-canvas__headline">Arraste sua imagem aqui</p>
+          <p class="td-canvas__sub">ou clique para escolher · JPG, PNG · fica tudo no seu navegador</p>
+          <p class="td-canvas__meta">16:9 · 1920 × 1080</p>
+        </div>
+      </div>
+    </main>
+
+    <!-- O PAINEL. Muda de conteúdo a cada parada; o canvas não. -->
+    <aside class="td-panel" aria-label="Trilha guiada">
+      <div class="td-panel__head">
+        <p class="td-panel__eyebrow">Sua thumb em 4 passos</p>
+        <p class="td-panel__counter" id="step-counter">Passo 1 de 4</p>
+      </div>
+
+      <ol class="td-track" id="track" aria-label="Paradas"></ol>
+
+      <hr class="td-panel__rule">
+
+      <div class="td-panel__stop" id="stop-body"></div>
+
+      <div class="td-panel__foot">
+        <button type="button" class="td-btn td-btn--primary td-btn--block" id="advance" disabled>
+          Continuar
+        </button>
+      </div>
+    </aside>
+
+  </div>
+</div>
+
+<script>
+/* =====================================================================
+   ThumbDrop V3 · config.js
+   ---------------------------------------------------------------------
+   ESTE ARQUIVO SÓ LÊ. Ele não escreve no localStorage, não guarda chave
+   em variável de módulo e não tem uma única chave escrita nele — nem
+   como constante, nem como fallback, nem como exemplo comentado.
+
+   Se este arquivo for commitado, e ele é, nada vaza.
+
+   Quem escreve as chaves é a tela de configuração, em app.js, porque
+   quem escreve é quem tem o formulário na mão. A separação é de
+   propósito: existe um lugar só no projeto que chama setItem com uma
+   chave, e ele está à vista.
+   ===================================================================== */
+
+(function (window) {
+  'use strict';
+
+  /* Os nomes das entradas no localStorage. São nomes de gaveta, não
+     valores — não há segredo nenhum aqui. */
+  var STORAGE_KEYS = {
+    google:   'thumbdrop.google_ai_key',
+    photoroom:'thumbdrop.photoroom_key',
+    proxy:    'thumbdrop.photoroom_proxy_url'
+  };
+
+  /* O que cada chave faz e como a pessoa consegue uma. Isso alimenta a
+     tela de configuração — é texto de interface, fica junto da definição
+     para não haver dois lugares a atualizar. */
+  var FIELDS = [
+    {
+      id: 'google',
+      label: 'Chave do Google AI',
+      hint: 'Gera os seis filtros de direção de arte.',
+      where: 'aistudio.google.com/apikey',
+      required: true,
+      placeholder: 'AIza…'
+    },
+    {
+      id: 'photoroom',
+      label: 'Chave da PhotoRoom',
+      hint: 'Remove o fundo da foto.',
+      where: 'app.photoroom.com/api-dashboard',
+      required: true,
+      placeholder: 'sk_pr_… ou sandbox_sk_pr_…'
+    },
+    {
+      id: 'proxy',
+      label: 'URL do proxy da PhotoRoom',
+      hint: 'Opcional. Sem ele o navegador bloqueia o recorte por CORS — ' +
+            'tudo o mais funciona. Veja o README para o worker de 20 linhas.',
+      where: null,
+      required: false,
+      placeholder: 'https://seu-worker.workers.dev'
+    }
+  ];
+
+  /* localStorage pode lançar: navegação privada, site data bloqueado,
+     iframe sem permissão. Nunca deixe isso derrubar o editor. */
+  function readRaw(name) {
+    try {
+      return window.localStorage.getItem(name) || '';
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function get(id) {
+    var name = STORAGE_KEYS[id];
+    return name ? readRaw(name).trim() : '';
+  }
+
+  function has(id) {
+    return get(id) !== '';
+  }
+
+  /* Quais chaves obrigatórias estão faltando. Lista vazia = pode entrar
+     no editor. É isso que decide se a tela de configuração abre. */
+  function missing() {
+    return FIELDS.filter(function (f) {
+      return f.required && !has(f.id);
+    }).map(function (f) {
+      return f.id;
+    });
+  }
+
+  function isConfigured() {
+    return missing().length === 0;
+  }
+
+  /* Verdadeiro quando o navegador não vai conseguir guardar nada — vale
+     avisar a pessoa antes dela digitar duas chaves à toa. */
+  function storageBlocked() {
+    try {
+      var probe = '__thumbdrop_probe__';
+      window.localStorage.setItem(probe, '1');
+      window.localStorage.removeItem(probe);
+      return false;
+    } catch (e) {
+      return true;
+    }
+  }
+
+  window.TD_CONFIG = {
+    STORAGE_KEYS: STORAGE_KEYS,
+    FIELDS: FIELDS,
+    get: get,
+    has: has,
+    missing: missing,
+    isConfigured: isConfigured,
+    storageBlocked: storageBlocked
+  };
+
+})(window);
+/* =====================================================================
+   ThumbDrop V3 · canvas.js
+   ---------------------------------------------------------------------
+   A superfície de composição. Posicionamento absoluto, nunca flex: os
+   elementos aqui têm coordenadas, não ordem.
+
+   O SISTEMA DE COORDENADAS
+   Tudo é guardado em pixels de EXPORT — o espaço de 1920 × 1080 em que a
+   thumb final é gerada — e só na hora de desenhar é convertido para o
+   tamanho que o canvas tem na tela. Duas consequências boas: o layout
+   não muda quando a janela muda de tamanho, e o export é uma releitura
+   do mesmo estado, não uma segunda implementação que pode divergir.
+
+   ZOOM 100% = a imagem no tamanho natural dela dentro dos 1920 × 1080.
+   Não é o mesmo que "caber no canvas" — por isso o duplo clique
+   (enquadrar) e o clique no número (voltar a 100%) são gestos
+   diferentes, com resultados diferentes.
+   ===================================================================== */
+
+(function (window, document) {
+  'use strict';
+
+  var EXPORT_W = 1920;
+  var EXPORT_H = 1080;
+
+  var MIN_ZOOM = 0.10;
+  var MAX_ZOOM = 4.00;
+
+  /* Quanto da imagem precisa continuar dentro do canvas. Um quarto do
+     menor lado: o suficiente para a pessoa sempre ter onde pegar de
+     volta, sem prender o enquadramento. */
+  var MIN_VISIBLE = 0.25;
+
+  function clamp(value, low, high) {
+    return Math.min(high, Math.max(low, value));
+  }
+
+  function createCanvas(root, options) {
+    options = options || {};
+    var onChange = options.onChange || function () {};
+
+    /* ── Estado da camada ───────────────────────────────────────────
+       x, y = canto superior esquerdo em pixels de export.
+       sx, sy = escala. Iguais, exceto quando alguém segura Shift numa
+       alça e libera a proporção de propósito.                          */
+
+    var layer = null;
+    var selected = false;
+
+    var image = document.createElement('img');
+    image.className = 'td-layer';
+    image.alt = '';
+    image.draggable = false;
+
+    var handles = document.createElement('div');
+    handles.className = 'td-handles';
+    handles.hidden = true;
+
+    var CORNERS = ['nw', 'ne', 'se', 'sw'];
+    CORNERS.forEach(function (corner) {
+      var handle = document.createElement('button');
+      handle.type = 'button';
+      handle.className = 'td-handle td-handle--' + corner;
+      handle.dataset.corner = corner;
+      handle.setAttribute('aria-label', 'Redimensionar pelo canto');
+      handles.appendChild(handle);
+    });
+
+    /* ── Conversão tela ↔ export ────────────────────────────────────── */
+
+    function factor() {
+      /* Quantos pixels de tela vale um pixel de export. */
+      return root.clientWidth / EXPORT_W;
+    }
+
+    function toExport(clientX, clientY) {
+      var rect = root.getBoundingClientRect();
+      var k = factor();
+      return {
+        x: (clientX - rect.left) / k,
+        y: (clientY - rect.top) / k
+      };
+    }
+
+    /* ── Desenho ────────────────────────────────────────────────────── */
+
+    function draw() {
+      if (!layer) return;
+      var k = factor();
+
+      image.style.width  = (layer.natW * layer.sx * k) + 'px';
+      image.style.height = (layer.natH * layer.sy * k) + 'px';
+      image.style.transform = 'translate(' + (layer.x * k) + 'px,' + (layer.y * k) + 'px)';
+
+      drawHandles(k);
+
+      onChange(publicState());
+    }
+
+
+    /* AS ALÇAS MORAM NA PARTE VISÍVEL DA CAMADA, não nos cantos dela.
+
+       Com a imagem preenchendo o canvas — que é o enquadre de partida —
+       os cantos reais ficam fora da área visível, e no zoom de 400% ficam
+       longe dela. Alça que não dá para alcançar não é alça. Então o
+       retângulo das alças é a interseção entre a camada e o canvas,
+       recuado o suficiente para nenhuma delas ser cortada pela borda.
+
+       Quem redimensiona continua puxando o canto REAL da camada: o
+       gesto é medido por deslocamento do ponteiro, não pela posição da
+       alça. Ver resize(). */
+    var HANDLE_INSET = 9;
+
+    function drawHandles(k) {
+      if (!selected) { handles.hidden = true; return; }
+
+      var cw = root.clientWidth;
+      var ch = root.clientHeight;
+
+      var left = layer.x * k;
+      var top  = layer.y * k;
+      var right  = left + layer.natW * layer.sx * k;
+      var bottom = top  + layer.natH * layer.sy * k;
+
+      var x0 = clamp(left,   HANDLE_INSET, cw - HANDLE_INSET);
+      var x1 = clamp(right,  HANDLE_INSET, cw - HANDLE_INSET);
+      var y0 = clamp(top,    HANDLE_INSET, ch - HANDLE_INSET);
+      var y1 = clamp(bottom, HANDLE_INSET, ch - HANDLE_INSET);
+
+      /* Camada arrastada quase toda para fora: não há retângulo onde
+         pousar alça, e mostrar quatro pontos empilhados seria pior que
+         não mostrar nada. */
+      if (x1 - x0 < 16 || y1 - y0 < 16) { handles.hidden = true; return; }
+
+      handles.hidden = false;
+      handles.style.width  = (x1 - x0) + 'px';
+      handles.style.height = (y1 - y0) + 'px';
+      handles.style.transform = 'translate(' + x0 + 'px,' + y0 + 'px)';
+    }
+
+    function publicState() {
+      if (!layer) return null;
+      return {
+        zoom: layer.sx,
+        zoomPercent: Math.round(layer.sx * 100),
+        uniform: Math.abs(layer.sx - layer.sy) < 0.0001
+      };
+    }
+
+    /* ── Limites ────────────────────────────────────────────────────────
+       A imagem não pode sumir da área visível. A regra é de SOBREPOSIÇÃO,
+       não de posição: o que importa é quanto da imagem ainda cruza o
+       canvas, em cada eixo.                                              */
+
+    function clampPosition(x, y) {
+      var w = layer.natW * layer.sx;
+      var h = layer.natH * layer.sy;
+
+      var needX = Math.min(w, EXPORT_W) * MIN_VISIBLE;
+      var needY = Math.min(h, EXPORT_H) * MIN_VISIBLE;
+
+      return {
+        x: clamp(x, needX - w, EXPORT_W - needX),
+        y: clamp(y, needY - h, EXPORT_H - needY)
+      };
+    }
+
+    /* Quem arrasta pode passar do limite enquanto segura; ao soltar, a
+       imagem volta para dentro suavemente. Puxar e ver voltar ensina o
+       limite melhor do que uma parede dura durante o gesto. */
+    function settle() {
+      if (!layer) return;
+      var fixed = clampPosition(layer.x, layer.y);
+      if (fixed.x === layer.x && fixed.y === layer.y) return;
+
+      image.classList.add('td-layer--settling');
+      handles.classList.add('td-layer--settling');
+      layer.x = fixed.x;
+      layer.y = fixed.y;
+      draw();
+
+      window.setTimeout(function () {
+        image.classList.remove('td-layer--settling');
+        handles.classList.remove('td-layer--settling');
+      }, 220);
+    }
+
+    /* ── Zoom ───────────────────────────────────────────────────────────
+       ANCORADO NO PONTEIRO: o pixel da imagem que está sob o cursor
+       continua sob o cursor depois do zoom. É isso que faz o gesto
+       parecer natural — zoom ancorado no centro parece quebrado.         */
+
+    function zoomAt(nextScale, anchorX, anchorY) {
+      if (!layer) return;
+
+      var target = clamp(nextScale, MIN_ZOOM, MAX_ZOOM);
+      if (target === layer.sx && target === layer.sy) return;
+
+      /* Onde o ponto ancorado cai DENTRO da imagem, de 0 a 1. */
+      var u = (anchorX - layer.x) / (layer.natW * layer.sx);
+      var v = (anchorY - layer.y) / (layer.natH * layer.sy);
+
+      layer.sx = target;
+      layer.sy = target;
+
+      /* Recoloca a imagem para que aquele mesmo ponto caia sob a âncora. */
+      layer.x = anchorX - u * layer.natW * layer.sx;
+      layer.y = anchorY - v * layer.natH * layer.sy;
+
+      draw();
+    }
+
+    function setZoom(next) {
+      if (!layer) return;
+      /* Sem ponteiro, a âncora é o centro do canvas — que é o que a
+         pessoa está olhando quando usa o controle de − e +. */
+      zoomAt(next, EXPORT_W / 2, EXPORT_H / 2);
+      settle();
+    }
+
+    /* Enquadrar: a imagem inteira cabe no canvas, centralizada. */
+    function fit() {
+      if (!layer) return;
+      var scale = Math.min(EXPORT_W / layer.natW, EXPORT_H / layer.natH);
+      layer.sx = layer.sy = clamp(scale, MIN_ZOOM, MAX_ZOOM);
+      center();
+      draw();
+    }
+
+    /* Preencher: a imagem cobre o canvas inteiro. É o enquadre de
+       partida, porque thumb com tarja preta nas laterais não é thumb. */
+    function fill() {
+      if (!layer) return;
+      var scale = Math.max(EXPORT_W / layer.natW, EXPORT_H / layer.natH);
+      layer.sx = layer.sy = clamp(scale, MIN_ZOOM, MAX_ZOOM);
+      center();
+      draw();
+    }
+
+    function center() {
+      layer.x = (EXPORT_W - layer.natW * layer.sx) / 2;
+      layer.y = (EXPORT_H - layer.natH * layer.sy) / 2;
+    }
+
+    /* ── Gestos de ponteiro ─────────────────────────────────────────────
+       Um só caminho para mouse, caneta e dedo. Dois ponteiros viram
+       pinça: zoom e pan juntos, ancorados no ponto médio entre os dedos. */
+
+    var pointers = new Map();
+    var dragging = null;      /* arraste da imagem */
+    var resizing = null;      /* arraste de alça */
+    var pinching = null;
+
+    function pointerList() {
+      return Array.from(pointers.values());
+    }
+
+    function distance(a, b) {
+      return Math.hypot(a.x - b.x, a.y - b.y);
+    }
+
+    function midpoint(a, b) {
+      return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+    }
+
+    function onPointerDown(event) {
+      if (!layer) return;
+
+      var corner = event.target.dataset && event.target.dataset.corner;
+
+      pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      try { event.target.setPointerCapture(event.pointerId); } catch (e) {}
+
+      var list = pointerList();
+
+      if (list.length === 2) {
+        /* Dois dedos: a pinça assume e cancela qualquer arraste em curso. */
+        dragging = null;
+        resizing = null;
+        var a = list[0], b = list[1];
+        var mid = toExport(midpoint(a, b).x, midpoint(a, b).y);
+        pinching = {
+          startDistance: distance(a, b) || 1,
+          startScale: layer.sx,
+          anchor: mid
+        };
+        return;
+      }
+
+      if (corner) {
+        var point = toExport(event.clientX, event.clientY);
+        resizing = {
+          corner: corner,
+          start: point,
+          startLayer: { x: layer.x, y: layer.y, sx: layer.sx, sy: layer.sy }
+        };
+        select(true);
+        return;
+      }
+
+      select(true);
+      var origin = toExport(event.clientX, event.clientY);
+      dragging = {
+        grabX: origin.x - layer.x,
+        grabY: origin.y - layer.y
+      };
+      root.classList.add('td-canvas--grabbing');
+    }
+
+    function onPointerMove(event) {
+      if (!layer) return;
+      if (!pointers.has(event.pointerId)) return;
+      pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+
+      if (pinching) {
+        var list = pointerList();
+        if (list.length < 2) return;
+        var spread = distance(list[0], list[1]) || 1;
+        var mid = midpoint(list[0], list[1]);
+        var anchor = toExport(mid.x, mid.y);
+        zoomAt(pinching.startScale * (spread / pinching.startDistance), anchor.x, anchor.y);
+        return;
+      }
+
+      if (resizing) {
+        resize(event);
+        return;
+      }
+
+      if (dragging) {
+        var point = toExport(event.clientX, event.clientY);
+        layer.x = point.x - dragging.grabX;
+        layer.y = point.y - dragging.grabY;
+        draw();
+      }
+    }
+
+    function onPointerUp(event) {
+      pointers.delete(event.pointerId);
+
+      if (pointers.size < 2) pinching = null;
+
+      if (pointers.size === 0) {
+        if (dragging || resizing) settle();
+        dragging = null;
+        resizing = null;
+        root.classList.remove('td-canvas--grabbing');
+      }
+    }
+
+    /* ── Alças ──────────────────────────────────────────────────────────
+       Mantêm proporção; Shift libera. O canto OPOSTO ao que está sendo
+       arrastado fica parado — é o que faz a alça parecer que puxa a
+       imagem, e não que a empurra.                                       */
+
+    function resize(event) {
+      var start = resizing.startLayer;
+      var point = toExport(event.clientX, event.clientY);
+
+      var west  = resizing.corner === 'nw' || resizing.corner === 'sw';
+      var north = resizing.corner === 'nw' || resizing.corner === 'ne';
+
+      var startW = layer.natW * start.sx;
+      var startH = layer.natH * start.sy;
+
+      /* O canto que está sendo puxado e o que fica parado — os dois da
+         camada, não da alça. A alça pode estar recuada para dentro do
+         canvas; o que ela move é sempre o canto de verdade. */
+      var cornerX = west  ? start.x : start.x + startW;
+      var cornerY = north ? start.y : start.y + startH;
+      var anchorX = west  ? start.x + startW : start.x;
+      var anchorY = north ? start.y + startH : start.y;
+
+      /* Medido por DESLOCAMENTO desde o início do gesto. É isso que
+         desacopla o redimensionamento da posição da alça. */
+      var movedX = point.x - resizing.start.x;
+      var movedY = point.y - resizing.start.y;
+
+      var width  = Math.abs((cornerX + movedX) - anchorX);
+      var height = Math.abs((cornerY + movedY) - anchorY);
+
+      var sx = width  / layer.natW;
+      var sy = height / layer.natH;
+
+      if (!event.shiftKey) {
+        /* Proporção mantida: o eixo que mais mudou manda nos dois. */
+        var uniform = Math.max(sx, sy);
+        sx = uniform;
+        sy = uniform;
+      }
+
+      layer.sx = clamp(sx, MIN_ZOOM, MAX_ZOOM);
+      layer.sy = clamp(sy, MIN_ZOOM, MAX_ZOOM);
+
+      layer.x = west  ? anchorX - layer.natW * layer.sx : anchorX;
+      layer.y = north ? anchorY - layer.natH * layer.sy : anchorY;
+
+      draw();
+    }
+
+    /* ── Roda do mouse ──────────────────────────────────────────────── */
+
+    function onWheel(event) {
+      if (!layer) return;
+      event.preventDefault();
+
+      var anchor = toExport(event.clientX, event.clientY);
+      /* Passo multiplicativo: subir e descer a mesma quantidade de
+         cliques volta exatamente ao zoom de onde saiu. */
+      var step = Math.exp(-event.deltaY * 0.0015);
+      zoomAt(layer.sx * step, anchor.x, anchor.y);
+    }
+
+    /* ── Duplo clique: enquadra a imagem inteira ────────────────────── */
+
+    var fitOnDoubleClick = true;
+
+    function onDoubleClick(event) {
+      if (!layer || !fitOnDoubleClick) return;
+      event.preventDefault();
+      fit();
+      settle();
+    }
+
+    function select(next) {
+      selected = next;
+      root.classList.toggle('td-canvas--selected', next);
+      draw();
+    }
+
+    /* ── API ────────────────────────────────────────────────────────── */
+
+    function setImage(src, naturalWidth, naturalHeight) {
+      layer = {
+        src: src,
+        natW: naturalWidth,
+        natH: naturalHeight,
+        sx: 1,
+        sy: 1,
+        x: 0,
+        y: 0
+      };
+      image.src = src;
+      if (!image.parentNode) {
+        root.insertBefore(image, root.firstChild);
+        root.appendChild(handles);
+      }
+      fill();
+      select(true);
+    }
+
+    function getLayer() {
+      return layer && {
+        src: layer.src, natW: layer.natW, natH: layer.natH,
+        x: layer.x, y: layer.y, sx: layer.sx, sy: layer.sy
+      };
+    }
+
+    /* Trocar a fonte da imagem SEM mexer no enquadramento. É isto que
+       torna verdade a regra de custo: o recorte é uma chamada de API, o
+       reenquadre é local. Depois de recortado, o PNG entra no lugar do
+       original na mesma posição e escala — nenhuma chamada nova. */
+    function replaceSource(src, naturalWidth, naturalHeight) {
+      if (!layer) return;
+      /* A escala é reancorada para que o recorte ocupe o mesmo retângulo
+         que o original ocupava, mesmo que venha com outro número de
+         pixels. */
+      var displayW = layer.natW * layer.sx;
+      var displayH = layer.natH * layer.sy;
+
+      layer.src = src;
+      layer.natW = naturalWidth;
+      layer.natH = naturalHeight;
+      layer.sx = displayW / naturalWidth;
+      layer.sy = displayH / naturalHeight;
+
+      image.src = src;
+      draw();
+    }
+
+
+    /* ── Desenho do texto ───────────────────────────────────────────────
+       Reimplementa a quebra de linha do navegador no canvas 2D, porque
+       canvas não quebra sozinho. Cada palavra carrega a cor do trecho de
+       onde veio — é assim que uma palavra amarela no meio de um título
+       branco chega inteira ao PNG.                                       */
+
+    function drawTexts(ctx, texts, scale) {
+      texts.forEach(function (model) {
+        var size = model.size * scale;
+        var width = model.width * scale;
+        var lineHeight = size * 1.1;
+
+        ctx.save();
+        ctx.font = 'italic ' + model.weight + ' ' + size + 'px Barlow, system-ui, sans-serif';
+        ctx.textBaseline = 'top';
+
+        /* Palavras, cada uma com a cor do trecho de origem. */
+        var words = [];
+        model.segments.forEach(function (segment) {
+          segment.text.split(/(\s+|\n)/).forEach(function (piece) {
+            if (piece !== '') words.push({ text: piece, color: segment.color });
+          });
+        });
+
+        /* Quebra gulosa, do jeito que o navegador faz. */
+        var lines = [];
+        var line = [];
+        var used = 0;
+
+        words.forEach(function (word) {
+          if (word.text === '\n') { lines.push(line); line = []; used = 0; return; }
+          var advance = ctx.measureText(word.text).width;
+          if (used + advance > width && line.length && word.text.trim()) {
+            lines.push(line); line = []; used = 0;
+          }
+          line.push(word);
+          used += advance;
+        });
+        if (line.length) lines.push(line);
+
+        if (model.shadow) {
+          ctx.shadowColor = 'rgba(0,0,0,.75)';
+          ctx.shadowBlur = size * 0.14;
+          ctx.shadowOffsetY = size * 0.06;
+        }
+
+        var y = model.y * scale;
+        lines.forEach(function (pieces) {
+          var lineWidth = pieces.reduce(function (total, word) {
+            return total + ctx.measureText(word.text).width;
+          }, 0);
+
+          var x = model.x * scale;
+          if (model.align === 'center') x += (width - lineWidth) / 2;
+          else if (model.align === 'right') x += width - lineWidth;
+
+          pieces.forEach(function (word) {
+            ctx.fillStyle = word.color || model.color;
+            ctx.fillText(word.text, x, y);
+            x += ctx.measureText(word.text).width;
+          });
+
+          y += lineHeight;
+        });
+
+        ctx.restore();
+      });
+    }
+
+    /* ── Snapshot ───────────────────────────────────────────────────────
+       Redesenha o estado num canvas de verdade e devolve um PNG. É o
+       MESMO renderizador que o export da etapa 8 vai usar — por isso ele
+       nasce aqui, mandando para a IA exatamente o que a pessoa vê, e não
+       uma segunda interpretação do estado que pode divergir.
+
+       `width` permite pedir uma versão menor: a prévia do filtro manda
+       uma entrada reduzida, porque o que ela precisa julgar é direção de
+       arte, não nitidez.                                                 */
+
+    function snapshot(options) {
+      options = options || {};
+      var width = options.width || EXPORT_W;
+      var height = Math.round(width * EXPORT_H / EXPORT_W);
+      var scale = width / EXPORT_W;
+
+      var sheet = document.createElement('canvas');
+      sheet.width = width;
+      sheet.height = height;
+
+      var ctx = sheet.getContext('2d');
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, width, height);
+
+      if (layer && image.complete && image.naturalWidth) {
+        ctx.drawImage(
+          image,
+          layer.x * scale,
+          layer.y * scale,
+          layer.natW * layer.sx * scale,
+          layer.natH * layer.sy * scale
+        );
+      }
+
+      /* O texto é desenhado pelo MESMO renderizador, a partir dos mesmos
+         trechos que a tela mostra. O guia do timer e as alças não entram
+         aqui — eles são interface, e interface não vai para o PNG. */
+      if (options.texts) drawTexts(ctx, options.texts, scale);
+
+      /* A moldura é a última camada: ela emoldura tudo, inclusive o
+         texto. */
+      if (options.frame) {
+        ctx.drawImage(options.frame, 0, 0, width, height);
+      } else if (options.frameColor) {
+        var band = (options.frameWidth || 16) * scale;
+        ctx.save();
+        ctx.strokeStyle = options.frameColor;
+        ctx.lineWidth = band;
+        /* Desenhada meia banda para dentro, para a borda ficar inteira
+           dentro dos 1920 x 1080 em vez de metade fora. */
+        ctx.strokeRect(band / 2, band / 2, width - band, height - band);
+        ctx.restore();
+      }
+
+      return sheet.toDataURL('image/png');
+    }
+
+    root.addEventListener('pointerdown', onPointerDown);
+    root.addEventListener('pointermove', onPointerMove);
+    root.addEventListener('pointerup', onPointerUp);
+    root.addEventListener('pointercancel', onPointerUp);
+    root.addEventListener('wheel', onWheel, { passive: false });
+    root.addEventListener('dblclick', onDoubleClick);
+    window.addEventListener('resize', draw);
+
+    return {
+      setImage: setImage,
+      snapshot: snapshot,
+      setDoubleClickFit: function (next) { fitOnDoubleClick = next; },
+      replaceSource: replaceSource,
+      getLayer: getLayer,
+      hasImage: function () { return !!layer; },
+      fit: fit,
+      fill: fill,
+      setZoom: setZoom,
+      getZoom: function () { return layer ? layer.sx : 1; },
+      select: select,
+      MIN_ZOOM: MIN_ZOOM,
+      MAX_ZOOM: MAX_ZOOM,
+      EXPORT_W: EXPORT_W,
+      EXPORT_H: EXPORT_H
+    };
+  }
+
+  window.TD_CANVAS = { create: createCanvas };
+
+})(window, document);
+/* =====================================================================
+   ThumbDrop V3 · text.js
+   ---------------------------------------------------------------------
+   As caixas de texto da parada 3.
+
+   O gesto principal não tem botão: DUPLO CLIQUE em qualquer ponto vazio
+   do canvas cria uma caixa ali e já entra em edição, com o cursor
+   piscando. Existe um botão de "adicionar texto" no painel, mas ele é a
+   porta de serviço — para quem não descobriu o gesto, e para quem navega
+   por teclado.
+
+   O DESTAQUE EM AMARELO É GESTO DE SELEÇÃO, não controle separado:
+   selecionar uma palavra dentro da edição e clicar no amarelo pinta só
+   ela. É a assinatura visual das thumbs da casa.
+
+   Por que contentEditable e não índices de caractere: o destaque precisa
+   sobreviver à edição. Se a pessoa pinta a terceira palavra e depois
+   insere uma palavra antes dela, um destaque guardado por índice
+   escorrega para o lugar errado. Guardado como span no DOM, ele anda
+   junto com o texto, porque é o próprio navegador que cuida disso.
+   ===================================================================== */
+
+(function (window, document) {
+  'use strict';
+
+  var EXPORT_W = 1920;
+  var EXPORT_H = 1080;
+
+  /* Padrão do título: Barlow Black Italic. */
+  var DEFAULT = {
+    size: 108,          /* px de export */
+    width: 1150,
+    weight: 900,
+    align: 'left',
+    color: '#ffffff',
+    shadow: true
+  };
+
+  var WEIGHTS = [
+    { value: 400, label: 'Regular' },
+    { value: 700, label: 'Bold' },
+    { value: 800, label: 'Extra Bold' },
+    { value: 900, label: 'Black' }
+  ];
+
+  function clamp(value, low, high) {
+    return Math.min(high, Math.max(low, value));
+  }
+
+  function createTexts(root, options) {
+    options = options || {};
+    var onChange = options.onChange || function () {};
+
+    var boxes = [];
+    var selected = null;
+    var editing = null;
+    var enabled = false;
+
+    var container = document.createElement('div');
+    container.className = 'td-texts';
+    root.appendChild(container);
+
+    function factor() { return root.clientWidth / EXPORT_W; }
+
+    /* ── Criar ─────────────────────────────────────────────────────── */
+
+    function create(exportX, exportY, options) {
+      options = options || {};
+
+      var model = {
+        id: 't' + Date.now() + Math.random().toString(36).slice(2, 6),
+        x: clamp(exportX, 0, EXPORT_W - 200),
+        y: clamp(exportY, 0, EXPORT_H - 80),
+        width: DEFAULT.width,
+        size: DEFAULT.size,
+        weight: DEFAULT.weight,
+        align: DEFAULT.align,
+        color: DEFAULT.color,
+        shadow: DEFAULT.shadow
+      };
+
+      var element = document.createElement('div');
+      element.className = 'td-text';
+      element.dataset.id = model.id;
+      element.spellcheck = false;
+      /* Alcançável por Tab: sem isto, quem navega por teclado consegue
+         criar um texto pelo painel e nunca mais voltar a ele. */
+      element.tabIndex = 0;
+      element.setAttribute('role', 'textbox');
+      element.setAttribute('aria-label', 'Caixa de texto da thumb. ' +
+        'Enter edita, Delete apaga, setas movem.');
+      element.textContent = options.content || '';
+
+      model.element = element;
+      container.appendChild(element);
+      boxes.push(model);
+
+      layout(model);
+      select(model);
+      if (options.edit !== false) edit(model);
+
+      onChange();
+      return model;
+    }
+
+    /* ── Desenhar ──────────────────────────────────────────────────── */
+
+    function layout(model) {
+      var k = factor();
+      var style = model.element.style;
+
+      style.transform = 'translate(' + (model.x * k) + 'px,' + (model.y * k) + 'px)';
+      style.width = (model.width * k) + 'px';
+      style.fontSize = (model.size * k) + 'px';
+      style.fontWeight = model.weight;
+      style.textAlign = model.align;
+      style.color = model.color;
+      /* A sombra escala junto com o texto, senão ela some no mobile e
+         vira borrão no desktop. */
+      style.textShadow = model.shadow
+        ? '0 ' + (model.size * k * 0.06) + 'px ' + (model.size * k * 0.14) + 'px rgba(0,0,0,.75)'
+        : 'none';
+    }
+
+    function layoutAll() {
+      boxes.forEach(layout);
+    }
+
+    /* ── Selecionar e editar ───────────────────────────────────────── */
+
+    function select(model) {
+      model = model || null;
+      /* Idempotente de propósito: render() chama setEnabled() a cada
+         desenho, e setEnabled desseleciona. Sem esta saída, o par
+         select → onChange → render → setEnabled → select se chamava até
+         estourar a pilha. Operação que não muda nada não avisa ninguém. */
+      if (model === selected && !editing) return;
+
+      /* Clicar num texto seleciona ele e DESSELECIONA os outros. */
+      if (selected && selected !== model) blur(selected);
+      selected = model;
+
+      boxes.forEach(function (box) {
+        box.element.classList.toggle('td-text--on', box === selected);
+      });
+
+      onChange();
+    }
+
+    function edit(model) {
+      if (!model) return;
+      editing = model;
+      model.element.contentEditable = 'true';
+      model.element.classList.add('td-text--editing');
+      model.element.focus();
+
+      /* Numa caixa que já tem conteúdo, o duplo clique entra em edição
+         COM O CONTEÚDO SELECIONADO — quem entra ali quase sempre quer
+         trocar o que está escrito, não emendar. */
+      if (model.element.textContent.length) {
+        var range = document.createRange();
+        range.selectNodeContents(model.element);
+        var selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
+
+      onChange();
+    }
+
+    function blur(model) {
+      if (!model || model.element.contentEditable !== 'true') return;
+      model.element.contentEditable = 'false';
+      model.element.classList.remove('td-text--editing');
+      if (editing === model) editing = null;
+
+      /* CAIXA VAZIA SE APAGA SOZINHA. Ninguém quer caixa fantasma. */
+      if (!model.element.textContent.trim()) remove(model);
+
+      onChange();
+    }
+
+    function stopEditing() {
+      if (editing) blur(editing);
+    }
+
+    function deselectQuiet() {
+      if (editing) blur(editing);
+      if (!selected) return;
+      selected.element.classList.remove('td-text--on');
+      selected = null;
+    }
+
+    function remove(model) {
+      if (!model) return;
+      if (model.element.parentNode) model.element.parentNode.removeChild(model.element);
+      boxes = boxes.filter(function (box) { return box !== model; });
+      if (selected === model) selected = null;
+      if (editing === model) editing = null;
+      onChange();
+    }
+
+    function deselect() {
+      stopEditing();
+      select(null);
+    }
+
+    /* ── O destaque em amarelo ───────────────────────────────────────────
+       Gesto de seleção: com um trecho selecionado dentro da edição,
+       pinta só aquele trecho. Sem seleção, pinta a caixa inteira.        */
+
+    function paint(color) {
+      if (!selected) return;
+
+      var selection = window.getSelection();
+      var inside = editing && selection.rangeCount &&
+                   selected.element.contains(selection.anchorNode) &&
+                   !selection.isCollapsed;
+
+      if (!inside) {
+        /* Sem trecho selecionado: a cor é da caixa. Os destaques que já
+           existem dentro dela continuam valendo — é isso que faz um
+           título branco com uma palavra amarela continuar possível. */
+        selected.color = color;
+        layout(selected);
+        onChange();
+        return;
+      }
+
+      var range = selection.getRangeAt(0);
+      var run = document.createElement('span');
+      run.className = 'td-run';
+      run.style.color = color;
+      run.appendChild(range.extractContents());
+
+      /* Um trecho pintado por cima de outro não deve empilhar spans: o
+         de fora manda, os de dentro somem. */
+      Array.prototype.slice.call(run.querySelectorAll('span')).forEach(unwrap);
+
+      range.insertNode(run);
+
+      /* A seleção continua onde estava, para a pessoa poder repintar sem
+         ter que selecionar de novo. */
+      var after = document.createRange();
+      after.selectNodeContents(run);
+      selection.removeAllRanges();
+      selection.addRange(after);
+
+      onChange();
+    }
+
+    function unwrap(span) {
+      var parent = span.parentNode;
+      while (span.firstChild) parent.insertBefore(span.firstChild, span);
+      parent.removeChild(span);
+    }
+
+    /* ── Gestos ──────────────────────────────────────────────────────── */
+
+    var dragging = null;
+    var resizing = null;
+
+    function toExport(clientX, clientY) {
+      var rect = root.getBoundingClientRect();
+      var k = factor();
+      return { x: (clientX - rect.left) / k, y: (clientY - rect.top) / k };
+    }
+
+    function boxFrom(target) {
+      var element = target && target.closest && target.closest('.td-text');
+      if (!element) return null;
+      return boxes.filter(function (box) { return box.element === element; })[0] || null;
+    }
+
+    container.addEventListener('pointerdown', function (event) {
+      if (!enabled) return;
+
+      var handle = event.target.dataset && event.target.dataset.textCorner;
+      if (handle && selected) {
+        event.stopPropagation();
+        resizing = {
+          corner: handle,
+          start: toExport(event.clientX, event.clientY),
+          startModel: { x: selected.x, y: selected.y, width: selected.width, size: selected.size }
+        };
+        try { event.target.setPointerCapture(event.pointerId); } catch (e) {}
+        return;
+      }
+
+      var box = boxFrom(event.target);
+      if (!box) return;
+
+      event.stopPropagation();
+      select(box);
+
+      /* Em modo de edição o ponteiro é do cursor de texto, não do
+         arraste — senão não dá para selecionar uma palavra. */
+      if (editing === box) return;
+
+      var point = toExport(event.clientX, event.clientY);
+      dragging = { model: box, grabX: point.x - box.x, grabY: point.y - box.y };
+      box.element.classList.add('td-text--moving');
+      try { box.element.setPointerCapture(event.pointerId); } catch (e) {}
+    });
+
+    container.addEventListener('pointermove', function (event) {
+      if (resizing && selected) {
+        var point = toExport(event.clientX, event.clientY);
+        var start = resizing.startModel;
+        var movedX = point.x - resizing.start.x;
+
+        /* A alça escala a caixa inteira, mantendo a proporção entre
+           largura e corpo da fonte. Texto esticado num eixo só deforma a
+           letra, e isso nunca é o que a pessoa queria — por isso não há
+           Shift aqui. */
+        var west = resizing.corner === 'nw' || resizing.corner === 'sw';
+        var width = clamp(west ? start.width - movedX : start.width + movedX, 120, EXPORT_W * 1.5);
+        var ratio = width / start.width;
+
+        selected.width = width;
+        selected.size = clamp(start.size * ratio, 16, 400);
+        if (west) selected.x = start.x + (start.width - width);
+
+        layout(selected);
+        onChange();
+        return;
+      }
+
+      if (!dragging) return;
+      var spot = toExport(event.clientX, event.clientY);
+      dragging.model.x = clamp(spot.x - dragging.grabX, -dragging.model.width * 0.5, EXPORT_W - 40);
+      dragging.model.y = clamp(spot.y - dragging.grabY, -dragging.model.size, EXPORT_H - 20);
+      layout(dragging.model);
+      onChange();
+    });
+
+    function endGesture() {
+      if (dragging) dragging.model.element.classList.remove('td-text--moving');
+      dragging = null;
+      resizing = null;
+    }
+
+    container.addEventListener('pointerup', endGesture);
+    container.addEventListener('pointercancel', endGesture);
+
+    /* Foco por teclado seleciona, Enter entra em edição — o par do
+       clique e do duplo clique, para quem não usa ponteiro. */
+    container.addEventListener('focusin', function (event) {
+      if (!enabled) return;
+      var box = boxFrom(event.target);
+      if (box && box !== selected) select(box);
+    });
+
+    container.addEventListener('keydown', function (event) {
+      if (!enabled || editing) return;
+      if (event.key !== 'Enter') return;
+      var box = boxFrom(event.target);
+      if (!box) return;
+      event.preventDefault();
+      edit(box);
+    });
+
+    /* Duplo clique num texto existente entra em edição daquele texto. */
+    container.addEventListener('dblclick', function (event) {
+      if (!enabled) return;
+      var box = boxFrom(event.target);
+      if (!box) return;
+      event.stopPropagation();
+      select(box);
+      edit(box);
+    });
+
+    /* ── Teclado ─────────────────────────────────────────────────────── */
+
+    document.addEventListener('keydown', function (event) {
+      if (!enabled || !selected) return;
+
+      /* Dentro da edição, Delete e Backspace são do texto. */
+      if (editing) {
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          stopEditing();
+        }
+        return;
+      }
+
+      var active = document.activeElement;
+      if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) return;
+
+      if (event.key === 'Delete' || event.key === 'Backspace') {
+        event.preventDefault();
+        remove(selected);
+        return;
+      }
+
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        deselect();
+        return;
+      }
+
+      /* Setas movem o texto: 1px de export por toque, 10 com Shift. */
+      var step = event.shiftKey ? 10 : 1;
+      if (event.key === 'ArrowLeft')  { event.preventDefault(); selected.x -= step; }
+      else if (event.key === 'ArrowRight') { event.preventDefault(); selected.x += step; }
+      else if (event.key === 'ArrowUp')    { event.preventDefault(); selected.y -= step; }
+      else if (event.key === 'ArrowDown')  { event.preventDefault(); selected.y += step; }
+      else return;
+
+      layout(selected);
+      onChange();
+    });
+
+    /* ── Serializar, para o export ───────────────────────────────────────
+       Cada caixa vira uma lista de trechos com a cor de cada um. É o que
+       o renderizador do canvas consome — o mesmo, para o que sai no PNG
+       ser o que está na tela.                                            */
+
+    function segmentsOf(model) {
+      var segments = [];
+
+      (function walk(node, inherited) {
+        Array.prototype.slice.call(node.childNodes).forEach(function (child) {
+          if (child.nodeType === 3) {
+            if (child.nodeValue) segments.push({ text: child.nodeValue, color: inherited });
+          } else if (child.nodeName === 'BR') {
+            segments.push({ text: '\n', color: inherited });
+          } else {
+            var color = (child.style && child.style.color) || inherited;
+            walk(child, color);
+          }
+        });
+      })(model.element, model.color);
+
+      return segments;
+    }
+
+    function serialize() {
+      return boxes.map(function (model) {
+        return {
+          x: model.x, y: model.y,
+          width: model.width, size: model.size,
+          weight: model.weight, align: model.align,
+          color: model.color, shadow: model.shadow,
+          segments: segmentsOf(model)
+        };
+      });
+    }
+
+    /* ── Estado ──────────────────────────────────────────────────────── */
+
+    function setEnabled(next) {
+      if (enabled === next) return;
+      enabled = next;
+      container.hidden = !next && boxes.length === 0;
+      container.classList.toggle('td-texts--live', next);
+      if (!next) deselectQuiet();
+    }
+
+    window.addEventListener('resize', layoutAll);
+
+    return {
+      create: create,
+      remove: remove,
+      select: select,
+      edit: edit,
+      deselect: deselect,
+      stopEditing: stopEditing,
+      paint: paint,
+      serialize: serialize,
+      setEnabled: setEnabled,
+      layoutAll: layoutAll,
+      count: function () { return boxes.length; },
+      selected: function () { return selected; },
+      isEditing: function () { return !!editing; },
+      update: function (changes) {
+        if (!selected) return;
+        Object.keys(changes).forEach(function (key) { selected[key] = changes[key]; });
+        layout(selected);
+        onChange();
+      },
+      WEIGHTS: WEIGHTS,
+      DEFAULT: DEFAULT
+    };
+  }
+
+  window.TD_TEXT = { create: createTexts };
+
+})(window, document);
+/* =====================================================================
+   ThumbDrop V3 · ai.js
+   ---------------------------------------------------------------------
+   As duas chamadas que custam dinheiro: PhotoRoom (recorte) e Gemini
+   (filtros). Este arquivo não conhece nenhuma chave — ele pede a chave
+   ao config.js no momento da chamada e não a guarda.
+
+   Toda função aqui devolve uma promessa que ou resolve com o resultado,
+   ou rejeita com um erro que tem `kind`. O `kind` é o que permite à
+   interface dizer o que aconteceu de verdade em vez de "deu erro":
+
+     'auth'      a chave foi recusada — 401 ou 403
+     'quota'     a cota acabou — 402
+     'cors'      o navegador bloqueou a chamada direta
+     'network'   não houve resposta
+     'service'   o serviço respondeu com erro
+     'empty'     respondeu, mas sem imagem
+   ===================================================================== */
+
+(function (window, document) {
+  'use strict';
+
+  var PHOTOROOM_ENDPOINT = 'https://sdk.photoroom.com/v1/segment';
+
+  function fail(kind, message) {
+    var error = new Error(message);
+    error.kind = kind;
+    return error;
+  }
+
+  /* ── Conversões ─────────────────────────────────────────────────────── */
+
+  function dataUrlToBlob(dataUrl) {
+    return fetch(dataUrl).then(function (response) { return response.blob(); });
+  }
+
+  function blobToDataUrl(blob) {
+    return new Promise(function (resolve, reject) {
+      var reader = new FileReader();
+      reader.onload = function () { resolve(reader.result); };
+      reader.onerror = function () { reject(fail('service', 'Não consegui ler a imagem devolvida.')); };
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  function measure(dataUrl) {
+    return new Promise(function (resolve, reject) {
+      var probe = new Image();
+      probe.onload = function () {
+        resolve({ src: dataUrl, width: probe.naturalWidth, height: probe.naturalHeight });
+      };
+      probe.onerror = function () { reject(fail('service', 'A imagem devolvida não abriu.')); };
+      probe.src = dataUrl;
+    });
+  }
+
+  /* ── PhotoRoom · remoção de fundo ─────────────────────────────────────
+     1 ✦ · US$ 0,020 por chamada.
+
+     Sobre o CORS: a PhotoRoom não devolve cabeçalho de origem cruzada
+     para chamada de navegador. Com a URL do proxy preenchida, a chamada
+     vai por ele e a chave nem sai daqui — quem a injeta é o worker.
+     Sem proxy, tentamos direto e o navegador provavelmente bloqueia. O
+     erro 'cors' existe para a interface poder explicar isso em vez de
+     deixar a pessoa achando que a chave está errada.                     */
+
+  function removeBackground(dataUrl, signal) {
+    var proxy = window.TD_CONFIG.get('proxy');
+    var apiKey = window.TD_CONFIG.get('photoroom');
+
+    if (!proxy && !apiKey) {
+      return Promise.reject(fail('auth', 'Falta a chave da PhotoRoom.'));
+    }
+
+    return dataUrlToBlob(dataUrl).then(function (blob) {
+      var body = new FormData();
+      body.append('image_file', blob, 'thumbdrop.png');
+      body.append('format', 'png');
+
+      var request = { method: 'POST', body: body, signal: signal };
+
+      /* Com proxy, a chave fica no worker e não viaja no cabeçalho. */
+      if (!proxy) request.headers = { 'x-api-key': apiKey };
+
+      return fetch(proxy || PHOTOROOM_ENDPOINT, request).catch(function (error) {
+        if (error && error.name === 'AbortError') throw error;
+        /* fetch só rejeita antes de haver resposta: CORS, DNS, offline.
+           Sem proxy, CORS é de longe a causa mais provável — e é a que
+           tem conserto conhecido. */
+        throw fail(proxy ? 'network' : 'cors',
+          proxy ? 'Não consegui falar com o proxy.'
+                : 'O navegador bloqueou a chamada direta à PhotoRoom.');
+      });
+    }).then(function (response) {
+      if (response.status === 401 || response.status === 403) {
+        throw fail('auth', 'A PhotoRoom recusou a chave.');
+      }
+      if (response.status === 402) {
+        throw fail('quota', 'A cota da chave da PhotoRoom acabou.');
+      }
+      if (!response.ok) {
+        throw fail('service', 'A PhotoRoom respondeu HTTP ' + response.status + '.');
+      }
+      return response.blob();
+    }).then(function (blob) {
+      if (!blob || blob.size === 0) throw fail('empty', 'A PhotoRoom devolveu uma imagem vazia.');
+      return blobToDataUrl(blob);
+    }).then(measure);
+  }
+
+
+  /* ── Os seis filtros ──────────────────────────────────────────────────
+     OS PROMPTS SÃO CÓPIA LITERAL DA V2. Não foram reescritos, resumidos
+     nem "melhorados" — foram extraídos do arquivo anexo por script, para
+     não haver erro de transcrição.
+
+     Todos seguem o mesmo esqueleto: regra de preservação, relighting,
+     pele e expressão, color grading, limpeza da marca d'água que o
+     removedor de fundo deixa, e saída.
+
+     A REGRA DE PRESERVAÇÃO É O QUE PROTEGE A PAUTA JORNALÍSTICA. Um
+     filtro que inventa cenário quebra a notícia. Se algum dia alguém for
+     mexer aqui, é essa parte que não pode relaxar.
+
+     "Cinema" usa o prompt que a V2 chamava de "cinematografico".        */
+
+  var FILTERS = [
+    {
+      id: "dramatico",
+      name: "Dramático",
+      note: "contraste alto, sombra pesada",
+      sample: 'assets/samples/dramatico.png',
+      prompt: "Use the provided image as a base composition and layout reference. Create a highly intense, high-contrast, and dramatic YouTube thumbnail base image based on this draft. Maintain the original subject, framing, and general composition, but significantly enhance the visual quality to match a high-stakes thriller movie look. IMPORTANT: Do not alter the environment or background structure. Keep the original background composition, but enhance atmosphere, depth, and grading. --- WATERMARK REMOVAL: Automatically detect, paint over, and completely remove any overlaid logos, text watermarks, or branding marks (such as the PhotoRoom watermark) present in the input composition. The final output must be 100% pristine and clean. --- RELIGHTING (Chiaroscuro & High Tension Style): Relight the subject with heavy, dramatic directional lighting: intense key light cutting across the scene; sharp, blinding specular highlights; deep, heavy cinematic shadows; powerful, crisp rim light separating the subject cleanly from the dark background. Add realistic dramatic highlight bloom on intense light sources. --- SKIN & SUBJECT RENDERING: Hyper-detailed, realistic skin texture with dramatic shadow casting. Enhance facial features to look focused, intense, and deeply emotional without morphing the face. --- ATMOSPHERE: Moody, heavy, and tense atmosphere. Thick depth with crisp light rays slicing through shadows. High-end dramatic studio look. --- COLOR GRADING: High-contrast modern thriller look. Deep, rich, ink-like blacks and stylized dark shadows contrasted with piercing white or intense amber highlights. Heavy visual tension grading. --- BACKGROUND: Do not change the structure or layout. Only enhance the intense lighting contrast between deep dark spots and bright reflections. --- COMPOSITION & STYLE: Razor-sharp subject separation with maximum visual pop. Optimized for YouTube thumbnail layout (16:9). OUTPUT: Sharp, detailed, high resolution, professional thumbnail background free of any watermarks."
+    },
+    {
+      id: "vivido",
+      name: "Vívido",
+      note: "cor saturada, brilho limpo",
+      sample: 'assets/samples/vivido.png',
+      prompt: "Use the provided image as a base composition and layout reference. Create a highly vibrant, hyper-energetic, and vivid YouTube thumbnail base image based on this draft. Maintain the original subject, framing, and general composition, but significantly enhance the visual quality to match a premium high-energy commercial look. IMPORTANT: Do not alter the environment or background structure. Keep the original background composition, but enhance atmosphere, depth, and grading. --- WATERMARK REMOVAL: Automatically detect, paint over, and completely remove any overlaid logos, text watermarks, or branding marks (such as the PhotoRoom watermark) present in the input composition. The final output must be 100% pristine and clean. --- RELIGHTING (High-Energy Studio Style): Relight the subject with punchy, brilliant commercial lighting: bright, clean key light that makes colors explode; vivid, crisp highlights on skin and clothing textures; dynamic colorful rim light that makes the subject leap forward from the background. Add beautiful highlight bloom and intense color radiance. --- SKIN & SUBJECT RENDERING: Realistic, flawless yet detailed skin texture with healthy, vibrant tones. Enhance facial expression to feel impactful, enthusiastic, and highly energetic. --- ATMOSPHERE: Crystal clear, luminous atmosphere with supreme digital clarity. Vibrant, energetic glow that emphasizes raw color power without adding noise. --- COLOR GRADING: Modern ultra-vivid look with rich, heavily saturated, deep colors. Clean, high-saturation contrast that preserves color details. Optimized specifically for maximum impact on tiny mobile screens. --- BACKGROUND: Do not change the structure or layout. Only enhance color depth, rich saturation, and pop-art contrast. OUTPUT: Sharp, detailed, high resolution, professional thumbnail background free of any watermarks."
+    },
+    {
+      id: "cinema",
+      name: "Cinema",
+      note: "teal e laranja, ar de filme",
+      sample: 'assets/samples/cinema.png',
+      prompt: "Use the provided image as a base composition and layout reference. Create a premium, filmic, and cinematic YouTube thumbnail base image based on this draft. Maintain the original subject, framing, and general composition, but significantly enhance the visual quality to match a high-budget movie look. IMPORTANT: Do not alter the environment or background structure. Keep the original background composition, but enhance atmosphere, depth, and grading. --- WATERMARK REMOVAL: Automatically detect, paint over, and completely remove any overlaid logos, text watermarks, or branding marks (such as the PhotoRoom watermark) present in the input composition. The final output must be 100% pristine and clean. --- RELIGHTING (Hollywood Feature Film Style): Relight the subject with masterful cinematic anamorphic lighting: soft yet directional cinematic key light; beautifully balanced highlights on skin; soft anamorphic rim light separating the subject elegantly from the background; high-end cinema commercial and feature film influence. Add realistic anamorphic lens flare and highlight bloom on bright areas. --- SKIN & SUBJECT RENDERING: Realistic, lifelike skin texture matching professional cinema cameras (Arri/Red style). Enhance facial expression to feel nuanced, emotional, and deeply engaging. --- ATMOSPHERE: Clear, pristine cinematic atmosphere with great depth. Elegant, warm cinematic glow across light sources and highlights. --- COLOR GRADING: Hollywood premium color grading (Teal and Orange or Editorial film look). Cool, stylized shadows balanced with perfect natural skin tones. Cinematic tone mapping with rich midtones and deep, film-like blacks. --- BACKGROUND: Do not change the structure or layout. Only enhance depth of field (subtle bokeh) and cinematic lighting contrast. --- COMPOSITION & STYLE: Clean and balanced with premium subject separation. Optimized for YouTube thumbnail layout (16:9) with an ultra-realistic, high-end editorial look. Inspired by viral, high-CTR thumbnails. OUTPUT: Sharp, detailed, high resolution, professional thumbnail background free of any watermarks."
+    },
+    {
+      id: "retro",
+      name: "Retrô",
+      note: "grão, pátina, arquivo antigo",
+      sample: 'assets/samples/retro.png',
+      prompt: "Use the provided image as a base composition and layout reference. Create an ultra-aged, highly weathered, and heavily desaturated vintage analog film style YouTube thumbnail base image based on this draft. Preserve the original subject, framing, and general composition with absolute fidelity. IMPORTANT: The output must be full-frame, without any borders, frames, or matte overlays. Do not add any framing elements. --- WATERMARK REMOVAL: Automatically detect, paint over, and completely remove any overlaid logos, text watermarks, or branding marks (such as the PhotoRoom watermark) present in the input composition. The final output must be 100% pristine and clean. --- COLOR GRADING & CAST (Ultra-Desaturated & Ancient): Extremely muted, drastically desaturated color palette where original colors are faded to their absolute limit. A heavy, dominant, rich antique amber-brown sepia patina cast must deeply coat the entire image, giving it a powerful historical archive appearance. Deep, rich, inky matte shadows with high tonal contrast. --- CRUCIAL FACE SHARPNESS (FIX FOR FACIAL DETAIL): ABSOLUTE REQUIREMENT: The main subject's face, eyes, and defining features must remain in pin-sharp, crystal-clear focus. Do not blur, distort, smooth out, or degrade the clarity of the human face. The heavy film grain and vintage patina must act as a transparent texture overlay, never compromising the sharp, high-definition details and crisp realism of the subject's expression and face. --- TEXTURE & NOISE: A dense, heavy layer of visible organic film grain and analog silver-halide noise scattered across the entire frame. Include micro-dust particles and tiny, authentic old film scratches to reinforce the archived cinematic print texture. --- RELIGHTING: Soft, moody, natural ambient light, slightly underexposed to enhance the aged, archival feel and the dramatic depth of the shadows. Soft, realistic halation bloom on highlight edges. OUTPUT: Sharp underlying facial details with a heavy, detailed, high-resolution overlay of weathered, aged film print texture free of any watermarks."
+    },
+    {
+      id: "epico",
+      name: "Épico",
+      note: "refletor de arena, ouro",
+      sample: 'assets/samples/epico.png',
+      prompt: "Use the provided image as a base composition and layout reference. Create a highly epic, heroic, and intense YouTube thumbnail base image based on this draft. Maintain the original subject, framing, and general composition, but significantly enhance the visual quality to match a high-stakes championship or sports movie look. IMPORTANT: Do not alter the environment or background structure. Keep the original background composition, but enhance atmosphere, depth, and grading. --- WATERMARK REMOVAL: Automatically detect, paint over, and completely remove any overlaid logos, text watermarks, or branding marks (such as the PhotoRoom watermark) present in the input composition. The final output must be 100% pristine and clean. --- RELIGHTING (Stadium & Arena Floodlight Style): Relight the subject with powerful, dramatic overhead sports lighting: intense key light cutting from above; sharp, blinding specular highlights on skin and clothing; deep, rich athletic shadows; piercing golden or bright white rim light separating the subject with aggressive contrast from the background. Add realistic highlight bloom on intense light sources. --- SKIN & SUBJECT RENDERING: Hyper-detailed, realistic skin texture with a sharp, high-sweat or reflective sheen look. Enhance facial features to look fiercely focused, triumphant, or competitive without morphing the face. --- ATMOSPHERE: High-energy, dust-flecked arena atmosphere. Thick, volumetric depth with dramatic light beams slicing through a dark background. --- COLOR GRADING: High-contrast athletic commercial look. Deep, rich charcoal grays and blacks contrasted with blinding golds, warm ambers, or sharp whites. Heavy visual impact grading optimized for competition. OUTPUT: Sharp, detailed, high resolution, professional thumbnail background free of any watermarks."
+    },
+    {
+      id: "quente",
+      name: "Quente",
+      note: "hora dourada, âmbar",
+      sample: 'assets/samples/quente.png',
+      prompt: "Use the provided image as a base composition and layout reference. Create a warm, nostalgic, and deeply inviting YouTube thumbnail base image based on this draft. Maintain the original subject, framing, and general composition, but significantly enhance the visual quality to match a premium golden-hour cinematic vlog look. IMPORTANT: Do not alter the environment or background structure. Keep the original background composition, but enhance atmosphere, depth, and grading to feel warm. --- WATERMARK REMOVAL: Automatically detect, paint over, and completely remove any overlaid logos, text watermarks, or branding marks (such as the PhotoRoom watermark) present in the input composition. The final output must be 100% pristine and clean. --- RELIGHTING (Golden Hour & Sunset Style): Relight the subject with beautiful, directional sun-kissed lighting: rich amber key light striking at an angle; warm, soft specular highlights; deep chocolatey, smooth shadows; intense golden rim light wrapping around the edges of the subject. Add soft, organic lens flares and volumetric sunbeams. --- SKIN & SUBJECT RENDERING: Lifelike, warm skin texture glowing under golden light. Enhance expressions to look authentic, welcoming, emotional, or deeply engaging. --- ATMOSPHERE: Cozy, rich, and atmospheric warm haze. Beautiful volumetric depth with floating light particles illuminated by sunset glow. --- COLOR GRADING: Nostalgic, rich warm-toned color grading. Deep cinematic browns and soft dark tones balanced perfectly with rich oranges, golds, and soft amber highlights. OUTPUT: Sharp, detailed, high resolution, professional thumbnail background free of any watermarks."
+    }
+  ];
+
+  /* ── Gemini · os filtros ──────────────────────────────────────────────
+     Prévia em 1K (1 ✦) e entrega em 2K (2 ✦).
+
+     A API aceita imageSize 1K, 2K e 4K — não existe "0.5K". A prévia
+     serve para julgar direção de arte, não nitidez, e isso se decide em
+     enquadramento, luz e cor, tudo legível em 1K. Ver o README.         */
+
+  var GEMINI_MODEL = 'gemini-3-pro-image-preview';
+  var GEMINI_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/';
+
+  function inlineData(dataUrl) {
+    var match = /^data:([^;]+);base64,(.*)$/.exec(dataUrl || '');
+    return match ? { inlineData: { mimeType: match[1], data: match[2] } } : null;
+  }
+
+  function applyFilter(options) {
+    var apiKey = window.TD_CONFIG.get('google');
+    if (!apiKey) return Promise.reject(fail('auth', 'Falta a chave do Google AI.'));
+
+    var parts = [{ text: options.prompt }];
+    var inline = inlineData(options.image);
+    if (inline) parts.push(inline);
+
+    var url = GEMINI_ENDPOINT + GEMINI_MODEL + ':generateContent?key=' +
+              encodeURIComponent(apiKey);
+
+    /* A V2 já tinha aprendido isto: nem toda conta aceita imageConfig, e
+       o erro vem como "Unknown name". Descer para uma configuração mais
+       simples é só formato — o modelo e o prompt não mudam. */
+    var attempts = [
+      { responseModalities: ['IMAGE'], imageConfig: { aspectRatio: '16:9', imageSize: options.size } },
+      { responseModalities: ['IMAGE'], imageConfig: { aspectRatio: '16:9' } },
+      { responseModalities: ['IMAGE'] }
+    ];
+
+    function attempt(index) {
+      if (index >= attempts.length) {
+        return Promise.reject(fail('empty', 'A IA respondeu sem imagem.'));
+      }
+
+      return fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: parts }],
+          generationConfig: attempts[index]
+        }),
+        signal: options.signal
+      }).catch(function (error) {
+        if (error && error.name === 'AbortError') throw error;
+        throw fail('network', 'Não consegui falar com o Google AI.');
+
+      }).then(function (response) {
+        if (response.status === 401 || response.status === 403) {
+          throw fail('auth', 'O Google AI recusou a chave.');
+        }
+        if (response.status === 429) {
+          throw fail('quota', 'A cota da chave do Google AI acabou por agora.');
+        }
+        return response.json().catch(function () {
+          throw fail('service', 'A resposta do Google AI não era JSON.');
+        });
+
+      }).then(function (body) {
+        if (body.error) {
+          var message = body.error.message || 'erro';
+          /* Só o formato é negociável; cota, chave e modelo não. */
+          if (/imageSize|imageConfig|aspectRatio|Unknown name|Invalid JSON/i.test(message)) {
+            return attempt(index + 1);
+          }
+          if (/API key|permission|PERMISSION_DENIED|UNAUTHENTICATED/i.test(message)) {
+            throw fail('auth', 'O Google AI recusou a chave.');
+          }
+          if (/quota|RESOURCE_EXHAUSTED/i.test(message)) {
+            throw fail('quota', 'A cota da chave do Google AI acabou por agora.');
+          }
+          throw fail('service', message);
+        }
+
+        var candidate = body.candidates && body.candidates[0];
+        var pieces = (candidate && candidate.content && candidate.content.parts) || [];
+        var picture = pieces.filter(function (piece) { return piece.inlineData; })[0];
+
+        if (picture) {
+          return measure('data:' + (picture.inlineData.mimeType || 'image/png') +
+                         ';base64,' + picture.inlineData.data);
+        }
+
+        var words = pieces.filter(function (piece) { return piece.text; })[0];
+        if (words) {
+          /* Acontece quando o pedido esbarra numa política: a IA explica
+             por escrito em vez de desenhar. Repassar o texto dela é mais
+             útil do que dizer "falhou". */
+          throw fail('empty', 'A IA respondeu em texto: ' + words.text.slice(0, 160));
+        }
+        return attempt(index + 1);
+      });
+    }
+
+    return attempt(0);
+  }
+
+  window.TD_AI = {
+    FILTERS: FILTERS,
+    removeBackground: removeBackground,
+    applyFilter: applyFilter
+  };
+
+})(window, document);
+/* =====================================================================
+   ThumbDrop V3 · app.js
+   ---------------------------------------------------------------------
+   Estado, trilha das quatro paradas e créditos (etapa 3 em diante).
+   Por ora: a tela de configuração das chaves.
+
+   ESTE É O ÚNICO ARQUIVO DO PROJETO QUE ESCREVE UMA CHAVE NO
+   localStorage, e a escrita está numa função só, logo abaixo. Nenhuma
+   chave aparece escrita em lugar nenhum — elas só existem no que a
+   pessoa digitou.
+   ===================================================================== */
+
+(function (window, document) {
+  'use strict';
+
+  var CFG = window.TD_CONFIG;
+
+  var setup       = document.getElementById('setup');
+  var form        = document.getElementById('setup-form');
+  var saveButton  = document.getElementById('setup-save');
+  var clearButton = document.getElementById('setup-clear');
+  var statusLine  = document.getElementById('setup-status');
+  var eyebrow     = document.getElementById('setup-eyebrow');
+  var title       = document.getElementById('setup-title');
+  var lede        = document.getElementById('setup-lede');
+  var app         = document.getElementById('app');
+  var openSetup   = document.getElementById('open-setup');
+
+  /* Para onde o foco volta quando a tela fecha. Sem isso, quem navega por
+     teclado cai no começo do documento e se perde. */
+  var focusOnClose = null;
+
+  /* ── A única escrita de chave do projeto ───────────────────────────── */
+
+  function persist(id, value) {
+    var name = CFG.STORAGE_KEYS[id];
+    if (!name) return false;
+    try {
+      if (value) window.localStorage.setItem(name, value);
+      else window.localStorage.removeItem(name);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function clearAll() {
+    Object.keys(CFG.STORAGE_KEYS).forEach(function (id) { persist(id, ''); });
+  }
+
+  /* ── Montagem dos campos ───────────────────────────────────────────── */
+
+  function buildFields() {
+    form.textContent = '';
+
+    CFG.FIELDS.forEach(function (field) {
+      var wrap = document.createElement('div');
+      wrap.className = 'td-field';
+      wrap.dataset.field = field.id;
+
+      var inputId = 'setup-' + field.id;
+      var hintId  = inputId + '-hint';
+      var errId   = inputId + '-error';
+
+      var label = document.createElement('label');
+      label.className = 'td-field__label';
+      label.htmlFor = inputId;
+      label.textContent = field.label;
+      if (!field.required) {
+        var opt = document.createElement('span');
+        opt.className = 'td-field__optional';
+        opt.textContent = 'opcional';
+        label.appendChild(opt);
+      }
+
+      var hint = document.createElement('p');
+      hint.className = 'td-field__hint';
+      hint.id = hintId;
+      hint.textContent = field.where
+        ? field.hint + ' Você pega a sua em ' + field.where + '.'
+        : field.hint;
+
+      var input = document.createElement('input');
+      input.id = inputId;
+      input.name = field.id;
+      input.type = 'text';
+      input.placeholder = field.placeholder;
+      input.autocomplete = 'off';
+      input.spellcheck = false;
+      input.setAttribute('aria-describedby', hintId);
+      input.value = CFG.get(field.id);
+
+      var error = document.createElement('p');
+      error.className = 'td-field__error';
+      error.id = errId;
+
+      /* Digitar limpa o estado de erro: o vermelho descreve a chave que o
+         servidor recusou, não a que está sendo escrita agora. */
+      input.addEventListener('input', function () {
+        wrap.classList.remove('td-field--invalid');
+        error.textContent = '';
+        input.removeAttribute('aria-invalid');
+        refreshSaveButton();
+      });
+
+      wrap.appendChild(label);
+      wrap.appendChild(hint);
+      wrap.appendChild(input);
+      wrap.appendChild(error);
+      form.appendChild(wrap);
+    });
+  }
+
+  function inputFor(id) {
+    return document.getElementById('setup-' + id);
+  }
+
+  function currentValue(id) {
+    var input = inputFor(id);
+    return input ? input.value.trim() : '';
+  }
+
+  /* Minúscula só na primeira letra. label.toLowerCase() inteiro comeria o
+     nome da marca e escrevia "chave da photoroom", que parece descuido. */
+  function descapitalize(text) {
+    return text.charAt(0).toLowerCase() + text.slice(1);
+  }
+
+  /* Saldo insuficiente de informação é a mesma ideia do saldo insuficiente
+     de crédito: o botão fica desabilitado COM O MOTIVO VISÍVEL, nunca
+     desabilitado e mudo. */
+  function refreshSaveButton() {
+    var faltando = CFG.FIELDS.filter(function (f) {
+      return f.required && !currentValue(f.id);
+    });
+
+    saveButton.disabled = faltando.length > 0;
+    saveButton.textContent = faltando.length === 0
+      ? 'Salvar e abrir o editor'
+      : (faltando.length === 1
+          ? 'Falta a ' + descapitalize(faltando[0].label)
+          : 'Faltam as duas chaves');
+  }
+
+  /* ── Abrir e fechar ────────────────────────────────────────────────── */
+
+  function open(options) {
+    options = options || {};
+    focusOnClose = options.returnFocusTo || null;
+
+    buildFields();
+    refreshSaveButton();
+
+    clearButton.hidden = !CFG.isConfigured();
+
+    if (options.invalid) {
+      markInvalid(options.invalid, options.reason);
+    } else {
+      eyebrow.textContent = CFG.isConfigured() ? 'Suas chaves' : 'Antes de começar';
+      title.textContent = CFG.isConfigured()
+        ? 'Trocar ou apagar as chaves'
+        : 'Duas chaves e você está dentro';
+      lede.textContent = 'O ThumbDrop conversa direto com o Google AI e com a ' +
+        'PhotoRoom, do seu navegador. Não há servidor no meio, então as chaves ' +
+        'precisam ser suas.';
+    }
+
+    if (CFG.storageBlocked()) {
+      lede.textContent = 'Este navegador está bloqueando o armazenamento local ' +
+        '(navegação privada ou dados de site bloqueados). Dá para usar o editor, ' +
+        'mas as chaves não vão sobreviver ao fechar da aba.';
+    }
+
+    setup.hidden = false;
+    app.hidden = true;
+
+    var first = CFG.FIELDS.filter(function (f) { return !CFG.has(f.id); })[0]
+             || CFG.FIELDS[0];
+    var target = inputFor((options.invalid || first.id));
+    if (target) target.focus();
+
+    document.addEventListener('keydown', onKeydown);
+  }
+
+  function close() {
+    setup.hidden = true;
+    app.hidden = false;
+    document.removeEventListener('keydown', onKeydown);
+    if (focusOnClose && focusOnClose.focus) focusOnClose.focus();
+    focusOnClose = null;
+  }
+
+  /* Esc só fecha se já houver chaves — senão não há para onde voltar, e
+     fechar seria dar à pessoa um editor que não funciona. */
+  function onKeydown(event) {
+    if (event.key === 'Escape' && CFG.isConfigured()) {
+      event.preventDefault();
+      close();
+    }
+  }
+
+  /* ── 401 e 403 ─────────────────────────────────────────────────────────
+     Quando uma chamada é recusada, a pessoa volta para cá sabendo QUAL das
+     duas chaves está inválida — não "deu erro". A outra continua no lugar. */
+
+  function markInvalid(id, reason) {
+    var field = CFG.FIELDS.filter(function (f) { return f.id === id; })[0];
+    if (!field) return;
+
+    var wrap = form.querySelector('[data-field="' + id + '"]');
+    var input = inputFor(id);
+    if (!wrap || !input) return;
+
+    wrap.classList.add('td-field--invalid');
+    input.setAttribute('aria-invalid', 'true');
+    wrap.querySelector('.td-field__error').textContent =
+      reason || 'O serviço recusou esta chave. Confira se ela foi copiada inteira ' +
+                'e se ainda está ativa.';
+
+    eyebrow.textContent = 'Chave recusada';
+    title.textContent = field.label + ' não foi aceita';
+    lede.textContent = 'A outra chave continua salva. Corrija só esta e volte ' +
+      'para onde você estava — seu trabalho no canvas não se perdeu.';
+
+    statusLine.textContent = field.label + ' foi recusada pelo serviço.';
+  }
+
+  /* Chamado por ai.js quando um fetch volta 401 ou 403. */
+  function reportAuthFailure(id, reason) {
+    open({ invalid: id, reason: reason });
+  }
+
+  /* ── Eventos ───────────────────────────────────────────────────────── */
+
+  form.addEventListener('submit', function (event) {
+    event.preventDefault();
+
+    var ok = true;
+    CFG.FIELDS.forEach(function (field) {
+      if (!persist(field.id, currentValue(field.id))) ok = false;
+    });
+
+    if (!ok) {
+      statusLine.textContent = 'Não consegui salvar neste navegador.';
+      lede.textContent = 'Este navegador bloqueou o armazenamento local. As ' +
+        'chaves valem só para esta aba: se você fechar, precisa colar de novo.';
+      /* Sem armazenamento a pessoa ainda pode trabalhar nesta sessão. Fechar
+         é melhor do que prendê-la numa tela que ela não consegue satisfazer. */
+    }
+
+    if (CFG.isConfigured() || !ok) close();
+  });
+
+  clearButton.addEventListener('click', function () {
+    clearAll();
+    buildFields();
+    refreshSaveButton();
+    clearButton.hidden = true;
+    statusLine.textContent = 'Chaves apagadas deste navegador.';
+    eyebrow.textContent = 'Antes de começar';
+    title.textContent = 'Duas chaves e você está dentro';
+    var first = inputFor(CFG.FIELDS[0].id);
+    if (first) first.focus();
+  });
+
+  openSetup.addEventListener('click', function (event) {
+    open({ returnFocusTo: event.currentTarget });
+  });
+
+  /* ── Partida ───────────────────────────────────────────────────────── */
+
+  if (CFG.isConfigured()) {
+    app.hidden = false;
+  } else {
+    open();
+  }
+
+  window.TD_APP = {
+    openSetup: open,
+    reportAuthFailure: reportAuthFailure
+  };
+
+})(window, document);
+
+
+/* =====================================================================
+   ThumbDrop V3 · o shell do editor (etapa 3)
+   ---------------------------------------------------------------------
+   A trilha de quatro paradas. O canvas NUNCA muda de posição nem de
+   tamanho entre elas — só o conteúdo do painel troca. Por isso o canvas
+   é um elemento só, montado uma vez, que nenhuma troca de parada
+   remonta.
+   ===================================================================== */
+
+(function (window, document) {
+  'use strict';
+
+  /* ── Estado ────────────────────────────────────────────────────────
+     Uma fonte de verdade. Tudo que a interface mostra é derivado daqui. */
+
+  var state = {
+    step: 0,            /* índice da parada atual, 0 a 3 */
+    reached: 0,         /* a parada mais distante já alcançada */
+    credits: 100,
+    image: null,        /* { src, width, height } */
+    bgRemoved: false,
+    filter: null,       /* o filtro aprovado, se houver */
+    texts: [],
+    frame: 'none'
+  };
+
+  /* ── Tabela de custo ────────────────────────────────────────────────
+     Em créditos. O custo real em dólar está no README; aqui só importa o
+     que a pessoa vê e o que é debitado.                                 */
+
+  var COST = {
+    removeBackground: 1,   /* PhotoRoom */
+    filterPreview:    1,   /* prévia */
+    filterDelivery:   2    /* entrega em 2K */
+  };
+
+  /* O custo real de cada chamada, em dólar. É isto que dá sentido ao
+     crédito: ✦ não é moeda inventada, é o custo da API arredondado para
+     um número que cabe num botão. */
+  var USD = {
+    removeBackground: 0.020,
+    filterPreview:    0.045,
+    filterDelivery:   0.101
+  };
+
+  var USD_TO_BRL = 5.50;
+
+  /* Cada gasto é registrado com o nome do que foi feito. O recibo lê
+     daqui — ele não recalcula nada, só mostra o que aconteceu. */
+  var ledger = [];
+  var startedAt = Date.now();
+
+  /* O crédito sai NO MOMENTO DA CHAMADA e não volta — nem se a pessoa
+     cancelar a espera. A única devolução é quando a chamada FALHA: aí a
+     IA não rodou, ninguém foi cobrado lá fora, e o saldo é preservado. */
+  function spend(amount, label, usd) {
+    state.credits -= amount;
+    ledger.push({ label: label, credits: amount, usd: usd || 0, at: Date.now() });
+    render();
+  }
+
+  function refund(amount) {
+    state.credits += amount;
+    /* Estornado: a linha sai do livro-caixa, senão o recibo cobraria
+       por uma chamada que não entregou nada. */
+    for (var i = ledger.length - 1; i >= 0; i--) {
+      if (ledger[i].credits === amount && !ledger[i].refunded) {
+        ledger[i].refunded = true;
+        break;
+      }
+    }
+    render();
+  }
+
+  function spentCredits() {
+    return ledger.filter(notRefunded).reduce(function (total, row) {
+      return total + row.credits;
+    }, 0);
+  }
+
+  function spentUsd() {
+    return ledger.filter(notRefunded).reduce(function (total, row) {
+      return total + row.usd;
+    }, 0);
+  }
+
+  function notRefunded(row) { return !row.refunded; }
+
+  function brl(usd) {
+    return 'R$ ' + (usd * USD_TO_BRL).toFixed(2).replace('.', ',');
+  }
+
+  /* ── As quatro paradas ─────────────────────────────────────────────
+     `ready` é a regra que destrava o avanço, e `blocked` é o que o botão
+     diz enquanto ela não está satisfeita. Botão desabilitado sem motivo
+     visível é a pessoa olhando para uma parede.                         */
+
+  var STOPS = [
+    {
+      name: 'Imagem',
+      note: 'sua foto no canvas',
+      noteDone: 'imagem no lugar',
+      title: 'Comece pela imagem',
+      text: 'Sem imagem não há thumb. Nenhuma ferramenta aparece antes de ' +
+            'existir conteúdo no canvas.',
+      cost: 'Uma cobrança por confirmação, não por tentativa: reenquadrar o ' +
+            'recorte é local e não gasta crédito.',
+      advance: 'Continuar',
+      blocked: 'Suba uma imagem para continuar',
+      ready: function () { return !!state.image; }
+    },
+    {
+      name: 'Filtro de IA',
+      note: 'escolha a direção',
+      noteDone: 'direção aplicada',
+      title: 'Escolha a direção de arte',
+      text: 'Clicar num filtro não gera nada e não cobra nada — abre a ' +
+            'confirmação. O crédito só sai quando você aprovar.',
+      cost: 'Prévia 1 ✦ · entrega 2 ✦. O crédito sai no instante da chamada e ' +
+            'não volta, nem se você cancelar a espera.',
+      advance: 'Seguir sem filtro · 0 ✦',
+      ready: function () { return ai.phase === 'idle'; },
+      blocked: 'Termine a prévia para continuar'
+    },
+    {
+      name: 'Texto',
+      note: 'título e destaque',
+      noteDone: 'título escrito',
+      title: 'Escreva o título',
+      text: 'Dê um duplo clique em qualquer ponto do canvas para criar uma ' +
+            'caixa de texto. Selecione uma palavra e pinte de amarelo para o ' +
+            'destaque da casa.',
+      cost: 'A faixa que o YouTube cobre com a duração aparece como guia. ' +
+            'Ninguém deve escrever embaixo dela — e ela some no export.',
+      advance: 'Continuar',
+      ready: function () { return true; }     /* thumb sem título é válida */
+    },
+    {
+      name: 'Moldura e export',
+      note: 'moldura e download',
+      noteDone: 'baixada',
+      title: 'Moldura e export',
+      text: 'Escolha a moldura e baixe. O PNG sai em 1920 × 1080, sem o guia ' +
+            'do timer, sem alças e sem nada de interface.',
+      cost: 'Baixar não cobra crédito.',
+      advance: 'Baixar PNG 1920 × 1080',
+      ready: function () { return true; }
+    }
+  ];
+
+  var track       = document.getElementById('track');
+  var counter     = document.getElementById('step-counter');
+  var stopBody    = document.getElementById('stop-body');
+  var advance     = document.getElementById('advance');
+  var downloadButton = document.getElementById('bar-download');
+  var creditsEl   = document.getElementById('credits-count');
+  var canvas      = document.getElementById('canvas');
+  var canvasEmpty = document.getElementById('canvas-empty');
+  var zoomBar     = document.getElementById('zoom');
+  var zoomValue   = document.getElementById('zoom-value');
+
+  /* A superfície de composição, criada UMA vez. Trocar de parada não a
+     recria — é isso que faz o canvas nunca mudar de posição. */
+  var surface = window.TD_CANVAS.create(canvas, {
+    onChange: function (info) {
+      if (info) zoomValue.textContent = info.zoomPercent + '%';
+    }
+  });
+
+  /* O passo do − e do + é multiplicativo, igual ao da roda: clicar quatro
+     vezes em + e quatro em − volta ao mesmo lugar. */
+  function nudgeZoom(direction) {
+    surface.setZoom(surface.getZoom() * (direction > 0 ? 1.2 : 1 / 1.2));
+  }
+
+  document.getElementById('zoom-in').addEventListener('click', function () { nudgeZoom(1); });
+  document.getElementById('zoom-out').addEventListener('click', function () { nudgeZoom(-1); });
+  zoomValue.addEventListener('click', function () { surface.setZoom(1); });
+
+  /* ── Render ────────────────────────────────────────────────────────── */
+
+  function icon(id) {
+    return '<svg class="td-icon" aria-hidden="true"><use href="#' + id + '"></use></svg>';
+  }
+
+  function renderTrack() {
+    track.textContent = '';
+
+    STOPS.forEach(function (stop, index) {
+      var status = index < state.step ? 'done'
+                 : index === state.step ? 'current'
+                 : 'next';
+
+      var li = document.createElement('li');
+
+      /* Uma parada já visitada volta a ser clicável. Ninguém perde
+         trabalho feito ao navegar para trás — o estado é o mesmo. */
+      var visitable = index <= state.reached;
+
+      var button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'td-step td-step--' + status;
+      button.disabled = !visitable;
+      if (status === 'current') button.setAttribute('aria-current', 'step');
+
+      var marker = document.createElement('span');
+      marker.className = 'td-step__marker';
+      marker.setAttribute('aria-hidden', 'true');
+      if (status === 'done') marker.innerHTML = icon('i-check');
+      else marker.textContent = String(index + 1);
+
+      var labels = document.createElement('span');
+      labels.className = 'td-step__labels';
+
+      var name = document.createElement('span');
+      name.className = 'td-step__name';
+      name.textContent = stop.name;
+
+      var note = document.createElement('span');
+      note.className = 'td-step__note';
+      note.textContent = status === 'done' ? stop.noteDone : stop.note;
+
+      labels.appendChild(name);
+      labels.appendChild(note);
+      button.appendChild(marker);
+      button.appendChild(labels);
+
+      button.addEventListener('click', function () { goTo(index); });
+
+      li.appendChild(button);
+      track.appendChild(li);
+    });
+  }
+
+  function renderStop() {
+    var stop = STOPS[state.step];
+
+    counter.textContent = 'Passo ' + (state.step + 1) + ' de ' + STOPS.length;
+
+    stopBody.textContent = '';
+
+    var title = document.createElement('h2');
+    title.className = 'td-stop__title';
+    title.textContent = stop.title;
+
+    var text = document.createElement('p');
+    text.className = 'td-stop__text';
+    text.textContent = stop.text;
+
+    stopBody.appendChild(title);
+    stopBody.appendChild(text);
+
+    /* Os controles de cada parada entram aqui nas etapas 4 a 8. Por ora
+       a parada 1 tem o que ela precisa para existir: uma imagem. */
+    if (state.step === 0) stopBody.appendChild(buildStopOne());
+    if (state.step === 1) stopBody.appendChild(buildStopTwo());
+    if (state.step === 2) stopBody.appendChild(buildStopThree());
+    if (state.step === 3) stopBody.appendChild(buildStopFour());
+
+    if (stop.cost) {
+      var cost = document.createElement('p');
+      cost.className = 'td-stop__cost';
+      cost.textContent = stop.cost;
+      stopBody.appendChild(cost);
+    }
+
+    var ready = stop.ready();
+    advance.disabled = !ready;
+    advance.textContent = ready ? stop.advance : (stop.blocked || stop.advance);
+
+    /* UM LARANJA POR TELA, e ele fica na ação que avança NAQUELA parada.
+       Nas paradas 1 a 3 o Baixar do topo é neutro; ele só acende na 4. */
+    var last = state.step === STOPS.length - 1;
+    downloadButton.disabled = !last;
+    downloadButton.classList.toggle('td-btn--primary', last);
+    downloadButton.classList.toggle('td-btn--ghost', !last);
+    advance.hidden = last;   /* na 4 o Baixar do topo é a ação que avança,
+                                e dois laranjas na mesma tela seria um a
+                                mais do que a regra permite */
+  }
+
+  function render() {
+    renderTrack();
+    renderStop();
+    creditsEl.textContent = String(state.credits);
+
+    /* Enquanto a IA trabalha ou a prévia está na tela, a composição não
+       é manipulável — e não deve PARECER manipulável. Alças e controle
+       de zoom saem: oferecer um gesto que vai ser descartado é pior do
+       que não oferecer. */
+    var busy = ai && (ai.phase === 'working' || ai.phase === 'preview');
+    if (busy) surface.select(false);
+    zoomBar.hidden = !state.image || busy;
+
+    /* Um gesto, um significado por vez: o duplo clique enquadra a imagem
+       na parada 1 e escreve na parada 3. */
+    surface.setDoubleClickFit(state.step === 0);
+    if (texts) {
+      texts.setEnabled(state.step === 2);
+      timerGuide.hidden = !(state.step === 2 && timerOn);
+    }
+
+    if (typeof announce === 'function') {
+      if (ai && ai.phase === 'working') {
+        announce(ai.stage === 'preview'
+          ? 'Gerando a prévia. Um crédito foi debitado.'
+          : 'Gerando a imagem final em 2K. Dois créditos foram debitados.');
+      } else if (ai && ai.phase === 'preview') {
+        announce('Prévia pronta. Compare antes e depois e aprove para gerar em 2K.');
+      } else if (ai && ai.phase === 'failed') {
+        announce('A geração falhou. Seu saldo foi devolvido e a composição está intacta.');
+      } else if (bgBusy) {
+        announce('Removendo o fundo.');
+      } else {
+        announce('Passo ' + (state.step + 1) + ' de ' + STOPS.length + ': ' +
+                 STOPS[state.step].name + '. Saldo de ' + state.credits + ' créditos.');
+      }
+    }
+  }
+
+  /* ── Navegação ─────────────────────────────────────────────────────── */
+
+  function goTo(index) {
+    if (index < 0 || index >= STOPS.length) return;
+    if (index > state.reached) return;
+    state.step = index;
+    render();
+  }
+
+  function next() {
+    if (!STOPS[state.step].ready()) return;
+    var target = Math.min(state.step + 1, STOPS.length - 1);
+    state.reached = Math.max(state.reached, target);
+    goTo(target);
+  }
+
+  advance.addEventListener('click', next);
+
+  /* ── A imagem ──────────────────────────────────────────────────────
+     Só o carregamento e o enquadre inicial. Arraste, zoom ancorado no
+     ponteiro e alças são a etapa 4 — a fundação de verdade.             */
+
+  function buildStopOne() {
+    var wrap = document.createElement('div');
+
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/png,image/jpeg,image/webp';
+    input.id = 'image-input';
+    input.className = 'td-sr';
+    input.addEventListener('change', function () {
+      if (input.files && input.files[0]) loadImage(input.files[0]);
+    });
+
+    var label = document.createElement('label');
+    label.className = 'td-btn td-btn--ghost td-btn--block';
+    label.htmlFor = 'image-input';
+    label.innerHTML = icon('i-upload') + ' ' +
+      (state.image ? 'Trocar a imagem' : 'Escolher imagem');
+
+    wrap.appendChild(input);
+    wrap.appendChild(label);
+
+    /* Nenhuma ferramenta aparece antes de existir conteúdo no canvas. */
+    if (state.image) wrap.appendChild(buildRemoveBackground());
+
+    return wrap;
+  }
+
+
+  /* Saldo insuficiente nunca é só um botão morto: o caminho de volta
+     aparece junto. */
+  function budgetWay() {
+    var button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'td-btn td-btn--ghost td-btn--block td-stack';
+    button.textContent = 'Ajustar o meu teto de gasto';
+    button.addEventListener('click', function () { openBudget(); });
+    return button;
+  }
+
+  function buildRemoveBackground() {
+    var box = document.createElement('div');
+    box.className = 'td-tool';
+
+    var button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'td-btn td-btn--ghost td-btn--block';
+
+    var enough = state.credits >= COST.removeBackground;
+
+    if (bgBusy) {
+      button.disabled = true;
+      button.textContent = 'Removendo o fundo…';
+    } else if (!enough) {
+      /* SALDO INSUFICIENTE: desabilitado COM O MOTIVO VISÍVEL. */
+      button.disabled = true;
+      button.textContent = 'Saldo insuficiente · precisa de ' +
+        COST.removeBackground + ' ✦';
+      box.appendChild(button);
+      box.appendChild(budgetWay());
+      return box;
+    } else {
+      button.textContent = (state.bgRemoved ? 'Remover fundo de novo' : 'Remover fundo') +
+        ' · ' + COST.removeBackground + ' ✦';
+      button.addEventListener('click', removeBackground);
+    }
+
+    box.appendChild(button);
+
+    /* A regra de custo dita em voz alta, antes de custar: depois de
+       recortado, reenquadrar é local e não chama a API de novo. */
+    if (state.bgRemoved && !bgBusy) {
+      var done = document.createElement('p');
+      done.className = 'td-tool__ok';
+      done.innerHTML = icon('i-check') +
+        ' Fundo removido. Mover, escalar e girar agora é de graça.';
+      box.appendChild(done);
+    }
+
+    if (bgError) box.appendChild(buildError(bgError));
+
+    return box;
+  }
+
+  /* Falha NUNCA é beco sem saída: a composição fica intacta, o saldo é
+     devolvido, e há sempre pelo menos uma saída visível. */
+  function buildError(error) {
+    var box = document.createElement('div');
+    box.className = 'td-error';
+
+    var text = document.createElement('p');
+    text.className = 'td-error__text';
+
+    var action = null;
+
+    if (error.kind === 'cors') {
+      text.textContent = 'O navegador bloqueou a chamada direta à PhotoRoom. ' +
+        'Ela não aceita chamada de página, só de servidor. Preencha a URL do ' +
+        'proxy nas chaves — o README tem o worker de 20 linhas.';
+      action = { label: 'Abrir as chaves', run: function () { window.TD_APP.openSetup({}); } };
+
+    } else if (error.kind === 'quota') {
+      text.textContent = 'A cota desta chave da PhotoRoom acabou. Use uma chave ' +
+        'de sandbox, que dá 1000 imagens por mês, ou recarregue o plano.';
+      action = { label: 'Trocar a chave', run: function () { window.TD_APP.openSetup({}); } };
+
+    } else if (error.kind === 'network') {
+      text.textContent = 'Não consegui falar com o proxy. Confira se a URL está ' +
+        'certa e se o worker está no ar.';
+      action = { label: 'Tentar de novo', run: removeBackground };
+
+    } else {
+      text.textContent = error.message || 'A chamada não deu certo.';
+      action = { label: 'Tentar de novo', run: removeBackground };
+    }
+
+    var kept = document.createElement('p');
+    kept.className = 'td-error__kept';
+    kept.textContent = 'Seu saldo não foi tocado e a composição está intacta.';
+
+    box.appendChild(text);
+    box.appendChild(kept);
+
+    if (action) {
+      var button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'td-btn td-btn--ghost td-btn--block';
+      button.textContent = action.label;
+      button.addEventListener('click', action.run);
+      box.appendChild(button);
+    }
+
+    return box;
+  }
+
+  var bgBusy = false;
+  var bgError = null;
+
+  function removeBackground() {
+    if (bgBusy || !state.image) return;
+    if (state.credits < COST.removeBackground) return;
+
+    bgBusy = true;
+    bgError = null;
+    /* Debitado NO MOMENTO DA CHAMADA, como a regra manda. */
+    spend(COST.removeBackground, 'Remoção de fundo', USD.removeBackground);
+
+    window.TD_AI.removeBackground(surface.getLayer().src).then(function (result) {
+      bgBusy = false;
+      state.bgRemoved = true;
+      state.image = result;
+      /* O recorte entra no lugar do original NO MESMO retângulo. O
+         enquadramento que a pessoa fez não se perde. */
+      surface.replaceSource(result.src, result.width, result.height);
+      render();
+
+    }).catch(function (error) {
+      bgBusy = false;
+      /* A chamada falhou: a IA não rodou e ninguém foi cobrado lá fora.
+         Saldo preservado. */
+      refund(COST.removeBackground);
+
+      if (error.kind === 'auth') {
+        window.TD_APP.reportAuthFailure('photoroom');
+        render();
+        return;
+      }
+
+      bgError = error;
+      render();
+    });
+
+    render();
+  }
+
+  function loadImage(file) {
+    var reader = new FileReader();
+    reader.onload = function () {
+      var probe = new Image();
+      probe.onload = function () {
+        state.image = {
+          src: reader.result,
+          width: probe.naturalWidth,
+          height: probe.naturalHeight
+        };
+        canvasEmpty.hidden = true;
+        zoomBar.hidden = false;
+        surface.setImage(reader.result, probe.naturalWidth, probe.naturalHeight);
+        render();
+      };
+      probe.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  /* O dropzone é o canvas inteiro — o estado vazio É a área de arraste. */
+  canvas.addEventListener('dragover', function (event) {
+    event.preventDefault();
+    canvas.classList.add('td-canvas--over');
+  });
+  canvas.addEventListener('dragleave', function () {
+    canvas.classList.remove('td-canvas--over');
+  });
+  canvas.addEventListener('drop', function (event) {
+    event.preventDefault();
+    canvas.classList.remove('td-canvas--over');
+    var file = event.dataTransfer && event.dataTransfer.files[0];
+    if (file && /^image\//.test(file.type)) loadImage(file);
+  });
+  canvas.addEventListener('click', function () {
+    if (!state.image) {
+      var input = document.getElementById('image-input');
+      if (input) input.click();
+    }
+  });
+
+
+  /* =====================================================================
+     PARADA 2 · O FILTRO DE IA
+     ---------------------------------------------------------------------
+     A sequência é obrigatória e existe porque o crédito sai no instante
+     em que a IA roda e não volta:
+
+       1. clicar num card NÃO gera nada e NÃO cobra nada — abre o modal
+       2. o modal diz o custo, mostra o saldo e oferece TRÊS saídas
+       3. confirmar gera a prévia em 1K e debita 1 ✦ na hora da chamada
+       4. a prévia aparece em comparação, com divisória arrastável
+       5. aprovar gera a entrega em 2K e debita mais 2 ✦
+       6. cancelar interrompe a espera mas NÃO devolve o crédito, e a
+          interface avisa isso ANTES, nunca depois
+
+     Não existe caminho aqui em que a pessoa gere sem confirmar.
+     ===================================================================== */
+
+  var ai = {
+    phase: 'idle',     /* idle · working · preview · failed */
+    filter: null,
+    stage: null,       /* 'preview' ou 'delivery' */
+    result: null,
+    error: null,
+    abort: null,
+    split: 50          /* posição da divisória, em % */
+  };
+
+  var confirmModal   = document.getElementById('confirm');
+  var confirmTitle   = document.getElementById('confirm-title');
+  var confirmEyebrow = document.getElementById('confirm-eyebrow');
+  var confirmText    = document.getElementById('confirm-text');
+  var confirmLedger  = document.getElementById('confirm-ledger');
+  var confirmGo      = document.getElementById('confirm-go');
+  var budgetShortcut = document.getElementById('confirm-budget');
+  var pendingFilter  = null;
+  var confirmReturnFocus = null;
+
+  function buildStopTwo() {
+    var wrap = document.createElement('div');
+
+    if (ai.phase === 'working') {
+      wrap.appendChild(buildWorking());
+      return wrap;
+    }
+
+    if (ai.phase === 'preview') {
+      wrap.appendChild(buildPreviewPanel());
+      return wrap;
+    }
+
+    var grid = document.createElement('div');
+    grid.className = 'td-filters';
+
+    window.TD_AI.FILTERS.forEach(function (filter) {
+      var card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'td-filter';
+      if (state.filter && state.filter.id === filter.id) {
+        card.classList.add('td-filter--on');
+        card.setAttribute('aria-pressed', 'true');
+      }
+
+      var art = document.createElement('span');
+      art.className = 'td-filter__art';
+      /* A amostra é decoração: se o arquivo não estiver em assets/
+         samples/, o card continua funcionando e legível. */
+      art.style.backgroundImage = 'url("' + filter.sample + '")';
+
+      var name = document.createElement('span');
+      name.className = 'td-filter__name';
+      name.textContent = filter.name;
+
+      var note = document.createElement('span');
+      note.className = 'td-filter__note';
+      note.textContent = filter.note;
+
+      card.appendChild(art);
+      card.appendChild(name);
+      card.appendChild(note);
+
+      /* CLICAR NÃO GERA NADA. Abre a confirmação. */
+      card.addEventListener('click', function () { askConfirm(filter, card); });
+
+      grid.appendChild(card);
+    });
+
+    wrap.appendChild(grid);
+
+    if (ai.phase === 'failed') wrap.appendChild(buildAiError());
+
+    return wrap;
+  }
+
+  /* ── O modal de confirmação ───────────────────────────────────────── */
+
+  function askConfirm(filter, origin) {
+    pendingFilter = filter;
+    confirmReturnFocus = origin || null;
+
+    var enough = state.credits >= COST.filterPreview;
+
+    confirmEyebrow.textContent = filter.name;
+    confirmTitle.textContent = 'Ver a prévia em ' + filter.name + '?';
+    confirmText.textContent = 'A prévia mostra a direção de arte para você decidir. ' +
+      'Só depois de aprovar é que a imagem final é gerada.';
+
+    confirmLedger.textContent = '';
+    ledgerRow('Prévia, agora', COST.filterPreview + ' ✦');
+    ledgerRow('Entrega, se você aprovar', COST.filterDelivery + ' ✦');
+    ledgerRow('Seu saldo', state.credits + ' ✦', true);
+
+    if (enough) {
+      confirmGo.disabled = false;
+      confirmGo.textContent = 'Ver prévia · ' + COST.filterPreview + ' ✦';
+    } else {
+      /* SALDO INSUFICIENTE: desabilitado com o motivo visível. */
+      confirmGo.disabled = true;
+      confirmGo.textContent = 'Saldo insuficiente · precisa de ' + COST.filterPreview + ' ✦';
+    }
+    budgetShortcut.hidden = enough;
+
+    confirmModal.hidden = false;
+    confirmGo.focus();
+    document.addEventListener('keydown', onConfirmKey);
+  }
+
+  function ledgerRow(label, value, strong) {
+    var dt = document.createElement('dt');
+    dt.textContent = label;
+    var dd = document.createElement('dd');
+    dd.textContent = value;
+    if (strong) dd.className = 'td-ledger__strong';
+    confirmLedger.appendChild(dt);
+    confirmLedger.appendChild(dd);
+  }
+
+  function closeConfirm() {
+    confirmModal.hidden = true;
+    document.removeEventListener('keydown', onConfirmKey);
+    if (confirmReturnFocus && confirmReturnFocus.focus) confirmReturnFocus.focus();
+    confirmReturnFocus = null;
+    pendingFilter = null;
+  }
+
+  function onConfirmKey(event) {
+    /* Esc = Descartar. A saída mais barata é sempre a mais fácil. */
+    if (event.key === 'Escape') { event.preventDefault(); closeConfirm(); }
+  }
+
+  document.getElementById('confirm-discard').addEventListener('click', closeConfirm);
+  confirmModal.querySelector('[data-close]').addEventListener('click', closeConfirm);
+
+  document.getElementById('confirm-skip').addEventListener('click', function () {
+    closeConfirm();
+    next();
+  });
+
+  confirmGo.addEventListener('click', function () {
+    var filter = pendingFilter;
+    closeConfirm();
+    runFilter(filter, 'preview');
+  });
+
+  /* ── A chamada ─────────────────────────────────────────────────────── */
+
+  function runFilter(filter, stage) {
+    if (!filter) return;
+
+    var cost = stage === 'preview' ? COST.filterPreview : COST.filterDelivery;
+    if (state.credits < cost) return;
+
+    ai.phase = 'working';
+    ai.filter = filter;
+    ai.stage = stage;
+    ai.error = null;
+    ai.abort = new AbortController();
+
+    /* DEBITADO AGORA, no instante da chamada. */
+    spend(cost,
+      stage === 'preview' ? 'Prévia · ' + filter.name : 'Entrega em 2K · ' + filter.name,
+      stage === 'preview' ? USD.filterPreview : USD.filterDelivery);
+
+    /* A prévia manda uma entrada reduzida: 1K basta para julgar direção
+       de arte, e custa menos. A entrega manda a composição inteira. */
+    var input = surface.snapshot({ width: stage === 'preview' ? 1024 : 1920 });
+
+    window.TD_AI.applyFilter({
+      prompt: filter.prompt,
+      image: input,
+      size: stage === 'preview' ? '1K' : '2K',
+      signal: ai.abort.signal
+    }).then(function (result) {
+      if (stage === 'preview') {
+        ai.phase = 'preview';
+        ai.result = result;
+        ai.split = 50;
+        render();
+        paintCompare();
+      } else {
+        /* A entrega é a nova base: o filtro devolve a composição inteira
+           já renderizada em 16:9. */
+        ai.phase = 'idle';
+        ai.result = null;
+        state.filter = filter;
+        state.image = result;
+        surface.setImage(result.src, result.width, result.height);
+        clearCompare();
+        render();
+      }
+
+    }).catch(function (error) {
+      if (error && error.name === 'AbortError') {
+        /* Cancelado: o crédito NÃO volta, e a pessoa já sabia disso antes
+           de começar. A composição fica exatamente como estava. */
+        ai.phase = 'idle';
+        ai.result = null;
+        clearCompare();
+        render();
+        return;
+      }
+
+      /* A chamada falhou: a IA não entregou nada, então o saldo volta. */
+      refund(cost);
+
+      if (error.kind === 'auth') {
+        ai.phase = 'idle';
+        window.TD_APP.reportAuthFailure('google');
+        render();
+        return;
+      }
+
+      ai.phase = 'failed';
+      ai.error = error;
+      clearCompare();
+      render();
+    });
+
+    render();
+  }
+
+  function cancelFilter() {
+    if (ai.abort) ai.abort.abort();
+  }
+
+  /* ── Processando ───────────────────────────────────────────────────────
+     Diz o que está sendo preservado, dá tempo estimado, e deixa cancelar
+     — com o aviso do crédito à vista, não escondido.                     */
+
+  function buildWorking() {
+    var box = document.createElement('div');
+    box.className = 'td-working';
+
+    var title = document.createElement('p');
+    title.className = 'td-working__title';
+    title.textContent = ai.stage === 'preview'
+      ? 'Gerando a prévia em ' + ai.filter.name
+      : 'Gerando a imagem final em 2K';
+
+    var preserving = document.createElement('p');
+    preserving.className = 'td-working__text';
+    preserving.textContent = 'Mantendo o sujeito, o enquadramento e o fundo como estão. ' +
+      'O filtro muda luz e cor — não inventa cenário.';
+
+    var time = document.createElement('p');
+    time.className = 'td-working__time';
+    time.textContent = ai.stage === 'preview'
+      ? 'Costuma levar de 10 a 30 segundos.'
+      : 'A entrega em 2K costuma levar de 20 a 60 segundos.';
+
+    var cancel = document.createElement('button');
+    cancel.type = 'button';
+    cancel.className = 'td-btn td-btn--ghost td-btn--block';
+    cancel.textContent = 'Cancelar a espera';
+    cancel.addEventListener('click', cancelFilter);
+
+    var warn = document.createElement('p');
+    warn.className = 'td-working__warn';
+    warn.textContent = 'Cancelar interrompe a espera, mas o crédito já saiu e não volta.';
+
+    box.appendChild(title);
+    box.appendChild(preserving);
+    box.appendChild(time);
+    box.appendChild(cancel);
+    box.appendChild(warn);
+    return box;
+  }
+
+  /* ── A prévia em comparação ────────────────────────────────────────── */
+
+  function buildPreviewPanel() {
+    var box = document.createElement('div');
+
+    var title = document.createElement('p');
+    title.className = 'td-working__title';
+    title.textContent = 'Prévia em ' + ai.filter.name;
+
+    var text = document.createElement('p');
+    text.className = 'td-working__text';
+    text.textContent = 'Arraste a divisória no canvas para comparar antes e depois. ' +
+      'Aprovar gera a imagem final em 2K.';
+
+    var approve = document.createElement('button');
+    approve.type = 'button';
+    approve.className = 'td-btn td-btn--primary td-btn--block';
+
+    if (state.credits >= COST.filterDelivery) {
+      approve.textContent = 'Aprovar em 2K · ' + COST.filterDelivery + ' ✦';
+      approve.addEventListener('click', function () { runFilter(ai.filter, 'delivery'); });
+    } else {
+      approve.disabled = true;
+      approve.textContent = 'Saldo insuficiente · precisa de ' + COST.filterDelivery + ' ✦';
+      box.appendChild(title);
+      box.appendChild(text);
+      box.appendChild(approve);
+      box.appendChild(budgetWay());
+      return box;
+    }
+
+    var discard = document.createElement('button');
+    discard.type = 'button';
+    discard.className = 'td-btn td-btn--ghost td-btn--block td-stack';
+    discard.textContent = 'Descartar a prévia';
+    discard.addEventListener('click', function () {
+      ai.phase = 'idle';
+      ai.result = null;
+      clearCompare();
+      surface.select(true);
+      render();
+    });
+
+    box.appendChild(title);
+    box.appendChild(text);
+    box.appendChild(approve);
+    box.appendChild(discard);
+    return box;
+  }
+
+  /* A comparação mora no canvas, por cima da composição, e some quando a
+     prévia é descartada ou aprovada. */
+  var compare = null;
+
+  function paintCompare() {
+    clearCompare();
+    if (!ai.result) return;
+
+    compare = document.createElement('div');
+    compare.className = 'td-compare';
+
+    var after = document.createElement('img');
+    after.className = 'td-compare__after';
+    after.alt = '';
+    after.src = ai.result.src;
+
+    var bar = document.createElement('div');
+    bar.className = 'td-compare__bar';
+
+    var grip = document.createElement('button');
+    grip.type = 'button';
+    grip.className = 'td-compare__grip';
+    grip.setAttribute('aria-label',
+      'Divisória entre antes e depois. Use as setas para mover.');
+
+    var tagBefore = document.createElement('span');
+    tagBefore.className = 'td-compare__tag td-compare__tag--before';
+    tagBefore.textContent = 'ANTES';
+
+    var tagAfter = document.createElement('span');
+    tagAfter.className = 'td-compare__tag td-compare__tag--after';
+    tagAfter.textContent = 'DEPOIS · ' + ai.filter.name.toUpperCase();
+
+    bar.appendChild(grip);
+    compare.appendChild(after);
+    compare.appendChild(tagBefore);
+    compare.appendChild(tagAfter);
+    compare.appendChild(bar);
+    canvas.appendChild(compare);
+
+    function moveTo(percent) {
+      ai.split = Math.max(0, Math.min(100, percent));
+      compare.style.setProperty('--split', ai.split + '%');
+    }
+    moveTo(ai.split);
+
+    function fromEvent(event) {
+      var rect = canvas.getBoundingClientRect();
+      moveTo((event.clientX - rect.left) / rect.width * 100);
+    }
+
+    var dragging = false;
+    bar.addEventListener('pointerdown', function (event) {
+      dragging = true;
+      event.stopPropagation();
+      try { bar.setPointerCapture(event.pointerId); } catch (e) {}
+    });
+    bar.addEventListener('pointermove', function (event) {
+      if (!dragging) return;
+      event.stopPropagation();
+      fromEvent(event);
+    });
+    bar.addEventListener('pointerup', function (event) {
+      dragging = false;
+      event.stopPropagation();
+    });
+
+    /* Arrastar com o mouse é o gesto principal; as setas existem para
+       quem navega por teclado não ficar sem a comparação. */
+    grip.addEventListener('keydown', function (event) {
+      var step = event.shiftKey ? 10 : 2;
+      if (event.key === 'ArrowLeft')  { event.preventDefault(); moveTo(ai.split - step); }
+      if (event.key === 'ArrowRight') { event.preventDefault(); moveTo(ai.split + step); }
+    });
+  }
+
+  function clearCompare() {
+    if (compare && compare.parentNode) compare.parentNode.removeChild(compare);
+    compare = null;
+  }
+
+  /* ── Falhou ────────────────────────────────────────────────────────────
+     Composição intacta, saldo preservado, DUAS saídas. Nunca beco sem
+     saída.                                                                */
+
+  function buildAiError() {
+    var box = document.createElement('div');
+    box.className = 'td-error';
+
+    var text = document.createElement('p');
+    text.className = 'td-error__text';
+    text.textContent = ai.error && ai.error.kind === 'quota'
+      ? 'A cota da chave do Google AI acabou por agora. Tente mais tarde ou troque a chave.'
+      : (ai.error && ai.error.message) || 'A geração não deu certo.';
+
+    var kept = document.createElement('p');
+    kept.className = 'td-error__kept';
+    kept.textContent = 'Seu saldo foi devolvido e a composição está intacta.';
+
+    var again = document.createElement('button');
+    again.type = 'button';
+    again.className = 'td-btn td-btn--ghost td-btn--block';
+    again.textContent = 'Tentar de novo · ' + COST.filterPreview + ' ✦';
+    again.addEventListener('click', function () { runFilter(ai.filter, 'preview'); });
+
+    var skip = document.createElement('button');
+    skip.type = 'button';
+    skip.className = 'td-btn td-btn--ghost td-btn--block td-stack';
+    skip.textContent = 'Seguir sem filtro · 0 ✦';
+    skip.addEventListener('click', function () {
+      ai.phase = 'idle';
+      render();
+      next();
+    });
+
+    box.appendChild(text);
+    box.appendChild(kept);
+    box.appendChild(again);
+    box.appendChild(skip);
+    return box;
+  }
+
+
+  /* =====================================================================
+     PARADA 3 · O TEXTO
+     ===================================================================== */
+
+  var texts = window.TD_TEXT.create(canvas, { onChange: function () { render(); } });
+
+  /* O guia do timer. A faixa que o YouTube cobre com a duração do vídeo:
+     ninguém deve escrever embaixo dela. Ligado por padrão na parada 3,
+     e NUNCA desenhado no export — ele é interface. */
+  var timerGuide = document.createElement('div');
+  timerGuide.className = 'td-timer';
+  timerGuide.innerHTML = '<span>16:20</span>';
+  timerGuide.hidden = true;
+  canvas.appendChild(timerGuide);
+  var timerOn = true;
+
+  /* DUPLO CLIQUE EM PONTO VAZIO CRIA UMA CAIXA ALI e já entra em edição.
+     Na parada 1 o mesmo gesto enquadra a imagem; por isso cada parada
+     liga o seu. Um gesto, um significado por vez. */
+  canvas.addEventListener('dblclick', function (event) {
+    if (state.step !== 2) return;
+    if (event.target.closest && event.target.closest('.td-text')) return;
+
+    var rect = canvas.getBoundingClientRect();
+    var k = rect.width / surface.EXPORT_W;
+    texts.create((event.clientX - rect.left) / k, (event.clientY - rect.top) / k);
+  });
+
+  /* Um clique fora do texto sai do modo de edição. O texto continua
+     selecionado, mostrando as alças — sair da edição não é desistir. */
+  canvas.addEventListener('pointerdown', function (event) {
+    if (state.step !== 2) return;
+    if (event.target.closest && event.target.closest('.td-text')) return;
+    texts.stopEditing();
+  });
+
+  function buildStopThree() {
+    var wrap = document.createElement('div');
+    var selected = texts.selected();
+
+    if (!selected) {
+      /* Sem nada selecionado, o painel ensina o gesto que não tem botão. */
+      var hint = document.createElement('p');
+      hint.className = 'td-stop__text';
+      hint.textContent = texts.count()
+        ? 'Clique num texto para editar as opções dele.'
+        : 'Dê um duplo clique em qualquer ponto do canvas para escrever.';
+      wrap.appendChild(hint);
+
+      var add = document.createElement('button');
+      add.type = 'button';
+      add.className = 'td-btn td-btn--ghost td-btn--block';
+      add.textContent = 'Adicionar um texto';
+      add.addEventListener('click', function () {
+        texts.create(surface.EXPORT_W * 0.08, surface.EXPORT_H * 0.6);
+      });
+      wrap.appendChild(add);
+
+      wrap.appendChild(buildTimerToggle());
+      return wrap;
+    }
+
+    /* ── Cor ──────────────────────────────────────────────────────────
+       O amarelo aqui é o destaque: com um trecho selecionado dentro da
+       edição, pinta só ele. Sem seleção, pinta a caixa. É o mesmo botão
+       porque é o mesmo conceito — não há um "modo destaque". */
+
+    wrap.appendChild(group('Cor', function (row) {
+      row.appendChild(swatch('#ffffff', 'Branco', selected.color === '#ffffff'));
+      row.appendChild(swatch('#ffd400', 'Amarelo · destaque', selected.color === '#ffd400'));
+
+      var picker = document.createElement('input');
+      picker.type = 'color';
+      picker.className = 'td-swatch td-swatch--pick';
+      picker.value = /^#[0-9a-f]{6}$/i.test(selected.color) ? selected.color : '#ffffff';
+      picker.setAttribute('aria-label', 'Escolher outra cor');
+      picker.addEventListener('input', function () { texts.paint(picker.value); });
+      row.appendChild(picker);
+    }));
+
+    var painted = document.createElement('p');
+    painted.className = 'td-stop__cost';
+    painted.textContent = 'Selecione uma palavra dentro do texto e clique no amarelo ' +
+      'para destacar só ela.';
+    wrap.appendChild(painted);
+
+    /* ── Alinhamento ─────────────────────────────────────────────────── */
+
+    wrap.appendChild(group('Alinhamento', function (row) {
+      [['left', 'Esquerda'], ['center', 'Centro'], ['right', 'Direita']].forEach(function (pair) {
+        row.appendChild(choice(pair[1], selected.align === pair[0], function () {
+          texts.update({ align: pair[0] });
+        }));
+      });
+    }));
+
+    /* ── Peso ─────────────────────────────────────────────────────────
+       Sempre em itálico: o padrão da casa é Barlow Black Italic. */
+
+    wrap.appendChild(group('Peso', function (row) {
+      texts.WEIGHTS.forEach(function (weight) {
+        row.appendChild(choice(weight.label, selected.weight === weight.value, function () {
+          texts.update({ weight: weight.value });
+        }));
+      });
+    }));
+
+    /* ── Sombra ───────────────────────────────────────────────────────── */
+
+    wrap.appendChild(group('Sombra', function (row) {
+      row.appendChild(choice('Com sombra', selected.shadow, function () {
+        texts.update({ shadow: true });
+      }));
+      row.appendChild(choice('Sem sombra', !selected.shadow, function () {
+        texts.update({ shadow: false });
+      }));
+    }));
+
+    var remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'td-btn td-btn--ghost td-btn--block td-stack';
+    remove.textContent = 'Apagar este texto';
+    remove.addEventListener('click', function () { texts.remove(texts.selected()); });
+    wrap.appendChild(remove);
+
+    var keys = document.createElement('p');
+    keys.className = 'td-stop__cost';
+    keys.textContent = 'Delete apaga · Esc desseleciona · setas movem um pixel, ' +
+      'dez com Shift.';
+    wrap.appendChild(keys);
+
+    wrap.appendChild(buildTimerToggle());
+    return wrap;
+  }
+
+  function buildTimerToggle() {
+    var box = document.createElement('label');
+    box.className = 'td-check';
+
+    var input = document.createElement('input');
+    input.type = 'checkbox';
+    input.checked = timerOn;
+    input.addEventListener('change', function () {
+      timerOn = input.checked;
+      render();
+    });
+
+    var text = document.createElement('span');
+    text.textContent = 'Mostrar a faixa do timer do YouTube';
+
+    var note = document.createElement('span');
+    note.className = 'td-check__note';
+    note.textContent = 'Some no export.';
+
+    box.appendChild(input);
+    box.appendChild(text);
+    box.appendChild(note);
+    return box;
+  }
+
+  /* ── Peças do painel ───────────────────────────────────────────────── */
+
+  function group(label, fill) {
+    var box = document.createElement('div');
+    box.className = 'td-group';
+
+    var caption = document.createElement('p');
+    caption.className = 'td-group__label';
+    caption.textContent = label;
+
+    var row = document.createElement('div');
+    row.className = 'td-group__row';
+    fill(row);
+
+    box.appendChild(caption);
+    box.appendChild(row);
+    return box;
+  }
+
+  /* AZUL MARCA O CONTROLE ATIVO — nunca laranja, porque escolher peso
+     não avança a parada. */
+  function choice(label, active, run) {
+    var button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'td-choice' + (active ? ' td-choice--on' : '');
+    button.textContent = label;
+    if (active) button.setAttribute('aria-pressed', 'true');
+    button.addEventListener('click', run);
+    return button;
+  }
+
+  function swatch(color, label, active) {
+    var button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'td-swatch' + (active ? ' td-swatch--on' : '');
+    button.style.background = color;
+    button.setAttribute('aria-label', label);
+    button.title = label;
+    /* O ponteiro não pode roubar a seleção do texto antes do clique
+       chegar: sem isto, clicar no amarelo desfaz a seleção da palavra e
+       o destaque nunca acontece. */
+    button.addEventListener('mousedown', function (event) { event.preventDefault(); });
+    button.addEventListener('click', function () { texts.paint(color); });
+    return button;
+  }
+
+
+  /* =====================================================================
+     PARADA 4 · MOLDURA E EXPORT
+     ===================================================================== */
+
+  var FRAMES = [
+    { id: 'canaltech', name: 'Canaltech',  file: 'assets/frames/moldura-canaltech.png' },
+    { id: 'cteletro',  name: 'CT Eletro',  file: 'assets/frames/moldura-ct-eletro.png' },
+    { id: 'cor',       name: 'Minha cor',  color: true },
+    { id: 'none',      name: 'Sem moldura' }
+  ];
+
+  /* Espessura da borda de "Minha cor", em pixels de export. Fina o
+     bastante para emoldurar sem comer a arte. */
+  var COLOR_FRAME_WIDTH = 16;
+
+  var frameImages = {};
+  var frameColor = '#f87737';
+
+  /* As molduras da marca são PNGs que ainda não estão no repositório.
+     Carregar é otimista: se o arquivo não existir, a opção aparece
+     desabilitada DIZENDO qual arquivo falta, em vez de quebrar o export
+     ou sumir sem explicação. */
+  FRAMES.forEach(function (frame) {
+    if (!frame.file) return;
+    var probe = new Image();
+    probe.onload  = function () { frameImages[frame.id] = probe; render(); };
+    probe.onerror = function () { frameImages[frame.id] = null;  render(); };
+    probe.src = frame.file;
+  });
+
+  function buildStopFour() {
+    var wrap = document.createElement('div');
+
+    var grid = document.createElement('div');
+    grid.className = 'td-frames';
+
+    FRAMES.forEach(function (frame) {
+      var card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'td-frameopt';
+
+      var missing = frame.file && frameImages[frame.id] === null;
+
+      if (state.frame === frame.id) {
+        /* AZUL MARCA A OPÇÃO ESCOLHIDA. */
+        card.classList.add('td-frameopt--on');
+        card.setAttribute('aria-pressed', 'true');
+      }
+
+      var art = document.createElement('span');
+      art.className = 'td-frameopt__art';
+      if (frame.file && frameImages[frame.id]) art.style.backgroundImage = 'url("' + frame.file + '")';
+      if (frame.id === 'cor') art.style.boxShadow = 'inset 0 0 0 3px ' + frameColor;
+      if (frame.id === 'none') art.classList.add('td-frameopt__art--none');
+
+      var name = document.createElement('span');
+      name.className = 'td-frameopt__name';
+      name.textContent = frame.name;
+
+      card.appendChild(art);
+      card.appendChild(name);
+
+      if (missing) {
+        card.disabled = true;
+        var gone = document.createElement('span');
+        gone.className = 'td-frameopt__missing';
+        gone.textContent = 'falta ' + frame.file.split('/').pop();
+        card.appendChild(gone);
+      } else {
+        card.addEventListener('click', function () {
+          state.frame = frame.id;
+          if (frame.color) colorInput.click();
+          paintFrame();
+          render();
+        });
+      }
+
+      grid.appendChild(card);
+    });
+
+    wrap.appendChild(grid);
+
+    /* O seletor RGB de "Minha cor". */
+    var colorInput = document.createElement('input');
+    colorInput.type = 'color';
+    colorInput.className = 'td-sr';
+    colorInput.value = frameColor;
+    colorInput.addEventListener('input', function () {
+      frameColor = colorInput.value;
+      state.frame = 'cor';
+      paintFrame();
+      render();
+    });
+    wrap.appendChild(colorInput);
+
+    var anyMissing = FRAMES.some(function (f) { return f.file && frameImages[f.id] === null; });
+    if (anyMissing) {
+      var note = document.createElement('p');
+      note.className = 'td-stop__cost';
+      note.textContent = 'As molduras da marca são PNG 1920 × 1080 com fundo ' +
+        'transparente. O README lista os nomes exatos que o código procura.';
+      wrap.appendChild(note);
+    }
+
+    return wrap;
+  }
+
+  /* A moldura na tela é uma prévia por cima do canvas. No export ela é
+     desenhada de novo, em 1920 × 1080, pelo renderizador — não é esta
+     camada que vira PNG. */
+  var framePreview = document.createElement('div');
+  framePreview.className = 'td-frameview';
+  canvas.appendChild(framePreview);
+
+  function paintFrame() {
+    var chosen = state.frame;
+
+    framePreview.style.backgroundImage = '';
+    framePreview.style.boxShadow = '';
+
+    if (chosen === 'cor') {
+      var k = canvas.clientWidth / surface.EXPORT_W;
+      framePreview.style.boxShadow = 'inset 0 0 0 ' + (COLOR_FRAME_WIDTH * k) + 'px ' + frameColor;
+    } else if (frameImages[chosen]) {
+      framePreview.style.backgroundImage = 'url("' + frameImages[chosen].src + '")';
+    }
+
+    framePreview.hidden = !(chosen && chosen !== 'none');
+  }
+
+  /* ── O export ────────────────────────────────────────────────────────
+     Relê o mesmo estado que a tela mostra. O guia do timer, as alças e o
+     controle de zoom não entram porque eles nunca estiveram no estado —
+     são interface, e interface não tem coordenada de export.            */
+
+  function renderFinal() {
+    return surface.snapshot({
+      texts: texts.serialize(),
+      frame: state.frame === 'cor' ? null : frameImages[state.frame] || null,
+      frameColor: state.frame === 'cor' ? frameColor : null,
+      frameWidth: COLOR_FRAME_WIDTH
+    });
+  }
+
+  function download() {
+    var dataUrl = renderFinal();
+
+    /* Baixar NÃO cobra crédito. */
+    var link = document.createElement('a');
+    link.href = dataUrl;
+    link.download = fileName();
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    state.downloaded = true;
+    render();
+  }
+
+  function fileName() {
+    var stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
+    return 'thumbdrop-' + stamp + '.png';
+  }
+
+  downloadButton.addEventListener('click', function () {
+    if (state.step !== STOPS.length - 1) return;
+    openReceipt();
+  });
+
+
+  /* =====================================================================
+     ETAPA 9 · RECIBO E SALDO
+     ===================================================================== */
+
+  var receipt      = document.getElementById('receipt');
+  var receiptLedger= document.getElementById('receipt-ledger');
+  var budget       = document.getElementById('budget');
+  var budgetInput  = document.getElementById('budget-input');
+
+  function duration() {
+    var seconds = Math.round((Date.now() - startedAt) / 1000);
+    if (seconds < 60) return seconds + ' s';
+    var minutes = Math.floor(seconds / 60);
+    return minutes + ' min ' + (seconds % 60) + ' s';
+  }
+
+  /* O RECIBO APARECE ANTES DO DOWNLOAD. Quem está prestes a baixar ainda
+     pode decidir alguma coisa; quem já baixou, não. */
+  function openReceipt() {
+    receiptLedger.textContent = '';
+
+    function row(label, value, strong) {
+      var dt = document.createElement('dt');
+      dt.textContent = label;
+      var dd = document.createElement('dd');
+      dd.textContent = value;
+      if (strong) dd.className = 'td-ledger__strong';
+      receiptLedger.appendChild(dt);
+      receiptLedger.appendChild(dd);
+    }
+
+    row('Tempo até aqui', duration());
+
+    ledger.filter(notRefunded).forEach(function (entry) {
+      row(entry.label, entry.credits + ' ✦');
+    });
+
+    if (!spentCredits()) row('Nenhuma chamada de IA', '0 ✦');
+
+    row('Créditos usados', spentCredits() + ' ✦', true);
+    row('Custo real', brl(spentUsd()), true);
+
+    /* A conta que justifica o produto: a thumb inteira aconteceu aqui.
+       Na rotina antiga eram três ferramentas e dois downloads no meio. */
+    row('Trocas de ferramenta', '0');
+
+    receipt.hidden = false;
+    document.getElementById('receipt-go').focus();
+    document.addEventListener('keydown', onReceiptKey);
+  }
+
+  function closeReceipt() {
+    receipt.hidden = true;
+    document.removeEventListener('keydown', onReceiptKey);
+  }
+
+  function onReceiptKey(event) {
+    if (event.key === 'Escape') { event.preventDefault(); closeReceipt(); }
+  }
+
+  document.getElementById('receipt-back').addEventListener('click', closeReceipt);
+  receipt.querySelector('[data-close]').addEventListener('click', closeReceipt);
+  document.getElementById('receipt-go').addEventListener('click', function () {
+    closeReceipt();
+    download();
+  });
+
+  /* ── O teto de gasto ────────────────────────────────────────────────
+     O saldo não é moeda que se compra de alguém: as chaves são da
+     pessoa, então o ✦ é um teto que ela dá a si mesma para a conta da
+     API não surpreender. É isso que dá ao "saldo insuficiente" um
+     caminho de volta honesto — sem inventar uma loja que não existe. */
+
+  function openBudget() {
+    budgetInput.value = state.credits;
+    budget.hidden = false;
+    budgetInput.focus();
+    budgetInput.select();
+    document.addEventListener('keydown', onBudgetKey);
+  }
+
+  function closeBudget() {
+    budget.hidden = true;
+    document.removeEventListener('keydown', onBudgetKey);
+  }
+
+  function onBudgetKey(event) {
+    if (event.key === 'Escape') { event.preventDefault(); closeBudget(); }
+  }
+
+  document.getElementById('credits').addEventListener('click', openBudget);
+  budgetShortcut.addEventListener('click', function () { closeConfirm(); openBudget(); });
+  document.getElementById('budget-cancel').addEventListener('click', closeBudget);
+  budget.querySelector('[data-close]').addEventListener('click', closeBudget);
+  document.getElementById('budget-save').addEventListener('click', function () {
+    var next = parseInt(budgetInput.value, 10);
+    if (!isNaN(next) && next >= 0) state.credits = next;
+    closeBudget();
+    render();
+  });
+
+
+  /* =====================================================================
+     ETAPA 10 · ACESSIBILIDADE
+     ---------------------------------------------------------------------
+     O que não dá para resolver com CSS: manter o foco dentro do diálogo
+     aberto, e contar por escrito o que a interface está mostrando por
+     cor e movimento.
+     ===================================================================== */
+
+  var FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), ' +
+                  'select:not([disabled]), textarea:not([disabled]), ' +
+                  '[tabindex]:not([tabindex="-1"])';
+
+  /* Um diálogo que deixa o Tab escapar para trás dele leva quem navega
+     por teclado para controles que ele não consegue ver. */
+  function trapFocus(dialog) {
+    dialog.addEventListener('keydown', function (event) {
+      if (event.key !== 'Tab' || dialog.hidden) return;
+
+      var stops = Array.prototype.slice.call(dialog.querySelectorAll(FOCUSABLE))
+        .filter(function (node) { return node.offsetParent !== null; });
+      if (!stops.length) return;
+
+      var first = stops[0];
+      var last = stops[stops.length - 1];
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    });
+  }
+
+  ['setup', 'confirm', 'receipt', 'budget'].forEach(function (id) {
+    var dialog = document.getElementById(id);
+    if (dialog) trapFocus(dialog);
+  });
+
+  /* O que a cor e o movimento dizem, isto diz por escrito. */
+  var speaker = document.createElement('p');
+  speaker.className = 'td-sr';
+  speaker.setAttribute('role', 'status');
+  speaker.setAttribute('aria-live', 'polite');
+  document.body.appendChild(speaker);
+
+  var lastSpoken = '';
+  function announce(message) {
+    if (!message || message === lastSpoken) return;
+    lastSpoken = message;
+    speaker.textContent = message;
+  }
+
+
+  paintFrame();
+  render();
+
+  window.TD_EDITOR = { state: state, ai: ai, render: render, goTo: goTo, surface: surface,
+                       texts: texts, askConfirm: askConfirm, renderFinal: renderFinal,
+                       download: download, openReceipt: openReceipt };
+
+})(window, document);
+</script>
+</body>
+</html>
