@@ -413,8 +413,10 @@
 
     /* ── Duplo clique: enquadra a imagem inteira ────────────────────── */
 
+    var fitOnDoubleClick = true;
+
     function onDoubleClick(event) {
-      if (!layer) return;
+      if (!layer || !fitOnDoubleClick) return;
       event.preventDefault();
       fit();
       settle();
@@ -476,6 +478,76 @@
       draw();
     }
 
+
+    /* ── Desenho do texto ───────────────────────────────────────────────
+       Reimplementa a quebra de linha do navegador no canvas 2D, porque
+       canvas não quebra sozinho. Cada palavra carrega a cor do trecho de
+       onde veio — é assim que uma palavra amarela no meio de um título
+       branco chega inteira ao PNG.                                       */
+
+    function drawTexts(ctx, texts, scale) {
+      texts.forEach(function (model) {
+        var size = model.size * scale;
+        var width = model.width * scale;
+        var lineHeight = size * 1.1;
+
+        ctx.save();
+        ctx.font = 'italic ' + model.weight + ' ' + size + 'px Barlow, system-ui, sans-serif';
+        ctx.textBaseline = 'top';
+
+        /* Palavras, cada uma com a cor do trecho de origem. */
+        var words = [];
+        model.segments.forEach(function (segment) {
+          segment.text.split(/(\s+|\n)/).forEach(function (piece) {
+            if (piece !== '') words.push({ text: piece, color: segment.color });
+          });
+        });
+
+        /* Quebra gulosa, do jeito que o navegador faz. */
+        var lines = [];
+        var line = [];
+        var used = 0;
+
+        words.forEach(function (word) {
+          if (word.text === '\n') { lines.push(line); line = []; used = 0; return; }
+          var advance = ctx.measureText(word.text).width;
+          if (used + advance > width && line.length && word.text.trim()) {
+            lines.push(line); line = []; used = 0;
+          }
+          line.push(word);
+          used += advance;
+        });
+        if (line.length) lines.push(line);
+
+        if (model.shadow) {
+          ctx.shadowColor = 'rgba(0,0,0,.75)';
+          ctx.shadowBlur = size * 0.14;
+          ctx.shadowOffsetY = size * 0.06;
+        }
+
+        var y = model.y * scale;
+        lines.forEach(function (pieces) {
+          var lineWidth = pieces.reduce(function (total, word) {
+            return total + ctx.measureText(word.text).width;
+          }, 0);
+
+          var x = model.x * scale;
+          if (model.align === 'center') x += (width - lineWidth) / 2;
+          else if (model.align === 'right') x += width - lineWidth;
+
+          pieces.forEach(function (word) {
+            ctx.fillStyle = word.color || model.color;
+            ctx.fillText(word.text, x, y);
+            x += ctx.measureText(word.text).width;
+          });
+
+          y += lineHeight;
+        });
+
+        ctx.restore();
+      });
+    }
+
     /* ── Snapshot ───────────────────────────────────────────────────────
        Redesenha o estado num canvas de verdade e devolve um PNG. É o
        MESMO renderizador que o export da etapa 8 vai usar — por isso ele
@@ -510,6 +582,13 @@
         );
       }
 
+      /* O texto é desenhado pelo MESMO renderizador, a partir dos mesmos
+         trechos que a tela mostra. O guia do timer e as alças não entram
+         aqui — eles são interface, e interface não vai para o PNG. */
+      if (options.texts) drawTexts(ctx, options.texts, scale);
+
+      if (options.frame) ctx.drawImage(options.frame, 0, 0, width, height);
+
       return sheet.toDataURL('image/png');
     }
 
@@ -524,6 +603,7 @@
     return {
       setImage: setImage,
       snapshot: snapshot,
+      setDoubleClickFit: function (next) { fitOnDoubleClick = next; },
       replaceSource: replaceSource,
       getLayer: getLayer,
       hasImage: function () { return !!layer; },

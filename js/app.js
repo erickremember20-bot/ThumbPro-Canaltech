@@ -496,6 +496,7 @@
        a parada 1 tem o que ela precisa para existir: uma imagem. */
     if (state.step === 0) stopBody.appendChild(buildStopOne());
     if (state.step === 1) stopBody.appendChild(buildStopTwo());
+    if (state.step === 2) stopBody.appendChild(buildStopThree());
 
     if (stop.cost) {
       var cost = document.createElement('p');
@@ -531,6 +532,14 @@
     var busy = ai && (ai.phase === 'working' || ai.phase === 'preview');
     if (busy) surface.select(false);
     zoomBar.hidden = !state.image || busy;
+
+    /* Um gesto, um significado por vez: o duplo clique enquadra a imagem
+       na parada 1 e escreve na parada 3. */
+    surface.setDoubleClickFit(state.step === 0);
+    if (texts) {
+      texts.setEnabled(state.step === 2);
+      timerGuide.hidden = !(state.step === 2 && timerOn);
+    }
   }
 
   /* ── Navegação ─────────────────────────────────────────────────────── */
@@ -1207,9 +1216,216 @@
   }
 
 
+  /* =====================================================================
+     PARADA 3 · O TEXTO
+     ===================================================================== */
+
+  var texts = window.TD_TEXT.create(canvas, { onChange: function () { render(); } });
+
+  /* O guia do timer. A faixa que o YouTube cobre com a duração do vídeo:
+     ninguém deve escrever embaixo dela. Ligado por padrão na parada 3,
+     e NUNCA desenhado no export — ele é interface. */
+  var timerGuide = document.createElement('div');
+  timerGuide.className = 'td-timer';
+  timerGuide.innerHTML = '<span>16:20</span>';
+  timerGuide.hidden = true;
+  canvas.appendChild(timerGuide);
+  var timerOn = true;
+
+  /* DUPLO CLIQUE EM PONTO VAZIO CRIA UMA CAIXA ALI e já entra em edição.
+     Na parada 1 o mesmo gesto enquadra a imagem; por isso cada parada
+     liga o seu. Um gesto, um significado por vez. */
+  canvas.addEventListener('dblclick', function (event) {
+    if (state.step !== 2) return;
+    if (event.target.closest && event.target.closest('.td-text')) return;
+
+    var rect = canvas.getBoundingClientRect();
+    var k = rect.width / surface.EXPORT_W;
+    texts.create((event.clientX - rect.left) / k, (event.clientY - rect.top) / k);
+  });
+
+  /* Um clique fora do texto sai do modo de edição. O texto continua
+     selecionado, mostrando as alças — sair da edição não é desistir. */
+  canvas.addEventListener('pointerdown', function (event) {
+    if (state.step !== 2) return;
+    if (event.target.closest && event.target.closest('.td-text')) return;
+    texts.stopEditing();
+  });
+
+  function buildStopThree() {
+    var wrap = document.createElement('div');
+    var selected = texts.selected();
+
+    if (!selected) {
+      /* Sem nada selecionado, o painel ensina o gesto que não tem botão. */
+      var hint = document.createElement('p');
+      hint.className = 'td-stop__text';
+      hint.textContent = texts.count()
+        ? 'Clique num texto para editar as opções dele.'
+        : 'Dê um duplo clique em qualquer ponto do canvas para escrever.';
+      wrap.appendChild(hint);
+
+      var add = document.createElement('button');
+      add.type = 'button';
+      add.className = 'td-btn td-btn--ghost td-btn--block';
+      add.textContent = 'Adicionar um texto';
+      add.addEventListener('click', function () {
+        texts.create(surface.EXPORT_W * 0.08, surface.EXPORT_H * 0.6);
+      });
+      wrap.appendChild(add);
+
+      wrap.appendChild(buildTimerToggle());
+      return wrap;
+    }
+
+    /* ── Cor ──────────────────────────────────────────────────────────
+       O amarelo aqui é o destaque: com um trecho selecionado dentro da
+       edição, pinta só ele. Sem seleção, pinta a caixa. É o mesmo botão
+       porque é o mesmo conceito — não há um "modo destaque". */
+
+    wrap.appendChild(group('Cor', function (row) {
+      row.appendChild(swatch('#ffffff', 'Branco', selected.color === '#ffffff'));
+      row.appendChild(swatch('#ffd400', 'Amarelo · destaque', selected.color === '#ffd400'));
+
+      var picker = document.createElement('input');
+      picker.type = 'color';
+      picker.className = 'td-swatch td-swatch--pick';
+      picker.value = /^#[0-9a-f]{6}$/i.test(selected.color) ? selected.color : '#ffffff';
+      picker.setAttribute('aria-label', 'Escolher outra cor');
+      picker.addEventListener('input', function () { texts.paint(picker.value); });
+      row.appendChild(picker);
+    }));
+
+    var painted = document.createElement('p');
+    painted.className = 'td-stop__cost';
+    painted.textContent = 'Selecione uma palavra dentro do texto e clique no amarelo ' +
+      'para destacar só ela.';
+    wrap.appendChild(painted);
+
+    /* ── Alinhamento ─────────────────────────────────────────────────── */
+
+    wrap.appendChild(group('Alinhamento', function (row) {
+      [['left', 'Esquerda'], ['center', 'Centro'], ['right', 'Direita']].forEach(function (pair) {
+        row.appendChild(choice(pair[1], selected.align === pair[0], function () {
+          texts.update({ align: pair[0] });
+        }));
+      });
+    }));
+
+    /* ── Peso ─────────────────────────────────────────────────────────
+       Sempre em itálico: o padrão da casa é Barlow Black Italic. */
+
+    wrap.appendChild(group('Peso', function (row) {
+      texts.WEIGHTS.forEach(function (weight) {
+        row.appendChild(choice(weight.label, selected.weight === weight.value, function () {
+          texts.update({ weight: weight.value });
+        }));
+      });
+    }));
+
+    /* ── Sombra ───────────────────────────────────────────────────────── */
+
+    wrap.appendChild(group('Sombra', function (row) {
+      row.appendChild(choice('Com sombra', selected.shadow, function () {
+        texts.update({ shadow: true });
+      }));
+      row.appendChild(choice('Sem sombra', !selected.shadow, function () {
+        texts.update({ shadow: false });
+      }));
+    }));
+
+    var remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'td-btn td-btn--ghost td-btn--block td-stack';
+    remove.textContent = 'Apagar este texto';
+    remove.addEventListener('click', function () { texts.remove(texts.selected()); });
+    wrap.appendChild(remove);
+
+    var keys = document.createElement('p');
+    keys.className = 'td-stop__cost';
+    keys.textContent = 'Delete apaga · Esc desseleciona · setas movem um pixel, ' +
+      'dez com Shift.';
+    wrap.appendChild(keys);
+
+    wrap.appendChild(buildTimerToggle());
+    return wrap;
+  }
+
+  function buildTimerToggle() {
+    var box = document.createElement('label');
+    box.className = 'td-check';
+
+    var input = document.createElement('input');
+    input.type = 'checkbox';
+    input.checked = timerOn;
+    input.addEventListener('change', function () {
+      timerOn = input.checked;
+      render();
+    });
+
+    var text = document.createElement('span');
+    text.textContent = 'Mostrar a faixa do timer do YouTube';
+
+    var note = document.createElement('span');
+    note.className = 'td-check__note';
+    note.textContent = 'Some no export.';
+
+    box.appendChild(input);
+    box.appendChild(text);
+    box.appendChild(note);
+    return box;
+  }
+
+  /* ── Peças do painel ───────────────────────────────────────────────── */
+
+  function group(label, fill) {
+    var box = document.createElement('div');
+    box.className = 'td-group';
+
+    var caption = document.createElement('p');
+    caption.className = 'td-group__label';
+    caption.textContent = label;
+
+    var row = document.createElement('div');
+    row.className = 'td-group__row';
+    fill(row);
+
+    box.appendChild(caption);
+    box.appendChild(row);
+    return box;
+  }
+
+  /* AZUL MARCA O CONTROLE ATIVO — nunca laranja, porque escolher peso
+     não avança a parada. */
+  function choice(label, active, run) {
+    var button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'td-choice' + (active ? ' td-choice--on' : '');
+    button.textContent = label;
+    if (active) button.setAttribute('aria-pressed', 'true');
+    button.addEventListener('click', run);
+    return button;
+  }
+
+  function swatch(color, label, active) {
+    var button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'td-swatch' + (active ? ' td-swatch--on' : '');
+    button.style.background = color;
+    button.setAttribute('aria-label', label);
+    button.title = label;
+    /* O ponteiro não pode roubar a seleção do texto antes do clique
+       chegar: sem isto, clicar no amarelo desfaz a seleção da palavra e
+       o destaque nunca acontece. */
+    button.addEventListener('mousedown', function (event) { event.preventDefault(); });
+    button.addEventListener('click', function () { texts.paint(color); });
+    return button;
+  }
+
+
   render();
 
   window.TD_EDITOR = { state: state, ai: ai, render: render, goTo: goTo, surface: surface,
-                       askConfirm: askConfirm };
+                       texts: texts, askConfirm: askConfirm };
 
 })(window, document);

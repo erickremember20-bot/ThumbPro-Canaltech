@@ -455,6 +455,8 @@ button:disabled {
   border-radius: var(--radius-canvas);
   background: #000;                 /* preto real: é a cor de vídeo, não
                                        uma superfície da interface */
+  container-type: inline-size;      /* o guia do timer mede o texto dele
+                                       contra a largura do canvas */
   box-shadow: 0 20px 50px 0 rgb(0 0 0 / 0.5);
 }
 
@@ -1072,3 +1074,153 @@ label.td-btn { cursor: pointer; }
 
 .td-compare__tag--before { left: var(--space-12); }
 .td-compare__tag--after  { right: var(--space-12); }
+
+/* =====================================================================
+   PARADA 3 · TEXTO
+   ===================================================================== */
+
+.td-texts {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;          /* só valem cliques na parada 3 */
+}
+
+.td-texts--live { pointer-events: auto; }
+
+.td-text {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  /* Padrão do título: Barlow Black Italic. */
+  font-family: var(--font-thumb-title);
+  font-style: italic;
+  line-height: 1.1;
+  outline: none;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  cursor: grab;
+}
+
+.td-text--moving { cursor: grabbing; }
+
+/* AZUL MARCA A SELEÇÃO. As alças são os quatro cantos da caixa. */
+.td-text--on { outline: 1px solid var(--brand-blue); }
+
+.td-text--editing {
+  outline: 2px solid var(--brand-blue);
+  cursor: text;
+}
+
+/* As quatro alças da caixa de texto, desenhadas em ::before/::after dos
+   cantos via elementos filhos seria mais código do que vale — aqui o
+   próprio contorno azul mais os pontos abaixo bastam. */
+.td-text--on::after,
+.td-text--on::before {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--brand-blue);
+  border-radius: 3px;
+  background: var(--brand-white);
+}
+.td-text--on::before { top: -6px;    left: -6px; }
+.td-text--on::after  { bottom: -6px; right: -6px; }
+
+.td-text--editing::before,
+.td-text--editing::after { display: none; }
+
+/* O guia do timer do YouTube. Interface, não conteúdo: some no export. */
+.td-timer {
+  position: absolute;
+  right: var(--timer-guide-right);
+  bottom: var(--timer-guide-bottom);
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  width: var(--timer-guide-width);
+  height: var(--timer-guide-height);
+  border: 1px dashed var(--feedback-yellow);
+  border-radius: 4px;
+  background: rgb(0 0 0 / 0.55);
+  color: var(--feedback-yellow);
+  font-size: clamp(10px, 1.6cqw, 16px);
+  font-weight: var(--font-weight-body-bold);
+  pointer-events: none;
+}
+
+/* ── Controles do painel ─────────────────────────────────────────────── */
+
+.td-group { margin-bottom: var(--space-16); }
+
+.td-group__label {
+  margin-bottom: var(--space-4);
+  color: var(--text-mute);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-label);
+  letter-spacing: var(--letter-spacing-label);
+  text-transform: uppercase;
+}
+
+.td-group__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.td-choice {
+  min-height: 32px;
+  padding: 0 var(--space-8);
+  border: 1px solid var(--border-line-2);
+  border-radius: var(--radius-input);
+  background: var(--surface-card-2);
+  color: var(--text-body);
+  font-size: var(--font-size-legal);
+  font-weight: var(--font-weight-small-bold);
+}
+
+/* AZUL MARCA O CONTROLE ATIVO. Escolher peso não avança a parada, então
+   nunca laranja aqui. */
+.td-choice--on {
+  border-color: var(--brand-blue);
+  background: var(--tint-blue-10);
+  color: var(--text-primary);
+}
+
+.td-swatch {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--border-line-2);
+  border-radius: var(--radius-input);
+}
+
+.td-swatch--on {
+  outline: 2px solid var(--brand-blue);
+  outline-offset: 2px;
+}
+
+.td-swatch--pick {
+  background: var(--surface-card-2);
+  cursor: pointer;
+}
+
+.td-check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  margin-top: var(--space-16);
+  color: var(--text-body);
+  font-size: var(--font-size-legal);
+  cursor: pointer;
+}
+
+.td-check input { accent-color: var(--brand-blue); }
+.td-check__note { color: var(--text-mute); }
+
+@media (max-width: 880px) {
+  .td-choice, .td-swatch { min-height: 44px; }
+  .td-swatch { width: 44px; height: 44px; }
+}

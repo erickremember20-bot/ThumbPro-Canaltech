@@ -19,7 +19,7 @@ Abre com duplo clique em `index.html`.
 | 4 | Canvas da parada 1: arraste, zoom ancorado no ponteiro, alças | ✅ feito |
 | 5 | Integração PhotoRoom (remoção de fundo) | ✅ feito |
 | 6 | Parada 2: modal de confirmação, Gemini, três estados de IA | ✅ feito |
-| 7 | Canvas de texto da parada 3 | ⬜ |
+| 7 | Canvas de texto da parada 3 | ✅ feito |
 | 8 | Parada 4: molduras e export 1920×1080 | ⬜ |
 | 9 | Recibo, contagem de créditos, saldo insuficiente | ⬜ |
 | 10 | Passada de acessibilidade | ⬜ |
