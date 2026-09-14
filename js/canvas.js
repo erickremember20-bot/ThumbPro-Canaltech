@@ -587,7 +587,20 @@
          aqui — eles são interface, e interface não vai para o PNG. */
       if (options.texts) drawTexts(ctx, options.texts, scale);
 
-      if (options.frame) ctx.drawImage(options.frame, 0, 0, width, height);
+      /* A moldura é a última camada: ela emoldura tudo, inclusive o
+         texto. */
+      if (options.frame) {
+        ctx.drawImage(options.frame, 0, 0, width, height);
+      } else if (options.frameColor) {
+        var band = (options.frameWidth || 16) * scale;
+        ctx.save();
+        ctx.strokeStyle = options.frameColor;
+        ctx.lineWidth = band;
+        /* Desenhada meia banda para dentro, para a borda ficar inteira
+           dentro dos 1920 x 1080 em vez de metade fora. */
+        ctx.strokeRect(band / 2, band / 2, width - band, height - band);
+        ctx.restore();
+      }
 
       return sheet.toDataURL('image/png');
     }

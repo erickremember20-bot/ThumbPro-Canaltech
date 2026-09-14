@@ -1224,3 +1224,69 @@ label.td-btn { cursor: pointer; }
   .td-choice, .td-swatch { min-height: 44px; }
   .td-swatch { width: 44px; height: 44px; }
 }
+
+/* ── Parada 4 · molduras ─────────────────────────────────────────────── */
+
+.td-frames {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-8);
+}
+
+.td-frameopt {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-8);
+  border: 1px solid var(--border-line-2);
+  border-radius: var(--radius-input);
+  background: var(--surface-card-2);
+  text-align: left;
+}
+
+.td-frameopt:hover:not(:disabled) { border-color: var(--text-mute); }
+
+/* AZUL MARCA A OPÇÃO ESCOLHIDA. */
+.td-frameopt--on {
+  border-color: var(--brand-blue);
+  background: var(--tint-blue-10);
+}
+
+.td-frameopt__art {
+  display: block;
+  aspect-ratio: 16 / 9;
+  border-radius: 6px;
+  background: var(--surface-mirage) center / cover no-repeat;
+}
+
+/* "Sem moldura" mostra o que é: nada por cima. */
+.td-frameopt__art--none {
+  background-image:
+    linear-gradient(45deg, var(--border-line) 25%, transparent 25%, transparent 75%, var(--border-line) 75%),
+    linear-gradient(45deg, var(--border-line) 25%, transparent 25%, transparent 75%, var(--border-line) 75%);
+  background-size: 12px 12px;
+  background-position: 0 0, 6px 6px;
+}
+
+.td-frameopt__name {
+  color: var(--text-primary);
+  font-size: var(--font-size-small-bold);
+  font-weight: var(--font-weight-small-bold);
+}
+
+/* Opção indisponível diz QUAL arquivo falta, em vez de só não funcionar. */
+.td-frameopt__missing {
+  color: var(--feedback-danger);
+  font-size: var(--font-size-legal);
+  line-height: 1.3;
+}
+
+/* A prévia da moldura no canvas. Não é ela que vira PNG — o export
+   redesenha a moldura em 1920 × 1080. */
+.td-frameview {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  background: center / 100% 100% no-repeat;
+  pointer-events: none;
+}

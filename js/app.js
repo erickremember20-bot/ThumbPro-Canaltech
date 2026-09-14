@@ -394,7 +394,7 @@
   var counter     = document.getElementById('step-counter');
   var stopBody    = document.getElementById('stop-body');
   var advance     = document.getElementById('advance');
-  var download    = document.getElementById('bar-download');
+  var downloadButton = document.getElementById('bar-download');
   var creditsEl   = document.getElementById('credits-count');
   var canvas      = document.getElementById('canvas');
   var canvasEmpty = document.getElementById('canvas-empty');
@@ -497,6 +497,7 @@
     if (state.step === 0) stopBody.appendChild(buildStopOne());
     if (state.step === 1) stopBody.appendChild(buildStopTwo());
     if (state.step === 2) stopBody.appendChild(buildStopThree());
+    if (state.step === 3) stopBody.appendChild(buildStopFour());
 
     if (stop.cost) {
       var cost = document.createElement('p');
@@ -512,9 +513,9 @@
     /* UM LARANJA POR TELA, e ele fica na ação que avança NAQUELA parada.
        Nas paradas 1 a 3 o Baixar do topo é neutro; ele só acende na 4. */
     var last = state.step === STOPS.length - 1;
-    download.disabled = !last;
-    download.classList.toggle('td-btn--primary', last);
-    download.classList.toggle('td-btn--ghost', !last);
+    downloadButton.disabled = !last;
+    downloadButton.classList.toggle('td-btn--primary', last);
+    downloadButton.classList.toggle('td-btn--ghost', !last);
     advance.hidden = last;   /* na 4 o Baixar do topo é a ação que avança,
                                 e dois laranjas na mesma tela seria um a
                                 mais do que a regra permite */
@@ -1423,9 +1424,181 @@
   }
 
 
+  /* =====================================================================
+     PARADA 4 · MOLDURA E EXPORT
+     ===================================================================== */
+
+  var FRAMES = [
+    { id: 'canaltech', name: 'Canaltech',  file: 'assets/frames/moldura-canaltech.png' },
+    { id: 'cteletro',  name: 'CT Eletro',  file: 'assets/frames/moldura-ct-eletro.png' },
+    { id: 'cor',       name: 'Minha cor',  color: true },
+    { id: 'none',      name: 'Sem moldura' }
+  ];
+
+  /* Espessura da borda de "Minha cor", em pixels de export. Fina o
+     bastante para emoldurar sem comer a arte. */
+  var COLOR_FRAME_WIDTH = 16;
+
+  var frameImages = {};
+  var frameColor = '#f87737';
+
+  /* As molduras da marca são PNGs que ainda não estão no repositório.
+     Carregar é otimista: se o arquivo não existir, a opção aparece
+     desabilitada DIZENDO qual arquivo falta, em vez de quebrar o export
+     ou sumir sem explicação. */
+  FRAMES.forEach(function (frame) {
+    if (!frame.file) return;
+    var probe = new Image();
+    probe.onload  = function () { frameImages[frame.id] = probe; render(); };
+    probe.onerror = function () { frameImages[frame.id] = null;  render(); };
+    probe.src = frame.file;
+  });
+
+  function buildStopFour() {
+    var wrap = document.createElement('div');
+
+    var grid = document.createElement('div');
+    grid.className = 'td-frames';
+
+    FRAMES.forEach(function (frame) {
+      var card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'td-frameopt';
+
+      var missing = frame.file && frameImages[frame.id] === null;
+
+      if (state.frame === frame.id) {
+        /* AZUL MARCA A OPÇÃO ESCOLHIDA. */
+        card.classList.add('td-frameopt--on');
+        card.setAttribute('aria-pressed', 'true');
+      }
+
+      var art = document.createElement('span');
+      art.className = 'td-frameopt__art';
+      if (frame.file && frameImages[frame.id]) art.style.backgroundImage = 'url("' + frame.file + '")';
+      if (frame.id === 'cor') art.style.boxShadow = 'inset 0 0 0 3px ' + frameColor;
+      if (frame.id === 'none') art.classList.add('td-frameopt__art--none');
+
+      var name = document.createElement('span');
+      name.className = 'td-frameopt__name';
+      name.textContent = frame.name;
+
+      card.appendChild(art);
+      card.appendChild(name);
+
+      if (missing) {
+        card.disabled = true;
+        var gone = document.createElement('span');
+        gone.className = 'td-frameopt__missing';
+        gone.textContent = 'falta ' + frame.file.split('/').pop();
+        card.appendChild(gone);
+      } else {
+        card.addEventListener('click', function () {
+          state.frame = frame.id;
+          if (frame.color) colorInput.click();
+          paintFrame();
+          render();
+        });
+      }
+
+      grid.appendChild(card);
+    });
+
+    wrap.appendChild(grid);
+
+    /* O seletor RGB de "Minha cor". */
+    var colorInput = document.createElement('input');
+    colorInput.type = 'color';
+    colorInput.className = 'td-sr';
+    colorInput.value = frameColor;
+    colorInput.addEventListener('input', function () {
+      frameColor = colorInput.value;
+      state.frame = 'cor';
+      paintFrame();
+      render();
+    });
+    wrap.appendChild(colorInput);
+
+    var anyMissing = FRAMES.some(function (f) { return f.file && frameImages[f.id] === null; });
+    if (anyMissing) {
+      var note = document.createElement('p');
+      note.className = 'td-stop__cost';
+      note.textContent = 'As molduras da marca são PNG 1920 × 1080 com fundo ' +
+        'transparente. O README lista os nomes exatos que o código procura.';
+      wrap.appendChild(note);
+    }
+
+    return wrap;
+  }
+
+  /* A moldura na tela é uma prévia por cima do canvas. No export ela é
+     desenhada de novo, em 1920 × 1080, pelo renderizador — não é esta
+     camada que vira PNG. */
+  var framePreview = document.createElement('div');
+  framePreview.className = 'td-frameview';
+  canvas.appendChild(framePreview);
+
+  function paintFrame() {
+    var chosen = state.frame;
+
+    framePreview.style.backgroundImage = '';
+    framePreview.style.boxShadow = '';
+
+    if (chosen === 'cor') {
+      var k = canvas.clientWidth / surface.EXPORT_W;
+      framePreview.style.boxShadow = 'inset 0 0 0 ' + (COLOR_FRAME_WIDTH * k) + 'px ' + frameColor;
+    } else if (frameImages[chosen]) {
+      framePreview.style.backgroundImage = 'url("' + frameImages[chosen].src + '")';
+    }
+
+    framePreview.hidden = !(chosen && chosen !== 'none');
+  }
+
+  /* ── O export ────────────────────────────────────────────────────────
+     Relê o mesmo estado que a tela mostra. O guia do timer, as alças e o
+     controle de zoom não entram porque eles nunca estiveram no estado —
+     são interface, e interface não tem coordenada de export.            */
+
+  function renderFinal() {
+    return surface.snapshot({
+      texts: texts.serialize(),
+      frame: state.frame === 'cor' ? null : frameImages[state.frame] || null,
+      frameColor: state.frame === 'cor' ? frameColor : null,
+      frameWidth: COLOR_FRAME_WIDTH
+    });
+  }
+
+  function download() {
+    var dataUrl = renderFinal();
+
+    /* Baixar NÃO cobra crédito. */
+    var link = document.createElement('a');
+    link.href = dataUrl;
+    link.download = fileName();
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    state.downloaded = true;
+    render();
+  }
+
+  function fileName() {
+    var stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
+    return 'thumbdrop-' + stamp + '.png';
+  }
+
+  downloadButton.addEventListener('click', function () {
+    if (state.step !== STOPS.length - 1) return;
+    download();
+  });
+
+
+  paintFrame();
   render();
 
   window.TD_EDITOR = { state: state, ai: ai, render: render, goTo: goTo, surface: surface,
-                       texts: texts, askConfirm: askConfirm };
+                       texts: texts, askConfirm: askConfirm, renderFinal: renderFinal,
+                       download: download };
 
 })(window, document);
