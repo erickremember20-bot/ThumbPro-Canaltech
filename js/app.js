@@ -391,7 +391,7 @@
       cost: 'Uma cobrança por confirmação, não por tentativa: reenquadrar o ' +
             'recorte é local e não gasta crédito.',
       advance: 'Continuar',
-      blocked: 'Suba uma imagem para continuar',
+      blocked: 'Suba uma imagem',
       ready: function () { return !!state.image; }
     },
     {
@@ -405,7 +405,7 @@
             'não volta, nem se você cancelar a espera.',
       advance: 'Seguir sem filtro · 0 ✦',
       ready: function () { return ai.phase === 'idle'; },
-      blocked: 'Termine a prévia para continuar'
+      blocked: 'Termine a prévia'
     },
     {
       name: 'Texto',
@@ -1439,7 +1439,7 @@
 
   function buildStopThree() {
     var wrap = document.createElement('div');
-    wrap.className = 'td-stop';
+    wrap.className = 'td-stop td-stop--text';
     var chosen = texts.selected();
 
     /* ── Campo/Área · o título ────────────────────────────────────────
