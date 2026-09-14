@@ -142,19 +142,39 @@ foco.
 
 ---
 
-## Assets que precisam ser subidos
+## Assets
 
-**Leia isto com atenção: o código procura estes nomes exatos.** Nome diferente,
-nada funciona. As pastas já existem no repositório, cada uma com um `.gitkeep`.
+Todos chegaram, menos as fontes. **O código procura estes nomes exatos** — nome
+diferente e o arquivo não é encontrado.
 
-Nenhum destes arquivos pôde ser baixado do Figma automaticamente — veja
-[Por que os assets não vieram do Figma](#por-que-os-assets-não-vieram-do-figma).
+### `assets/frames/` ✅
 
-### `assets/fonts/` — 10 arquivos `.woff2`
+| Arquivo | Estado |
+|---|---|
+| `moldura-canaltech.png` | 1920 × 1080, RGBA, 97% vazada |
+| `moldura-ct-eletro.png` | 1920 × 1080, RGBA, 97% vazada |
 
-Auto-hospedadas com `@font-face`, **não** via CDN do Google.
-Barlow é a fonte da interface; Barlow Black Italic e Anton são as fontes de
-título dentro da thumbnail.
+> **Trocou uma moldura? Rode `./build.sh`.** As molduras vivem no código como
+> data URI, geradas destes PNGs — veja
+> [Por que as molduras são data URI](#por-que-as-molduras-são-data-uri).
+> Sem rodar o script, o arquivo novo fica em `assets/` e o editor continua
+> usando o antigo.
+
+### `assets/samples/` ✅
+
+`dramatico.png` · `vivido.png` · `cinema.png` · `retro.png` · `epico.png` ·
+`quente.png` — 300 × 179 cada.
+
+Um detalhe menor: 300 × 179 dá 1,676 e não os 1,778 de 16:9, então o card corta
+cerca de 5% em cima e embaixo. Não atrapalha a comparação entre os filtros, que
+é a função do card. Se quiser o enquadramento exato, 320 × 180 resolve.
+
+### `assets/fonts/` ⬜ — o que ainda falta
+
+Dez arquivos `.woff2`, auto-hospedados com `@font-face`, **não** por CDN do
+Google. Sem eles a interface cai na pilha de fontes do sistema: funciona e é
+legível, mas não é o desenho — o Barlow muda bastante o peso dos títulos, e o
+título dentro da thumb sai com itálico sintetizado em vez do Black Italic real.
 
 | Arquivo | Família | Peso | Estilo | Usado em |
 |---|---|---|---|---|
@@ -169,83 +189,30 @@ título dentro da thumbnail.
 | `barlow-900-italic.woff2` | Barlow | 900 | itálico | **título da thumb, padrão (Black Italic)** |
 | `anton-400.woff2` | Anton | 400 | normal | título da thumb, alternativa |
 
-Os quatro itálicos cobrem exatamente os pesos que a seção 8 do briefing pede:
-Regular, Bold, Extra Bold e Black, sempre em itálico.
+Em `fonts.google.com/specimen/Barlow` e `/specimen/Anton`. Se vierem em `.ttf`,
+pode subir assim mesmo que eu converto.
 
-### `assets/frames/` — 2 arquivos `.png`
+### `assets/icons/` ⬜ — opcional
 
-| Arquivo | Dimensão | Formato |
-|---|---|---|
-| `moldura-canaltech.png` | exatamente 1920×1080 | PNG com canal alfa (transparente onde a foto aparece) |
-| `moldura-ct-eletro.png` | exatamente 1920×1080 | PNG com canal alfa |
-
-A moldura é desenhada por cima da composição no export, em escala 1:1.
-Se não for 1920×1080 exato, ela vai esticar e desalinhar.
-
-### `assets/samples/` — 6 arquivos `.png`
-
-As miniaturas dos cards de filtro na parada 2. Uma por filtro, mesma foto de
-base nas seis, para a pessoa comparar o efeito e não a foto.
-
-| Arquivo | Filtro |
-|---|---|
-| `dramatico.png` | Dramático |
-| `vivido.png` | Vívido |
-| `cinema.png` | Cinema |
-| `retro.png` | Retrô |
-| `epico.png` | Épico |
-| `quente.png` | Quente |
-
-Proporção 16:9, recomendado 480×270 (ou 960×540 para telas 2x). PNG ou JPG —
-se preferir JPG, avise que eu troco a extensão no código.
-
-### `assets/icons/` — SVG
-
-Estes quatro estão nomeados no Figma e têm descrição ("24px, stroke"):
-
-| Arquivo | Ícone |
-|---|---|
-| `close.svg` | fechar |
-| `save.svg` | salvar |
-| `download.svg` | baixar |
-| `upload.svg` | subir imagem |
-
-O handoff do Figma diz que existem **26 ícones**, mas os outros 22 são vetores
-soltos dentro dos componentes, sem nome próprio — não dá para listar antes de
-montar cada tela. Conforme eu construir as paradas, acrescento os nomes que
-faltam a esta tabela.
-
-Todos em SVG, 24×24, traço (não preenchimento), `stroke="currentColor"` para
-herdarem a cor do token onde forem usados.
-
-> **Não fica travado por causa dos ícones.** Enquanto os SVGs reais não chegam,
-> eu desenho stand-ins inline de 24px em traço, marcados no código. Trocar um
-> stand-in pelo arquivo real depois é substituir um arquivo, não mexer em lógica.
+Os ícones são stand-ins desenhados à mão, 24 px em traço. Funcionam. Se quiser
+os do Figma, são `close.svg`, `save.svg`, `download.svg` e `upload.svg`, em
+24 × 24 com `stroke="currentColor"`.
 
 ---
 
-### Por que os assets não vieram do Figma
+### Por que as molduras são data URI
 
-O briefing pedia que eu exportasse do Figma via MCP tudo que já tem export
-configurado. Consegui **ler** o arquivo inteiro — as 5 coleções de variáveis
-com os valores reais, os 9 estilos de texto, as telas e os dois frames de
-handoff. É disso que sai o `tokens.css`, e é a parte que importa.
+Desenhar no canvas um PNG carregado de `assets/` **contamina o canvas** quando a
+página roda em `file://`, e `toDataURL()` passa a lançar `SecurityError`. Na
+prática: o export quebraria exatamente quando a pessoa escolhesse a moldura da
+marca — o caso mais comum. E em `file://` não há como ler os bytes de um arquivo
+local por `fetch` nem por `XHR`: o navegador bloqueia os dois.
 
-O que não deu:
+Por isso `build.sh` gera `js/frames.js` com as duas molduras em base64. O PNG em
+`assets/frames/` continua sendo a fonte da verdade, e serve de reserva quando a
+página é servida por `http`, onde a contaminação não acontece.
 
-1. **O ambiente onde este código roda bloqueia downloads de `figma.com`.**
-   A política de rede da sessão nega a conexão com o servidor de assets. Não é
-   permissão do Figma nem export mal configurado no arquivo: é o sandbox.
-   Vale para ícones, molduras e amostras, sem exceção.
-2. **As 6 amostras de filtro não existem como imagem no Figma.** Os cards
-   `Filtro/Amostra` são formas desenhadas, não fotos — o Figma devolveu a lista
-   de imagens vazia para eles. Mesmo sem o bloqueio de rede, não haveria o que
-   baixar. Precisam ser geradas por fora.
-3. **As molduras existem como imagem** dentro do nó `Canvas final com moldura`.
-   Estão lá, são reais, e caem no bloqueio do item 1. Se você conseguir
-   exportá-las direto do Figma em 1920×1080, é o caminho mais curto.
-
----
+Custo: 70 KB no arquivo final. É o preço de o export funcionar com duplo clique.
 
 ## Chaves de API
 

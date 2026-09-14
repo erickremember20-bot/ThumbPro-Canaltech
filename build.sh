@@ -11,6 +11,42 @@
 set -e
 cd "$(dirname "$0")"
 
+# ---------------------------------------------------------------------
+# PASSO 1 · embutir as molduras
+#
+# Desenhar um PNG carregado de assets/ dentro do canvas CONTAMINA o
+# canvas quando a página roda em file://, e toDataURL passa a lançar
+# SecurityError — ou seja, o export quebraria justamente quando a pessoa
+# escolhe a moldura da marca. E em file:// não há como ler os bytes de um
+# arquivo local por fetch nem por XHR: o navegador bloqueia os dois.
+#
+# Então as molduras entram no código como data URI. assets/frames/
+# continua sendo a fonte da verdade; js/frames.js é gerado dela.
+#
+# TROCOU UMA MOLDURA? RODE ESTE SCRIPT DE NOVO.
+# ---------------------------------------------------------------------
+
+{
+  echo '/* GERADO POR build.sh A PARTIR DE assets/frames/ — não edite à mão.'
+  echo '   As molduras vivem aqui como data URI porque um PNG carregado de'
+  echo '   assets/ contamina o canvas em file:// e quebraria o export. */'
+  echo 'window.TD_FRAMES = {'
+  for id in canaltech ct-eletro; do
+    file="assets/frames/moldura-$id.png"
+    if [ -f "$file" ]; then
+      printf "  '%s': 'data:image/png;base64,%s',\n" \
+        "$(echo "$id" | tr -d '-')" "$(base64 -w0 < "$file")"
+    fi
+  done
+  echo '};'
+} > js/frames.js
+
+printf 'js/frames.js · %s KB\n' "$(( $(wc -c < js/frames.js) / 1024 ))"
+
+# ---------------------------------------------------------------------
+# PASSO 2 · juntar tudo num arquivo
+# ---------------------------------------------------------------------
+
 OUT=thumbdrop.html
 
 {
@@ -30,7 +66,7 @@ OUT=thumbdrop.html
     | sed '/<\/body>/d' | sed '/<\/html>/d'
 
   echo '<script>'
-  cat js/config.js js/canvas.js js/text.js js/ai.js js/app.js
+  cat js/frames.js js/config.js js/canvas.js js/text.js js/ai.js js/app.js
   echo '</script>'
   echo '</body>'
   echo '</html>'

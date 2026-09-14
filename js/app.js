@@ -1526,16 +1526,30 @@
   var frameImages = {};
   var frameColor = '#f87737';
 
-  /* As molduras da marca são PNGs que ainda não estão no repositório.
-     Carregar é otimista: se o arquivo não existir, a opção aparece
-     desabilitada DIZENDO qual arquivo falta, em vez de quebrar o export
-     ou sumir sem explicação. */
+  /* A moldura é carregada do data URI embutido por build.sh, e não do
+     arquivo em assets/.
+
+     O motivo é o export: desenhar um PNG carregado de assets/ dentro do
+     canvas CONTAMINA o canvas quando a página roda em file://, e
+     toDataURL passa a lançar SecurityError. O export quebraria
+     justamente quando a pessoa escolhe a moldura da marca. E em file://
+     não há como ler os bytes de um arquivo local por fetch nem por XHR.
+
+     O arquivo em assets/frames/ continua sendo a fonte da verdade — ele
+     é a origem do data URI, e serve de reserva quando a página é servida
+     por http, onde a contaminação não acontece.
+
+     Se o arquivo não existir de nenhuma das duas formas, a opção aparece
+     desabilitada DIZENDO qual arquivo falta. */
   FRAMES.forEach(function (frame) {
     if (!frame.file) return;
+
+    var embedded = window.TD_FRAMES && window.TD_FRAMES[frame.id.replace(/-/g, '')];
+
     var probe = new Image();
     probe.onload  = function () { frameImages[frame.id] = probe; render(); };
     probe.onerror = function () { frameImages[frame.id] = null;  render(); };
-    probe.src = frame.file;
+    probe.src = embedded || frame.file;
   });
 
   function buildStopFour() {
