@@ -51,13 +51,101 @@
   </div>
 </div>
 
-<!-- O editor. Montado na etapa 3: barra superior, palco com o canvas 16:9
-     que nunca muda de posição, e painel de 320 à direita no desktop ou dock
-     rolável embaixo no mobile. -->
-<div id="app" hidden>
-  <button type="button" class="td-btn td-btn--ghost" id="open-setup">
-    Trocar ou apagar as chaves
-  </button>
+<!-- ═══════════════════════════════════════════════════════════════════
+     O EDITOR
+     Barra superior fixa · palco com o canvas 16:9 que NUNCA muda de
+     posição nem de tamanho entre as paradas · painel de 320 à direita no
+     desktop, dock rolável embaixo abaixo de 880px.
+     O que troca entre as paradas é só o conteúdo do painel.
+     ═══════════════════════════════════════════════════════════════════ -->
+<div id="app" class="td-app" hidden>
+
+  <!-- Ícones stand-in, 24px em traço, até os SVGs do Figma chegarem.
+       Trocar cada um é substituir o conteúdo de um <symbol>. -->
+  <svg class="td-sr" aria-hidden="true" focusable="false">
+    <defs>
+      <symbol id="i-close" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+      <symbol id="i-save" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 3h11l3 3v15H5z"/><path d="M9 3v6h6V3M8 21v-6h8v6"/></symbol>
+      <symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 3v12m0 0l-4-4m4 4l4-4M4 19h16"/></symbol>
+      <symbol id="i-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 19V7m0 0l-4 4m4-4l4 4M4 3h16"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 13l4 4L19 7"/></symbol>
+    </defs>
+  </svg>
+
+  <header class="td-topbar">
+    <button type="button" class="td-iconbtn" id="bar-close" aria-label="Fechar o editor">
+      <svg class="td-icon" aria-hidden="true"><use href="#i-close"></use></svg>
+    </button>
+
+    <h1 class="td-topbar__title" id="thumb-title">Thumb sem título</h1>
+
+    <span class="td-pill td-pill--format">1920 × 1080</span>
+
+    <div class="td-topbar__spacer"></div>
+
+    <!-- Saldo, sempre à vista. O número muda; o ✦ é parte do componente. -->
+    <p class="td-pill td-pill--credits">
+      <span id="credits-count">100</span>
+      <span class="td-pill__spark" aria-hidden="true">✦</span>
+      <span class="td-sr">créditos</span>
+    </p>
+
+    <button type="button" class="td-btn td-btn--ghost td-topbar__action" id="open-setup" aria-label="Trocar ou apagar as chaves">
+      <svg class="td-icon" aria-hidden="true"><use href="#i-save"></use></svg>
+      <span class="td-btn__label">Chaves</span>
+    </button>
+
+    <!-- BAIXAR FICA NEUTRO NAS PARADAS 1 A 3. Só acende na 4, que é onde
+         baixar passa a ser a ação que avança. -->
+    <button type="button" class="td-btn td-btn--ghost td-topbar__action" id="bar-download" aria-label="Baixar a thumb" disabled>
+      <svg class="td-icon" aria-hidden="true"><use href="#i-download"></use></svg>
+      <span class="td-btn__label">Baixar Thumb</span>
+    </button>
+  </header>
+
+  <div class="td-body">
+
+    <!-- O PALCO. O canvas é filho único e não se mexe daqui. -->
+    <main class="td-stage">
+      <div class="td-canvas" id="canvas">
+        <div class="td-canvas__empty" id="canvas-empty">
+          <p class="td-canvas__headline">Arraste sua imagem aqui</p>
+          <p class="td-canvas__sub">ou clique para escolher · JPG, PNG · fica tudo no seu navegador</p>
+          <p class="td-canvas__meta">16:9 · 1920 × 1080</p>
+        </div>
+      </div>
+    </main>
+
+    <!-- O PAINEL. Muda de conteúdo a cada parada; o canvas não. -->
+    <aside class="td-panel" aria-label="Trilha guiada">
+      <div class="td-panel__head">
+        <p class="td-panel__eyebrow">Sua thumb em 4 passos</p>
+        <p class="td-panel__counter" id="step-counter">Passo 1 de 4</p>
+      </div>
+
+      <ol class="td-track" id="track" aria-label="Paradas"></ol>
+
+      <hr class="td-panel__rule">
+
+      <div class="td-panel__stop" id="stop-body"></div>
+
+      <div class="td-panel__foot">
+        <button type="button" class="td-btn td-btn--primary td-btn--block" id="advance" disabled>
+          Continuar
+        </button>
+      </div>
+    </aside>
+
+  </div>
 </div>
 
 <script src="js/config.js"></script>

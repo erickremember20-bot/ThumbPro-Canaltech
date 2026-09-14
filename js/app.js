@@ -281,3 +281,305 @@
   };
 
 })(window, document);
+
+
+/* =====================================================================
+   ThumbDrop V3 · o shell do editor (etapa 3)
+   ---------------------------------------------------------------------
+   A trilha de quatro paradas. O canvas NUNCA muda de posição nem de
+   tamanho entre elas — só o conteúdo do painel troca. Por isso o canvas
+   é um elemento só, montado uma vez, que nenhuma troca de parada
+   remonta.
+   ===================================================================== */
+
+(function (window, document) {
+  'use strict';
+
+  /* ── Estado ────────────────────────────────────────────────────────
+     Uma fonte de verdade. Tudo que a interface mostra é derivado daqui. */
+
+  var state = {
+    step: 0,            /* índice da parada atual, 0 a 3 */
+    reached: 0,         /* a parada mais distante já alcançada */
+    credits: 100,
+    image: null,        /* { src, width, height } */
+    bgRemoved: false,
+    filter: null,       /* o filtro aprovado, se houver */
+    texts: [],
+    frame: 'none'
+  };
+
+  /* ── As quatro paradas ─────────────────────────────────────────────
+     `ready` é a regra que destrava o avanço, e `blocked` é o que o botão
+     diz enquanto ela não está satisfeita. Botão desabilitado sem motivo
+     visível é a pessoa olhando para uma parede.                         */
+
+  var STOPS = [
+    {
+      name: 'Imagem',
+      note: 'sua foto no canvas',
+      noteDone: 'imagem no lugar',
+      title: 'Comece pela imagem',
+      text: 'Sem imagem não há thumb. Nenhuma ferramenta aparece antes de ' +
+            'existir conteúdo no canvas.',
+      cost: 'Uma cobrança por confirmação, não por tentativa: reenquadrar o ' +
+            'recorte é local e não gasta crédito.',
+      advance: 'Continuar',
+      blocked: 'Suba uma imagem para continuar',
+      ready: function () { return !!state.image; }
+    },
+    {
+      name: 'Filtro de IA',
+      note: 'escolha a direção',
+      noteDone: 'direção aplicada',
+      title: 'Escolha a direção de arte',
+      text: 'Clicar num filtro não gera nada e não cobra nada — abre a ' +
+            'confirmação. O crédito só sai quando você aprovar.',
+      cost: 'Prévia 1 ✦ · entrega 2 ✦. O crédito sai no instante da chamada e ' +
+            'não volta, nem se você cancelar a espera.',
+      advance: 'Seguir sem filtro · 0 ✦',
+      ready: function () { return true; }     /* filtro é opcional */
+    },
+    {
+      name: 'Texto',
+      note: 'título e destaque',
+      noteDone: 'título escrito',
+      title: 'Escreva o título',
+      text: 'Dê um duplo clique em qualquer ponto do canvas para criar uma ' +
+            'caixa de texto. Selecione uma palavra e pinte de amarelo para o ' +
+            'destaque da casa.',
+      cost: 'A faixa que o YouTube cobre com a duração aparece como guia. ' +
+            'Ninguém deve escrever embaixo dela — e ela some no export.',
+      advance: 'Continuar',
+      ready: function () { return true; }     /* thumb sem título é válida */
+    },
+    {
+      name: 'Moldura e export',
+      note: 'moldura e download',
+      noteDone: 'baixada',
+      title: 'Moldura e export',
+      text: 'Escolha a moldura e baixe. O PNG sai em 1920 × 1080, sem o guia ' +
+            'do timer, sem alças e sem nada de interface.',
+      cost: 'Baixar não cobra crédito.',
+      advance: 'Baixar PNG 1920 × 1080',
+      ready: function () { return true; }
+    }
+  ];
+
+  var track       = document.getElementById('track');
+  var counter     = document.getElementById('step-counter');
+  var stopBody    = document.getElementById('stop-body');
+  var advance     = document.getElementById('advance');
+  var download    = document.getElementById('bar-download');
+  var creditsEl   = document.getElementById('credits-count');
+  var canvas      = document.getElementById('canvas');
+  var canvasEmpty = document.getElementById('canvas-empty');
+
+  /* ── Render ────────────────────────────────────────────────────────── */
+
+  function icon(id) {
+    return '<svg class="td-icon" aria-hidden="true"><use href="#' + id + '"></use></svg>';
+  }
+
+  function renderTrack() {
+    track.textContent = '';
+
+    STOPS.forEach(function (stop, index) {
+      var status = index < state.step ? 'done'
+                 : index === state.step ? 'current'
+                 : 'next';
+
+      var li = document.createElement('li');
+
+      /* Uma parada já visitada volta a ser clicável. Ninguém perde
+         trabalho feito ao navegar para trás — o estado é o mesmo. */
+      var visitable = index <= state.reached;
+
+      var button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'td-step td-step--' + status;
+      button.disabled = !visitable;
+      if (status === 'current') button.setAttribute('aria-current', 'step');
+
+      var marker = document.createElement('span');
+      marker.className = 'td-step__marker';
+      marker.setAttribute('aria-hidden', 'true');
+      if (status === 'done') marker.innerHTML = icon('i-check');
+      else marker.textContent = String(index + 1);
+
+      var labels = document.createElement('span');
+      labels.className = 'td-step__labels';
+
+      var name = document.createElement('span');
+      name.className = 'td-step__name';
+      name.textContent = stop.name;
+
+      var note = document.createElement('span');
+      note.className = 'td-step__note';
+      note.textContent = status === 'done' ? stop.noteDone : stop.note;
+
+      labels.appendChild(name);
+      labels.appendChild(note);
+      button.appendChild(marker);
+      button.appendChild(labels);
+
+      button.addEventListener('click', function () { goTo(index); });
+
+      li.appendChild(button);
+      track.appendChild(li);
+    });
+  }
+
+  function renderStop() {
+    var stop = STOPS[state.step];
+
+    counter.textContent = 'Passo ' + (state.step + 1) + ' de ' + STOPS.length;
+
+    stopBody.textContent = '';
+
+    var title = document.createElement('h2');
+    title.className = 'td-stop__title';
+    title.textContent = stop.title;
+
+    var text = document.createElement('p');
+    text.className = 'td-stop__text';
+    text.textContent = stop.text;
+
+    stopBody.appendChild(title);
+    stopBody.appendChild(text);
+
+    /* Os controles de cada parada entram aqui nas etapas 4 a 8. Por ora
+       a parada 1 tem o que ela precisa para existir: uma imagem. */
+    if (state.step === 0) stopBody.appendChild(buildUpload());
+
+    if (stop.cost) {
+      var cost = document.createElement('p');
+      cost.className = 'td-stop__cost';
+      cost.textContent = stop.cost;
+      stopBody.appendChild(cost);
+    }
+
+    var ready = stop.ready();
+    advance.disabled = !ready;
+    advance.textContent = ready ? stop.advance : (stop.blocked || stop.advance);
+
+    /* UM LARANJA POR TELA, e ele fica na ação que avança NAQUELA parada.
+       Nas paradas 1 a 3 o Baixar do topo é neutro; ele só acende na 4. */
+    var last = state.step === STOPS.length - 1;
+    download.disabled = !last;
+    download.classList.toggle('td-btn--primary', last);
+    download.classList.toggle('td-btn--ghost', !last);
+    advance.hidden = last;   /* na 4 o Baixar do topo é a ação que avança,
+                                e dois laranjas na mesma tela seria um a
+                                mais do que a regra permite */
+  }
+
+  function render() {
+    renderTrack();
+    renderStop();
+    creditsEl.textContent = String(state.credits);
+  }
+
+  /* ── Navegação ─────────────────────────────────────────────────────── */
+
+  function goTo(index) {
+    if (index < 0 || index >= STOPS.length) return;
+    if (index > state.reached) return;
+    state.step = index;
+    render();
+  }
+
+  function next() {
+    if (!STOPS[state.step].ready()) return;
+    var target = Math.min(state.step + 1, STOPS.length - 1);
+    state.reached = Math.max(state.reached, target);
+    goTo(target);
+  }
+
+  advance.addEventListener('click', next);
+
+  /* ── A imagem ──────────────────────────────────────────────────────
+     Só o carregamento e o enquadre inicial. Arraste, zoom ancorado no
+     ponteiro e alças são a etapa 4 — a fundação de verdade.             */
+
+  function buildUpload() {
+    var wrap = document.createElement('div');
+
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/png,image/jpeg,image/webp';
+    input.id = 'image-input';
+    input.className = 'td-sr';
+
+    var label = document.createElement('label');
+    label.className = 'td-btn td-btn--ghost td-btn--block';
+    label.htmlFor = 'image-input';
+    label.innerHTML = icon('i-upload') + ' Escolher imagem';
+
+    input.addEventListener('change', function () {
+      if (input.files && input.files[0]) loadImage(input.files[0]);
+    });
+
+    wrap.appendChild(input);
+    wrap.appendChild(label);
+    return wrap;
+  }
+
+  function loadImage(file) {
+    var reader = new FileReader();
+    reader.onload = function () {
+      var probe = new Image();
+      probe.onload = function () {
+        state.image = {
+          src: reader.result,
+          width: probe.naturalWidth,
+          height: probe.naturalHeight
+        };
+        paintImage();
+        render();
+      };
+      probe.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function paintImage() {
+    if (!state.image) return;
+    canvasEmpty.hidden = true;
+
+    var img = canvas.querySelector('.td-canvas__image');
+    if (!img) {
+      img = document.createElement('img');
+      img.className = 'td-canvas__image';
+      img.alt = '';
+      canvas.insertBefore(img, canvas.firstChild);
+    }
+    img.src = state.image.src;
+  }
+
+  /* O dropzone é o canvas inteiro — o estado vazio É a área de arraste. */
+  canvas.addEventListener('dragover', function (event) {
+    event.preventDefault();
+    canvas.classList.add('td-canvas--over');
+  });
+  canvas.addEventListener('dragleave', function () {
+    canvas.classList.remove('td-canvas--over');
+  });
+  canvas.addEventListener('drop', function (event) {
+    event.preventDefault();
+    canvas.classList.remove('td-canvas--over');
+    var file = event.dataTransfer && event.dataTransfer.files[0];
+    if (file && /^image\//.test(file.type)) loadImage(file);
+  });
+  canvas.addEventListener('click', function () {
+    if (!state.image) {
+      var input = document.getElementById('image-input');
+      if (input) input.click();
+    }
+  });
+
+  render();
+
+  window.TD_EDITOR = { state: state, render: render, goTo: goTo };
+
+})(window, document);
