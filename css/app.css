@@ -830,3 +830,245 @@ label.td-btn { cursor: pointer; }
   font-size: var(--font-size-legal);
   line-height: var(--line-height-legal);
 }
+
+/* =====================================================================
+   PARADA 2 · FILTROS, CONFIRMAÇÃO E OS TRÊS ESTADOS DE IA
+   ===================================================================== */
+
+.td-filters {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-8);
+}
+
+.td-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-8);
+  border: 1px solid var(--border-line-2);
+  border-radius: var(--radius-input);
+  background: var(--surface-card-2);
+  text-align: left;
+  transition: border-color var(--duration-fast) var(--ease-out);
+}
+
+.td-filter:hover { border-color: var(--text-mute); }
+
+/* AZUL MARCA A OPÇÃO ESCOLHIDA. Nunca laranja num card de filtro:
+   escolher o filtro não é a ação que avança a parada. */
+.td-filter--on {
+  border-color: var(--brand-blue);
+  background: var(--tint-blue-10);
+}
+
+.td-filter__art {
+  display: block;
+  aspect-ratio: 16 / 9;
+  margin-bottom: var(--space-4);
+  border-radius: 6px;
+  background: var(--surface-mirage) center / cover no-repeat;
+}
+
+.td-filter__name {
+  color: var(--text-primary);
+  font-size: var(--font-size-small-bold);
+  font-weight: var(--font-weight-small-bold);
+}
+
+.td-filter__note {
+  color: var(--text-mute);
+  font-size: var(--font-size-legal);
+  line-height: 1.3;
+}
+
+.td-stack { margin-top: var(--space-8); }
+
+/* ── Processando e prévia ────────────────────────────────────────────── */
+
+.td-working__title {
+  margin-bottom: var(--space-8);
+  color: var(--text-primary);
+  font-size: var(--font-size-body-bold);
+  font-weight: var(--font-weight-body-bold);
+}
+
+.td-working__text {
+  margin-bottom: var(--space-8);
+  color: var(--text-body);
+  font-size: var(--font-size-small);
+  line-height: var(--line-height-small);
+}
+
+.td-working__time {
+  margin-bottom: var(--space-16);
+  color: var(--brand-blue);      /* azul marca o que está acontecendo
+                                    agora, não convida a clicar */
+  font-size: var(--font-size-small);
+}
+
+.td-working__warn {
+  margin-top: var(--space-8);
+  color: var(--text-mute);
+  font-size: var(--font-size-legal);
+  line-height: var(--line-height-legal);
+}
+
+/* ── O modal ─────────────────────────────────────────────────────────── */
+
+.td-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: var(--space-24) var(--space-16);
+  overflow-y: auto;
+}
+
+.td-modal__veil {
+  position: fixed;
+  inset: 0;
+  background: var(--tint-ink-86);
+}
+
+.td-modal__card {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  padding: var(--space-24);
+  border: 1px solid var(--border-line-2);
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+}
+
+.td-modal__eyebrow {
+  margin-bottom: var(--space-4);
+  color: var(--brand-orange);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-label);
+  letter-spacing: var(--letter-spacing-label);
+  text-transform: uppercase;
+}
+
+.td-modal__title {
+  margin-bottom: var(--space-8);
+  color: var(--text-primary);
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-h3);
+  line-height: var(--line-height-h3);
+}
+
+.td-modal__text {
+  margin-bottom: var(--space-16);
+  color: var(--text-body);
+  font-size: var(--font-size-small);
+  line-height: var(--line-height-small);
+}
+
+/* A conta, à vista antes de custar. */
+.td-ledger {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--space-4) var(--space-12);
+  margin: 0 0 var(--space-16);
+  padding: var(--space-12);
+  border-radius: var(--radius-input);
+  background: var(--surface-card-2);
+  font-size: var(--font-size-small);
+}
+
+.td-ledger dt { color: var(--text-body); }
+.td-ledger dd { margin: 0; color: var(--text-primary); text-align: right; }
+.td-ledger__strong { font-weight: var(--font-weight-body-bold); }
+
+/* O aviso do crédito vem ANTES, nunca depois. */
+.td-modal__warning {
+  margin-bottom: var(--space-16);
+  padding: var(--space-8) var(--space-12);
+  border-left: 3px solid var(--feedback-yellow);
+  border-radius: var(--radius-input);
+  background: var(--tint-yellow-16);
+  color: var(--text-body);
+  font-size: var(--font-size-legal);
+  line-height: var(--line-height-legal);
+}
+
+.td-modal__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}
+
+.td-modal__actions .td-btn--primary { flex: 1 1 100%; order: -1; }
+
+@media (max-width: 880px) {
+  .td-modal__actions .td-btn { flex: 1 1 100%; }
+}
+
+/* ── A comparação antes/depois ───────────────────────────────────────── */
+
+.td-compare {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  --split: 50%;
+}
+
+/* O "depois" é revelado da divisória para a direita. O "antes" é a
+   composição que já está no canvas, por baixo — não uma segunda cópia. */
+.td-compare__after {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  clip-path: inset(0 0 0 var(--split));
+}
+
+.td-compare__bar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--split);
+  width: 2px;
+  margin-left: -1px;
+  background: var(--brand-white);
+  cursor: ew-resize;
+  touch-action: none;
+}
+
+.td-compare__grip {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 44px;
+  height: 44px;
+  transform: translate(-50%, -50%);
+  border: 2px solid var(--brand-white);
+  border-radius: 999px;
+  background: var(--tint-ink-86);
+  cursor: ew-resize;
+}
+
+.td-compare__grip::before {
+  content: '‹ ›';
+  color: var(--brand-white);
+  font-size: var(--font-size-small-bold);
+  letter-spacing: 2px;
+}
+
+.td-compare__tag {
+  position: absolute;
+  top: var(--space-12);
+  padding: var(--space-4) var(--space-8);
+  border-radius: 6px;
+  background: var(--tint-ink-86);
+  color: var(--brand-white);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-label);
+  letter-spacing: var(--letter-spacing-label);
+}
+
+.td-compare__tag--before { left: var(--space-12); }
+.td-compare__tag--after  { right: var(--space-12); }

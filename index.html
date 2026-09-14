@@ -51,6 +51,35 @@
   </div>
 </div>
 
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     PARADA 2a · CONFIRMAR A PRÉVIA
+     Clicar num filtro não gera nada e não cobra nada: abre isto. A
+     geração só acontece depois do OK, e o crédito é debitado nesse
+     instante. Três saídas, nenhuma delas escondida.
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="td-modal" id="confirm" role="dialog" aria-modal="true" aria-labelledby="confirm-title" hidden>
+  <div class="td-modal__veil" data-close></div>
+  <div class="td-modal__card">
+    <p class="td-modal__eyebrow" id="confirm-eyebrow">Confirmar</p>
+    <h2 class="td-modal__title" id="confirm-title">Ver a prévia do filtro</h2>
+    <p class="td-modal__text" id="confirm-text"></p>
+
+    <dl class="td-ledger" id="confirm-ledger"></dl>
+
+    <p class="td-modal__warning">
+      O crédito sai no instante em que a IA começa a rodar e não volta —
+      nem se você cancelar a espera no meio.
+    </p>
+
+    <div class="td-modal__actions">
+      <button type="button" class="td-btn td-btn--ghost" id="confirm-discard">Descartar</button>
+      <button type="button" class="td-btn td-btn--ghost" id="confirm-skip">Seguir sem filtro · 0 ✦</button>
+      <button type="button" class="td-btn td-btn--primary" id="confirm-go">Ver prévia · 1 ✦</button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════════════════════════════════════════════════════════════
      O EDITOR
      Barra superior fixa · palco com o canvas 16:9 que NUNCA muda de

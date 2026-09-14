@@ -476,6 +476,43 @@
       draw();
     }
 
+    /* ── Snapshot ───────────────────────────────────────────────────────
+       Redesenha o estado num canvas de verdade e devolve um PNG. É o
+       MESMO renderizador que o export da etapa 8 vai usar — por isso ele
+       nasce aqui, mandando para a IA exatamente o que a pessoa vê, e não
+       uma segunda interpretação do estado que pode divergir.
+
+       `width` permite pedir uma versão menor: a prévia do filtro manda
+       uma entrada reduzida, porque o que ela precisa julgar é direção de
+       arte, não nitidez.                                                 */
+
+    function snapshot(options) {
+      options = options || {};
+      var width = options.width || EXPORT_W;
+      var height = Math.round(width * EXPORT_H / EXPORT_W);
+      var scale = width / EXPORT_W;
+
+      var sheet = document.createElement('canvas');
+      sheet.width = width;
+      sheet.height = height;
+
+      var ctx = sheet.getContext('2d');
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, width, height);
+
+      if (layer && image.complete && image.naturalWidth) {
+        ctx.drawImage(
+          image,
+          layer.x * scale,
+          layer.y * scale,
+          layer.natW * layer.sx * scale,
+          layer.natH * layer.sy * scale
+        );
+      }
+
+      return sheet.toDataURL('image/png');
+    }
+
     root.addEventListener('pointerdown', onPointerDown);
     root.addEventListener('pointermove', onPointerMove);
     root.addEventListener('pointerup', onPointerUp);
@@ -486,6 +523,7 @@
 
     return {
       setImage: setImage,
+      snapshot: snapshot,
       replaceSource: replaceSource,
       getLayer: getLayer,
       hasImage: function () { return !!layer; },

@@ -361,7 +361,8 @@
       cost: 'Prévia 1 ✦ · entrega 2 ✦. O crédito sai no instante da chamada e ' +
             'não volta, nem se você cancelar a espera.',
       advance: 'Seguir sem filtro · 0 ✦',
-      ready: function () { return true; }     /* filtro é opcional */
+      ready: function () { return ai.phase === 'idle'; },
+      blocked: 'Termine a prévia para continuar'
     },
     {
       name: 'Texto',
@@ -494,6 +495,7 @@
     /* Os controles de cada parada entram aqui nas etapas 4 a 8. Por ora
        a parada 1 tem o que ela precisa para existir: uma imagem. */
     if (state.step === 0) stopBody.appendChild(buildStopOne());
+    if (state.step === 1) stopBody.appendChild(buildStopTwo());
 
     if (stop.cost) {
       var cost = document.createElement('p');
@@ -521,6 +523,14 @@
     renderTrack();
     renderStop();
     creditsEl.textContent = String(state.credits);
+
+    /* Enquanto a IA trabalha ou a prévia está na tela, a composição não
+       é manipulável — e não deve PARECER manipulável. Alças e controle
+       de zoom saem: oferecer um gesto que vai ser descartado é pior do
+       que não oferecer. */
+    var busy = ai && (ai.phase === 'working' || ai.phase === 'preview');
+    if (busy) surface.select(false);
+    zoomBar.hidden = !state.image || busy;
   }
 
   /* ── Navegação ─────────────────────────────────────────────────────── */
@@ -745,8 +755,461 @@
     }
   });
 
+
+  /* =====================================================================
+     PARADA 2 · O FILTRO DE IA
+     ---------------------------------------------------------------------
+     A sequência é obrigatória e existe porque o crédito sai no instante
+     em que a IA roda e não volta:
+
+       1. clicar num card NÃO gera nada e NÃO cobra nada — abre o modal
+       2. o modal diz o custo, mostra o saldo e oferece TRÊS saídas
+       3. confirmar gera a prévia em 1K e debita 1 ✦ na hora da chamada
+       4. a prévia aparece em comparação, com divisória arrastável
+       5. aprovar gera a entrega em 2K e debita mais 2 ✦
+       6. cancelar interrompe a espera mas NÃO devolve o crédito, e a
+          interface avisa isso ANTES, nunca depois
+
+     Não existe caminho aqui em que a pessoa gere sem confirmar.
+     ===================================================================== */
+
+  var ai = {
+    phase: 'idle',     /* idle · working · preview · failed */
+    filter: null,
+    stage: null,       /* 'preview' ou 'delivery' */
+    result: null,
+    error: null,
+    abort: null,
+    split: 50          /* posição da divisória, em % */
+  };
+
+  var confirmModal   = document.getElementById('confirm');
+  var confirmTitle   = document.getElementById('confirm-title');
+  var confirmEyebrow = document.getElementById('confirm-eyebrow');
+  var confirmText    = document.getElementById('confirm-text');
+  var confirmLedger  = document.getElementById('confirm-ledger');
+  var confirmGo      = document.getElementById('confirm-go');
+  var pendingFilter  = null;
+  var confirmReturnFocus = null;
+
+  function buildStopTwo() {
+    var wrap = document.createElement('div');
+
+    if (ai.phase === 'working') {
+      wrap.appendChild(buildWorking());
+      return wrap;
+    }
+
+    if (ai.phase === 'preview') {
+      wrap.appendChild(buildPreviewPanel());
+      return wrap;
+    }
+
+    var grid = document.createElement('div');
+    grid.className = 'td-filters';
+
+    window.TD_AI.FILTERS.forEach(function (filter) {
+      var card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'td-filter';
+      if (state.filter && state.filter.id === filter.id) {
+        card.classList.add('td-filter--on');
+        card.setAttribute('aria-pressed', 'true');
+      }
+
+      var art = document.createElement('span');
+      art.className = 'td-filter__art';
+      /* A amostra é decoração: se o arquivo não estiver em assets/
+         samples/, o card continua funcionando e legível. */
+      art.style.backgroundImage = 'url("' + filter.sample + '")';
+
+      var name = document.createElement('span');
+      name.className = 'td-filter__name';
+      name.textContent = filter.name;
+
+      var note = document.createElement('span');
+      note.className = 'td-filter__note';
+      note.textContent = filter.note;
+
+      card.appendChild(art);
+      card.appendChild(name);
+      card.appendChild(note);
+
+      /* CLICAR NÃO GERA NADA. Abre a confirmação. */
+      card.addEventListener('click', function () { askConfirm(filter, card); });
+
+      grid.appendChild(card);
+    });
+
+    wrap.appendChild(grid);
+
+    if (ai.phase === 'failed') wrap.appendChild(buildAiError());
+
+    return wrap;
+  }
+
+  /* ── O modal de confirmação ───────────────────────────────────────── */
+
+  function askConfirm(filter, origin) {
+    pendingFilter = filter;
+    confirmReturnFocus = origin || null;
+
+    var enough = state.credits >= COST.filterPreview;
+
+    confirmEyebrow.textContent = filter.name;
+    confirmTitle.textContent = 'Ver a prévia em ' + filter.name + '?';
+    confirmText.textContent = 'A prévia mostra a direção de arte para você decidir. ' +
+      'Só depois de aprovar é que a imagem final é gerada.';
+
+    confirmLedger.textContent = '';
+    ledgerRow('Prévia, agora', COST.filterPreview + ' ✦');
+    ledgerRow('Entrega, se você aprovar', COST.filterDelivery + ' ✦');
+    ledgerRow('Seu saldo', state.credits + ' ✦', true);
+
+    if (enough) {
+      confirmGo.disabled = false;
+      confirmGo.textContent = 'Ver prévia · ' + COST.filterPreview + ' ✦';
+    } else {
+      /* SALDO INSUFICIENTE: desabilitado com o motivo visível. */
+      confirmGo.disabled = true;
+      confirmGo.textContent = 'Saldo insuficiente · precisa de ' + COST.filterPreview + ' ✦';
+    }
+
+    confirmModal.hidden = false;
+    confirmGo.focus();
+    document.addEventListener('keydown', onConfirmKey);
+  }
+
+  function ledgerRow(label, value, strong) {
+    var dt = document.createElement('dt');
+    dt.textContent = label;
+    var dd = document.createElement('dd');
+    dd.textContent = value;
+    if (strong) dd.className = 'td-ledger__strong';
+    confirmLedger.appendChild(dt);
+    confirmLedger.appendChild(dd);
+  }
+
+  function closeConfirm() {
+    confirmModal.hidden = true;
+    document.removeEventListener('keydown', onConfirmKey);
+    if (confirmReturnFocus && confirmReturnFocus.focus) confirmReturnFocus.focus();
+    confirmReturnFocus = null;
+    pendingFilter = null;
+  }
+
+  function onConfirmKey(event) {
+    /* Esc = Descartar. A saída mais barata é sempre a mais fácil. */
+    if (event.key === 'Escape') { event.preventDefault(); closeConfirm(); }
+  }
+
+  document.getElementById('confirm-discard').addEventListener('click', closeConfirm);
+  confirmModal.querySelector('[data-close]').addEventListener('click', closeConfirm);
+
+  document.getElementById('confirm-skip').addEventListener('click', function () {
+    closeConfirm();
+    next();
+  });
+
+  confirmGo.addEventListener('click', function () {
+    var filter = pendingFilter;
+    closeConfirm();
+    runFilter(filter, 'preview');
+  });
+
+  /* ── A chamada ─────────────────────────────────────────────────────── */
+
+  function runFilter(filter, stage) {
+    if (!filter) return;
+
+    var cost = stage === 'preview' ? COST.filterPreview : COST.filterDelivery;
+    if (state.credits < cost) return;
+
+    ai.phase = 'working';
+    ai.filter = filter;
+    ai.stage = stage;
+    ai.error = null;
+    ai.abort = new AbortController();
+
+    /* DEBITADO AGORA, no instante da chamada. */
+    spend(cost);
+
+    /* A prévia manda uma entrada reduzida: 1K basta para julgar direção
+       de arte, e custa menos. A entrega manda a composição inteira. */
+    var input = surface.snapshot({ width: stage === 'preview' ? 1024 : 1920 });
+
+    window.TD_AI.applyFilter({
+      prompt: filter.prompt,
+      image: input,
+      size: stage === 'preview' ? '1K' : '2K',
+      signal: ai.abort.signal
+    }).then(function (result) {
+      if (stage === 'preview') {
+        ai.phase = 'preview';
+        ai.result = result;
+        ai.split = 50;
+        render();
+        paintCompare();
+      } else {
+        /* A entrega é a nova base: o filtro devolve a composição inteira
+           já renderizada em 16:9. */
+        ai.phase = 'idle';
+        ai.result = null;
+        state.filter = filter;
+        state.image = result;
+        surface.setImage(result.src, result.width, result.height);
+        clearCompare();
+        render();
+      }
+
+    }).catch(function (error) {
+      if (error && error.name === 'AbortError') {
+        /* Cancelado: o crédito NÃO volta, e a pessoa já sabia disso antes
+           de começar. A composição fica exatamente como estava. */
+        ai.phase = 'idle';
+        ai.result = null;
+        clearCompare();
+        render();
+        return;
+      }
+
+      /* A chamada falhou: a IA não entregou nada, então o saldo volta. */
+      refund(cost);
+
+      if (error.kind === 'auth') {
+        ai.phase = 'idle';
+        window.TD_APP.reportAuthFailure('google');
+        render();
+        return;
+      }
+
+      ai.phase = 'failed';
+      ai.error = error;
+      clearCompare();
+      render();
+    });
+
+    render();
+  }
+
+  function cancelFilter() {
+    if (ai.abort) ai.abort.abort();
+  }
+
+  /* ── Processando ───────────────────────────────────────────────────────
+     Diz o que está sendo preservado, dá tempo estimado, e deixa cancelar
+     — com o aviso do crédito à vista, não escondido.                     */
+
+  function buildWorking() {
+    var box = document.createElement('div');
+    box.className = 'td-working';
+
+    var title = document.createElement('p');
+    title.className = 'td-working__title';
+    title.textContent = ai.stage === 'preview'
+      ? 'Gerando a prévia em ' + ai.filter.name
+      : 'Gerando a imagem final em 2K';
+
+    var preserving = document.createElement('p');
+    preserving.className = 'td-working__text';
+    preserving.textContent = 'Mantendo o sujeito, o enquadramento e o fundo como estão. ' +
+      'O filtro muda luz e cor — não inventa cenário.';
+
+    var time = document.createElement('p');
+    time.className = 'td-working__time';
+    time.textContent = ai.stage === 'preview'
+      ? 'Costuma levar de 10 a 30 segundos.'
+      : 'A entrega em 2K costuma levar de 20 a 60 segundos.';
+
+    var cancel = document.createElement('button');
+    cancel.type = 'button';
+    cancel.className = 'td-btn td-btn--ghost td-btn--block';
+    cancel.textContent = 'Cancelar a espera';
+    cancel.addEventListener('click', cancelFilter);
+
+    var warn = document.createElement('p');
+    warn.className = 'td-working__warn';
+    warn.textContent = 'Cancelar interrompe a espera, mas o crédito já saiu e não volta.';
+
+    box.appendChild(title);
+    box.appendChild(preserving);
+    box.appendChild(time);
+    box.appendChild(cancel);
+    box.appendChild(warn);
+    return box;
+  }
+
+  /* ── A prévia em comparação ────────────────────────────────────────── */
+
+  function buildPreviewPanel() {
+    var box = document.createElement('div');
+
+    var title = document.createElement('p');
+    title.className = 'td-working__title';
+    title.textContent = 'Prévia em ' + ai.filter.name;
+
+    var text = document.createElement('p');
+    text.className = 'td-working__text';
+    text.textContent = 'Arraste a divisória no canvas para comparar antes e depois. ' +
+      'Aprovar gera a imagem final em 2K.';
+
+    var approve = document.createElement('button');
+    approve.type = 'button';
+    approve.className = 'td-btn td-btn--primary td-btn--block';
+
+    if (state.credits >= COST.filterDelivery) {
+      approve.textContent = 'Aprovar em 2K · ' + COST.filterDelivery + ' ✦';
+      approve.addEventListener('click', function () { runFilter(ai.filter, 'delivery'); });
+    } else {
+      approve.disabled = true;
+      approve.textContent = 'Saldo insuficiente · precisa de ' + COST.filterDelivery + ' ✦';
+    }
+
+    var discard = document.createElement('button');
+    discard.type = 'button';
+    discard.className = 'td-btn td-btn--ghost td-btn--block td-stack';
+    discard.textContent = 'Descartar a prévia';
+    discard.addEventListener('click', function () {
+      ai.phase = 'idle';
+      ai.result = null;
+      clearCompare();
+      surface.select(true);
+      render();
+    });
+
+    box.appendChild(title);
+    box.appendChild(text);
+    box.appendChild(approve);
+    box.appendChild(discard);
+    return box;
+  }
+
+  /* A comparação mora no canvas, por cima da composição, e some quando a
+     prévia é descartada ou aprovada. */
+  var compare = null;
+
+  function paintCompare() {
+    clearCompare();
+    if (!ai.result) return;
+
+    compare = document.createElement('div');
+    compare.className = 'td-compare';
+
+    var after = document.createElement('img');
+    after.className = 'td-compare__after';
+    after.alt = '';
+    after.src = ai.result.src;
+
+    var bar = document.createElement('div');
+    bar.className = 'td-compare__bar';
+
+    var grip = document.createElement('button');
+    grip.type = 'button';
+    grip.className = 'td-compare__grip';
+    grip.setAttribute('aria-label',
+      'Divisória entre antes e depois. Use as setas para mover.');
+
+    var tagBefore = document.createElement('span');
+    tagBefore.className = 'td-compare__tag td-compare__tag--before';
+    tagBefore.textContent = 'ANTES';
+
+    var tagAfter = document.createElement('span');
+    tagAfter.className = 'td-compare__tag td-compare__tag--after';
+    tagAfter.textContent = 'DEPOIS · ' + ai.filter.name.toUpperCase();
+
+    bar.appendChild(grip);
+    compare.appendChild(after);
+    compare.appendChild(tagBefore);
+    compare.appendChild(tagAfter);
+    compare.appendChild(bar);
+    canvas.appendChild(compare);
+
+    function moveTo(percent) {
+      ai.split = Math.max(0, Math.min(100, percent));
+      compare.style.setProperty('--split', ai.split + '%');
+    }
+    moveTo(ai.split);
+
+    function fromEvent(event) {
+      var rect = canvas.getBoundingClientRect();
+      moveTo((event.clientX - rect.left) / rect.width * 100);
+    }
+
+    var dragging = false;
+    bar.addEventListener('pointerdown', function (event) {
+      dragging = true;
+      event.stopPropagation();
+      try { bar.setPointerCapture(event.pointerId); } catch (e) {}
+    });
+    bar.addEventListener('pointermove', function (event) {
+      if (!dragging) return;
+      event.stopPropagation();
+      fromEvent(event);
+    });
+    bar.addEventListener('pointerup', function (event) {
+      dragging = false;
+      event.stopPropagation();
+    });
+
+    /* Arrastar com o mouse é o gesto principal; as setas existem para
+       quem navega por teclado não ficar sem a comparação. */
+    grip.addEventListener('keydown', function (event) {
+      var step = event.shiftKey ? 10 : 2;
+      if (event.key === 'ArrowLeft')  { event.preventDefault(); moveTo(ai.split - step); }
+      if (event.key === 'ArrowRight') { event.preventDefault(); moveTo(ai.split + step); }
+    });
+  }
+
+  function clearCompare() {
+    if (compare && compare.parentNode) compare.parentNode.removeChild(compare);
+    compare = null;
+  }
+
+  /* ── Falhou ────────────────────────────────────────────────────────────
+     Composição intacta, saldo preservado, DUAS saídas. Nunca beco sem
+     saída.                                                                */
+
+  function buildAiError() {
+    var box = document.createElement('div');
+    box.className = 'td-error';
+
+    var text = document.createElement('p');
+    text.className = 'td-error__text';
+    text.textContent = ai.error && ai.error.kind === 'quota'
+      ? 'A cota da chave do Google AI acabou por agora. Tente mais tarde ou troque a chave.'
+      : (ai.error && ai.error.message) || 'A geração não deu certo.';
+
+    var kept = document.createElement('p');
+    kept.className = 'td-error__kept';
+    kept.textContent = 'Seu saldo foi devolvido e a composição está intacta.';
+
+    var again = document.createElement('button');
+    again.type = 'button';
+    again.className = 'td-btn td-btn--ghost td-btn--block';
+    again.textContent = 'Tentar de novo · ' + COST.filterPreview + ' ✦';
+    again.addEventListener('click', function () { runFilter(ai.filter, 'preview'); });
+
+    var skip = document.createElement('button');
+    skip.type = 'button';
+    skip.className = 'td-btn td-btn--ghost td-btn--block td-stack';
+    skip.textContent = 'Seguir sem filtro · 0 ✦';
+    skip.addEventListener('click', function () {
+      ai.phase = 'idle';
+      render();
+      next();
+    });
+
+    box.appendChild(text);
+    box.appendChild(kept);
+    box.appendChild(again);
+    box.appendChild(skip);
+    return box;
+  }
+
+
   render();
 
-  window.TD_EDITOR = { state: state, render: render, goTo: goTo, surface: surface };
+  window.TD_EDITOR = { state: state, ai: ai, render: render, goTo: goTo, surface: surface,
+                       askConfirm: askConfirm };
 
 })(window, document);
