@@ -13,7 +13,7 @@ Abre com duplo clique em `index.html`.
 | Etapa | O que passa a funcionar | Status |
 |---|---|---|
 | 0 | Estrutura do repositório e manifesto de assets | ✅ feito |
-| 1 | `tokens.css` a partir das 5 coleções de variáveis do Figma | ⬜ |
+| 1 | `tokens.css` a partir das 5 coleções de variáveis do Figma | ✅ feito |
 | 2 | Tela de configuração das chaves e `config.js` | ⬜ |
 | 3 | Shell do editor: barra superior, palco, painel/dock, trilha | ⬜ |
 | 4 | Canvas da parada 1: arraste, zoom ancorado no ponteiro, alças | ⬜ |
@@ -23,6 +23,72 @@ Abre com duplo clique em `index.html`.
 | 8 | Parada 4: molduras e export 1920×1080 | ⬜ |
 | 9 | Recibo, contagem de créditos, saldo insuficiente | ⬜ |
 | 10 | Passada de acessibilidade | ⬜ |
+
+---
+
+## Decisões tomadas
+
+Duas perguntas em aberto foram delegadas para mim. Ficam registradas aqui com o
+raciocínio, para poderem ser revertidas com conhecimento de causa.
+
+### O guia do timer "16:20" — resolvido pelo Figma, não por chute
+
+`16:20` nunca foi uma proporção. O Figma tem um nó chamado `timer-guide` e o
+filho dele é um texto literal `16:20` — é a **duração falsa** que o mock mostra
+dentro da tarja. A geometria está desenhada:
+
+```
+timer-guide   x=868  y=494   128×56     dentro de um canvas de 1024×576
+```
+
+Convertido para porcentagem, que é o que faz o guia escalar sozinho até os
+1920×1080 do export:
+
+| | % do canvas | em 1920×1080 |
+|---|---|---|
+| largura | 12,5 % | 240 px |
+| altura | 9,7222 % | 105 px |
+| margem direita | 2,7344 % | 52,5 px |
+| margem inferior | 4,5139 % | 48,75 px |
+
+Está em `tokens.css` como `--timer-guide-*`. O guia aparece na parada 3, ligado
+por padrão, e **some no export**.
+
+### A prévia do filtro: "0.5K" não existe na API
+
+O `imageConfig.imageSize` do Gemini aceita `1K`, `2K` e `4K`. Não há `0.5K`.
+A V2 era travada em 2K e não tinha caminho de prévia nenhum.
+
+**Decisão: a prévia manda a imagem de entrada reduzida e pede `1K` na saída.
+A tabela de créditos não muda — prévia continua 1 ✦, entrega continua 2 ✦.**
+
+Por quê:
+
+- **A prévia existe para julgar direção de arte, não nitidez.** A pessoa está
+  decidindo se o Dramático ficou melhor que o Cinema. Isso se decide no
+  enquadramento, na luz e na cor — tudo legível em 1K, ainda mais num preview
+  de ~700 px de largura em modo comparação. Entregar 2K na prévia seria pagar
+  o dobro por uma informação que não muda a decisão.
+- **A tabela de preços foi testada com usuário.** "Uma thumb fecha em 4 ✦,
+  cerca de R$ 0,91" é a frase que a pessoa já viu e entendeu. Mexer nela para
+  refletir um detalhe de API é trocar clareza por precisão contábil, no lugar
+  errado. O que muda é a margem por prévia, e isso é problema de planilha, não
+  de interface.
+- **Erra para o lado seguro.** Se 1K se mostrar insuficiente para julgar algum
+  filtro, subir a prévia para 2K é trocar uma string — e o preço que a pessoa
+  vê continua de pé.
+
+Efeito prático: a prévia sai mais rápida e mais barata que na V2, e a interface
+não promete resolução nenhuma — ela diz "prévia", que é o que a pessoa precisa
+saber.
+
+### Sobre o Focus/Ring
+
+O handoff avisa que o token `Focus/Ring` existe mas nunca foi aplicado
+componente a componente, e chama isso de "dívida conhecida". O valor está
+documentado no arquivo: **`#5CB2FF`**. Está em `tokens.css`, e a etapa 10 aplica
+o anel de 2px em todo controle interativo — a V2 não tinha nenhum estado de
+foco.
 
 ---
 

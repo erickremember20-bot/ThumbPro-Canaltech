@@ -1,2 +1,198 @@
-/* tokens.css — gerado a partir das 5 coleções de variáveis do Figma.
-   Etapa 1. Nenhum hex escrito à mão em lugar nenhum do projeto. */
+/* =====================================================================
+   ThumbDrop V3 · tokens.css
+   ---------------------------------------------------------------------
+   GERADO A PARTIR DAS VARIÁVEIS DO FIGMA — não edite valores à mão.
+   Arquivo de origem: Thumbdrop-Handoff (byiakiUNISoGO9TGT17jz1)
+
+   Nenhum hex é escrito à mão em nenhum outro arquivo do projeto. Se um
+   valor precisar mudar, ele muda no Figma e volta para cá.
+
+   A troca Desktop/Mobile é MODO DE COLEÇÃO no Figma. Aqui ela vira um
+   bloco :root e um @media (max-width: 880px) que redefine as MESMAS
+   variáveis com outros valores. Os nomes nunca mudam entre os blocos —
+   é isso que faz um componente não precisar saber em que modo está.
+   ===================================================================== */
+
+:root {
+
+  /* ── Coleção ThumbDrop · 22 cores · modo Dark ──────────────────────
+     Não há modo Light. O editor é escuro porque a thumbnail é o objeto
+     brilhante na tela, e a interface não disputa atenção com ela.      */
+
+  /* Superfícies — da mais funda para a mais próxima */
+  --surface-ink:        #0b0d14;   /* fundo da aplicação */
+  --surface-mirage:     #181a21;   /* barra superior, palco */
+  --surface-card:       #171a22;   /* painel, cartões */
+  --surface-card-2:     #1e2230;   /* cartão elevado, campo de entrada */
+
+  /* Traços */
+  --border-line:        #252836;   /* divisória padrão */
+  --border-line-2:      #2c3142;   /* divisória de contraste */
+
+  /* Texto */
+  --text-primary:       #ffffff;   /* títulos */
+  --text-body:          #c7cddb;   /* corpo */
+  --text-mute:          #7c8497;   /* legendas, texto desabilitado */
+
+  /* Marca */
+  --brand-white:        #ffffff;
+  --brand-blue:         #1c8cfe;   /* AZUL MARCA ONDE VOCÊ ESTÁ.
+                                      Parada atual, opção escolhida,
+                                      controle ativo. NUNCA em ação que
+                                      avança. */
+  --brand-orange-cta:   #b85829;   /* FUNDO de CTA. Branco por cima dá
+                                      4,7:1 e passa AA. */
+  --brand-orange:       #f87737;   /* Laranja da marca. Só TEXTO e ÍCONE
+                                      sobre fundo escuro, onde dá 7,1:1.
+                                      Como fundo de botão dá 2,73:1 e
+                                      reprova AA — por isso existe o
+                                      token de cima. */
+
+  /* Feedback — cada cor tem um trabalho só */
+  --feedback-yellow:    #ffd400;   /* destaque de trecho no título */
+  --feedback-success:   #22d3a8;   /* VERDE SÓ CONFIRMA o que já
+                                      aconteceu. Nunca anuncia. */
+  --feedback-danger:    #ff4d6d;   /* VERMELHO SÓ PARA FALHA. */
+
+  /* Foco */
+  --focus-ring:         #5cb2ff;   /* anel de 2px em todo controle
+                                      interativo. Ver app.css. */
+
+  /* Véus — cor sobre cor, com alfa no próprio token */
+  --tint-white-2:       #ffffff05;
+  --tint-white-6:       #ffffff0f;
+  --tint-blue-10:       #1c8cfe1a;
+  --tint-yellow-16:     #ffd40029;
+  --tint-ink-86:        #0b0d14db;  /* véu do modal */
+
+  /* Sombra (estilo de efeito ThumbDrop/Glow laranja) */
+  --shadow-glow-orange: 0 8px 24px 0 #f8773752;
+
+
+  /* ── Coleção Typography · 9 tamanhos · MODO DESKTOP ────────────────
+     Só números pares. Nenhum tamanho quebrado em lugar nenhum.         */
+
+  --font-size-h2:         32px;
+  --font-size-h3:         24px;
+  --font-size-title:      18px;
+  --font-size-body:       16px;
+  --font-size-body-bold:  16px;
+  --font-size-small:      14px;
+  --font-size-small-bold: 14px;
+  --font-size-label:      12px;
+  --font-size-legal:      12px;
+
+  /* Peso, entrelinha e tracking dos 9 estilos de texto do Figma.
+     O tamanho vem das variáveis acima e troca sozinho no modo Mobile. */
+  --font-weight-h2:         800;   --line-height-h2:         1.15;
+  --font-weight-h3:         700;   --line-height-h3:         1.15;
+  --font-weight-title:      700;   --line-height-title:      1.5;
+  --font-weight-body:       400;   --line-height-body:       1.5;
+  --font-weight-body-bold:  700;   --line-height-body-bold:  1.5;
+  --font-weight-small:      500;   --line-height-small:      1.5;
+  --font-weight-small-bold: 700;   --line-height-small-bold: 1.5;
+  --font-weight-label:      700;   --line-height-label:      1.5;
+  --font-weight-legal:      400;   --line-height-legal:      1.5;
+  --letter-spacing-label:   1.2px; /* único estilo com tracking */
+
+  /* Famílias. Os arquivos são auto-hospedados em assets/fonts/ com
+     @font-face — nunca CDN do Google. Ver README. */
+  --font-ui:            'Barlow', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-thumb-title:   'Barlow', system-ui, sans-serif;   /* Black Italic é o padrão */
+  --font-thumb-display: 'Anton', 'Barlow', system-ui, sans-serif;
+
+
+  /* ── Coleção Spacing · 8 passos confirmados ────────────────────────
+     O handoff fala em 10 passos. Estes 8 são os que aparecem amarrados
+     a algum nó do arquivo; os outros 2 não são usados por nenhuma tela,
+     então não têm valor legível pelo MCP. Quando aparecerem, entram
+     aqui — não vou inventar dois números para fechar a conta.          */
+
+  --space-2:   2px;
+  --space-4:   4px;
+  --space-8:   8px;
+  --space-12:  12px;
+  --space-16:  16px;
+  --space-24:  24px;
+  --space-32:  32px;
+  --space-40:  40px;
+
+
+  /* ── Coleção Radius ───────────────────────────────────────────────
+     Três vêm das variáveis; --radius-canvas é medido do nó
+     Editor/Canvas, que é desenhado com 12px. O quinto valor não é
+     usado por nenhum nó legível — provavelmente o pill de créditos.
+     Confirmo na etapa 3, quando montar o pill.                        */
+
+  --radius-input:   9px;
+  --radius-button:  10px;
+  --radius-canvas:  12px;
+  --radius-card:    16px;
+
+
+  /* ── Coleção Layout · MODO DESKTOP ─────────────────────────────────
+     TopBar/Height e TopBar/Padding X são variáveis. A largura do painel
+     é medida das telas: o painel ocupa x=1120..1440 num frame de 1440.  */
+
+  --topbar-height:    54px;
+  --topbar-padding-x: 10px;
+  --panel-width:      320px;
+
+
+  /* ── Geometria do canvas e do guia do timer ────────────────────────
+     Derivado do nó timer-guide do Figma: x=868 y=494 128×56 dentro de
+     um canvas de 1024×576. Em porcentagem para escalar sozinho até os
+     1920×1080 do export.
+
+     "16:20" nunca foi proporção: é o texto de duração falsa que o mock
+     desenha dentro do guia. O guia marca a faixa que o YouTube cobre
+     com o tempo do vídeo — ninguém deve escrever embaixo dela. Ele
+     aparece na parada 3 e SOME NO EXPORT.                              */
+
+  --canvas-aspect:        16 / 9;
+  --timer-guide-width:    12.5%;     /* 128/1024  → 240px em 1920 */
+  --timer-guide-height:   9.7222%;   /*  56/576   → 105px em 1080 */
+  --timer-guide-right:    2.7344%;   /*  28/1024  →  52.5px em 1920 */
+  --timer-guide-bottom:   4.5139%;   /*  26/576   →  48.75px em 1080 */
+
+
+  /* ── Movimento ─────────────────────────────────────────────────────
+     Desligado inteiro sob prefers-reduced-motion. Ver app.css.         */
+
+  --duration-fast:   120ms;
+  --duration-base:   200ms;
+  --duration-slow:   320ms;
+  --ease-out:        cubic-bezier(0.2, 0, 0, 1);
+}
+
+
+/* =====================================================================
+   MODO MOBILE — o mesmo que trocar o modo da coleção no Figma.
+   Só os valores mudam; os nomes das variáveis são idênticos.
+   O corte em 880px é onde o painel de 320 deixa de caber ao lado do
+   canvas e vira dock embaixo.
+   ===================================================================== */
+
+@media (max-width: 880px) {
+  :root {
+
+    /* Typography · MODO MOBILE
+       32→24 · 24→22 · 18→16 · 16→14 · 14→12 · 12→12                    */
+
+    --font-size-h2:         24px;
+    --font-size-h3:         22px;
+    --font-size-title:      16px;
+    --font-size-body:       14px;
+    --font-size-body-bold:  14px;
+    --font-size-small:      12px;
+    --font-size-small-bold: 12px;
+    --font-size-label:      12px;
+    --font-size-legal:      12px;
+
+    /* Layout · MODO MOBILE
+       O painel deixa de ser coluna de 320 e vira dock rolável de
+       largura cheia, com o canvas fixo no topo.                        */
+
+    --panel-width: 100%;
+  }
+}
