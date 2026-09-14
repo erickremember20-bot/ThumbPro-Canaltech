@@ -17,7 +17,7 @@ Abre com duplo clique em `index.html`.
 | 2 | Tela de configuração das chaves e `config.js` | ✅ feito |
 | 3 | Shell do editor: barra superior, palco, painel/dock, trilha | ✅ feito |
 | 4 | Canvas da parada 1: arraste, zoom ancorado no ponteiro, alças | ✅ feito |
-| 5 | Integração PhotoRoom (remoção de fundo) | ⬜ |
+| 5 | Integração PhotoRoom (remoção de fundo) | ✅ feito |
 | 6 | Parada 2: modal de confirmação, Gemini, três estados de IA | ⬜ |
 | 7 | Canvas de texto da parada 3 | ⬜ |
 | 8 | Parada 4: molduras e export 1920×1080 | ⬜ |

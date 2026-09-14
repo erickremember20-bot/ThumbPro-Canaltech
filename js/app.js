@@ -309,6 +309,29 @@
     frame: 'none'
   };
 
+  /* ── Tabela de custo ────────────────────────────────────────────────
+     Em créditos. O custo real em dólar está no README; aqui só importa o
+     que a pessoa vê e o que é debitado.                                 */
+
+  var COST = {
+    removeBackground: 1,   /* PhotoRoom */
+    filterPreview:    1,   /* prévia */
+    filterDelivery:   2    /* entrega em 2K */
+  };
+
+  /* O crédito sai NO MOMENTO DA CHAMADA e não volta — nem se a pessoa
+     cancelar a espera. A única devolução é quando a chamada FALHA: aí a
+     IA não rodou, ninguém foi cobrado lá fora, e o saldo é preservado. */
+  function spend(amount) {
+    state.credits -= amount;
+    render();
+  }
+
+  function refund(amount) {
+    state.credits += amount;
+    render();
+  }
+
   /* ── As quatro paradas ─────────────────────────────────────────────
      `ready` é a regra que destrava o avanço, e `blocked` é o que o botão
      diz enquanto ela não está satisfeita. Botão desabilitado sem motivo
@@ -470,7 +493,7 @@
 
     /* Os controles de cada parada entram aqui nas etapas 4 a 8. Por ora
        a parada 1 tem o que ela precisa para existir: uma imagem. */
-    if (state.step === 0) stopBody.appendChild(buildUpload());
+    if (state.step === 0) stopBody.appendChild(buildStopOne());
 
     if (stop.cost) {
       var cost = document.createElement('p');
@@ -522,7 +545,7 @@
      Só o carregamento e o enquadre inicial. Arraste, zoom ancorado no
      ponteiro e alças são a etapa 4 — a fundação de verdade.             */
 
-  function buildUpload() {
+  function buildStopOne() {
     var wrap = document.createElement('div');
 
     var input = document.createElement('input');
@@ -530,19 +553,155 @@
     input.accept = 'image/png,image/jpeg,image/webp';
     input.id = 'image-input';
     input.className = 'td-sr';
-
-    var label = document.createElement('label');
-    label.className = 'td-btn td-btn--ghost td-btn--block';
-    label.htmlFor = 'image-input';
-    label.innerHTML = icon('i-upload') + ' Escolher imagem';
-
     input.addEventListener('change', function () {
       if (input.files && input.files[0]) loadImage(input.files[0]);
     });
 
+    var label = document.createElement('label');
+    label.className = 'td-btn td-btn--ghost td-btn--block';
+    label.htmlFor = 'image-input';
+    label.innerHTML = icon('i-upload') + ' ' +
+      (state.image ? 'Trocar a imagem' : 'Escolher imagem');
+
     wrap.appendChild(input);
     wrap.appendChild(label);
+
+    /* Nenhuma ferramenta aparece antes de existir conteúdo no canvas. */
+    if (state.image) wrap.appendChild(buildRemoveBackground());
+
     return wrap;
+  }
+
+  function buildRemoveBackground() {
+    var box = document.createElement('div');
+    box.className = 'td-tool';
+
+    var button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'td-btn td-btn--ghost td-btn--block';
+
+    var enough = state.credits >= COST.removeBackground;
+
+    if (bgBusy) {
+      button.disabled = true;
+      button.textContent = 'Removendo o fundo…';
+    } else if (!enough) {
+      /* SALDO INSUFICIENTE: desabilitado COM O MOTIVO VISÍVEL. */
+      button.disabled = true;
+      button.textContent = 'Saldo insuficiente · precisa de ' +
+        COST.removeBackground + ' ✦';
+    } else {
+      button.textContent = (state.bgRemoved ? 'Remover fundo de novo' : 'Remover fundo') +
+        ' · ' + COST.removeBackground + ' ✦';
+      button.addEventListener('click', removeBackground);
+    }
+
+    box.appendChild(button);
+
+    /* A regra de custo dita em voz alta, antes de custar: depois de
+       recortado, reenquadrar é local e não chama a API de novo. */
+    if (state.bgRemoved && !bgBusy) {
+      var done = document.createElement('p');
+      done.className = 'td-tool__ok';
+      done.innerHTML = icon('i-check') +
+        ' Fundo removido. Mover, escalar e girar agora é de graça.';
+      box.appendChild(done);
+    }
+
+    if (bgError) box.appendChild(buildError(bgError));
+
+    return box;
+  }
+
+  /* Falha NUNCA é beco sem saída: a composição fica intacta, o saldo é
+     devolvido, e há sempre pelo menos uma saída visível. */
+  function buildError(error) {
+    var box = document.createElement('div');
+    box.className = 'td-error';
+
+    var text = document.createElement('p');
+    text.className = 'td-error__text';
+
+    var action = null;
+
+    if (error.kind === 'cors') {
+      text.textContent = 'O navegador bloqueou a chamada direta à PhotoRoom. ' +
+        'Ela não aceita chamada de página, só de servidor. Preencha a URL do ' +
+        'proxy nas chaves — o README tem o worker de 20 linhas.';
+      action = { label: 'Abrir as chaves', run: function () { window.TD_APP.openSetup({}); } };
+
+    } else if (error.kind === 'quota') {
+      text.textContent = 'A cota desta chave da PhotoRoom acabou. Use uma chave ' +
+        'de sandbox, que dá 1000 imagens por mês, ou recarregue o plano.';
+      action = { label: 'Trocar a chave', run: function () { window.TD_APP.openSetup({}); } };
+
+    } else if (error.kind === 'network') {
+      text.textContent = 'Não consegui falar com o proxy. Confira se a URL está ' +
+        'certa e se o worker está no ar.';
+      action = { label: 'Tentar de novo', run: removeBackground };
+
+    } else {
+      text.textContent = error.message || 'A chamada não deu certo.';
+      action = { label: 'Tentar de novo', run: removeBackground };
+    }
+
+    var kept = document.createElement('p');
+    kept.className = 'td-error__kept';
+    kept.textContent = 'Seu saldo não foi tocado e a composição está intacta.';
+
+    box.appendChild(text);
+    box.appendChild(kept);
+
+    if (action) {
+      var button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'td-btn td-btn--ghost td-btn--block';
+      button.textContent = action.label;
+      button.addEventListener('click', action.run);
+      box.appendChild(button);
+    }
+
+    return box;
+  }
+
+  var bgBusy = false;
+  var bgError = null;
+
+  function removeBackground() {
+    if (bgBusy || !state.image) return;
+    if (state.credits < COST.removeBackground) return;
+
+    bgBusy = true;
+    bgError = null;
+    /* Debitado NO MOMENTO DA CHAMADA, como a regra manda. */
+    spend(COST.removeBackground);
+
+    window.TD_AI.removeBackground(surface.getLayer().src).then(function (result) {
+      bgBusy = false;
+      state.bgRemoved = true;
+      state.image = result;
+      /* O recorte entra no lugar do original NO MESMO retângulo. O
+         enquadramento que a pessoa fez não se perde. */
+      surface.replaceSource(result.src, result.width, result.height);
+      render();
+
+    }).catch(function (error) {
+      bgBusy = false;
+      /* A chamada falhou: a IA não rodou e ninguém foi cobrado lá fora.
+         Saldo preservado. */
+      refund(COST.removeBackground);
+
+      if (error.kind === 'auth') {
+        window.TD_APP.reportAuthFailure('photoroom');
+        render();
+        return;
+      }
+
+      bgError = error;
+      render();
+    });
+
+    render();
   }
 
   function loadImage(file) {

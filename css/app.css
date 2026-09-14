@@ -790,3 +790,43 @@ label.td-btn { cursor: pointer; }
   .td-zoom__btn, .td-zoom__value { height: 44px; }
   .td-zoom__btn { width: 44px; }
 }
+
+/* ── Ferramentas da parada e estados de falha ─────────────────────────── */
+
+.td-tool { margin-top: var(--space-12); }
+
+.td-tool__ok {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-8);
+  margin-top: var(--space-8);
+  color: var(--feedback-success);   /* VERDE SÓ CONFIRMA o que já
+                                       aconteceu — nunca anuncia nem
+                                       convida a clicar */
+  font-size: var(--font-size-legal);
+  line-height: var(--line-height-legal);
+}
+.td-tool__ok .td-icon { margin-top: 2px; }
+
+/* Falha nunca é beco sem saída: o bloco sempre carrega uma saída. */
+.td-error {
+  margin-top: var(--space-12);
+  padding: var(--space-12);
+  border-left: 3px solid var(--feedback-danger);   /* VERMELHO SÓ PARA
+                                                      FALHA */
+  border-radius: var(--radius-input);
+  background: var(--surface-card-2);
+}
+
+.td-error__text {
+  color: var(--text-body);
+  font-size: var(--font-size-small);
+  line-height: var(--line-height-small);
+}
+
+.td-error__kept {
+  margin: var(--space-8) 0 var(--space-12);
+  color: var(--feedback-success);
+  font-size: var(--font-size-legal);
+  line-height: var(--line-height-legal);
+}
