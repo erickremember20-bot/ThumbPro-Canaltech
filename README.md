@@ -171,26 +171,32 @@ cerca de 5% em cima e embaixo. Não atrapalha a comparação entre os filtros, q
 
 ### `assets/fonts/` ⬜ — o que ainda falta
 
-Dez arquivos `.woff2`, auto-hospedados com `@font-face`, **não** por CDN do
-Google. Sem eles a interface cai na pilha de fontes do sistema: funciona e é
-legível, mas não é o desenho — o Barlow muda bastante o peso dos títulos, e o
-título dentro da thumb sai com itálico sintetizado em vez do Black Italic real.
+**Uma família só: Barlow, em nove arquivos `.woff2`.** Auto-hospedada com
+`@font-face`, **não** por CDN do Google. A Anton foi retirada do projeto.
 
-| Arquivo | Família | Peso | Estilo | Usado em |
-|---|---|---|---|---|
-| `barlow-400.woff2` | Barlow | 400 | normal | corpo de texto da interface |
-| `barlow-500.woff2` | Barlow | 500 | normal | rótulos e textos secundários |
-| `barlow-700.woff2` | Barlow | 700 | normal | títulos e botões da interface |
-| `barlow-800.woff2` | Barlow | 800 | normal | títulos grandes da interface |
-| `barlow-900.woff2` | Barlow | 900 | normal | destaques |
-| `barlow-400-italic.woff2` | Barlow | 400 | itálico | título da thumb, peso Regular |
-| `barlow-700-italic.woff2` | Barlow | 700 | itálico | título da thumb, peso Bold |
-| `barlow-800-italic.woff2` | Barlow | 800 | itálico | título da thumb, peso Extra Bold |
-| `barlow-900-italic.woff2` | Barlow | 900 | itálico | **título da thumb, padrão (Black Italic)** |
-| `anton-400.woff2` | Anton | 400 | normal | título da thumb, alternativa |
+Os cinco pesos normais vestem a interface. Os quatro itálicos são os pesos que
+o título dentro da thumb oferece — Regular, Bold, Extra Bold e Black, sempre em
+itálico, com o Black Italic como padrão da casa.
 
-Em `fonts.google.com/specimen/Barlow` e `/specimen/Anton`. Se vierem em `.ttf`,
-pode subir assim mesmo que eu converto.
+| Arquivo | Peso | Estilo | Usado em |
+|---|---|---|---|
+| `barlow-400.woff2` | 400 | normal | corpo de texto da interface |
+| `barlow-500.woff2` | 500 | normal | rótulos e textos secundários |
+| `barlow-700.woff2` | 700 | normal | títulos e botões da interface |
+| `barlow-800.woff2` | 800 | normal | títulos grandes da interface |
+| `barlow-900.woff2` | 900 | normal | destaques |
+| `barlow-400-italic.woff2` | 400 | itálico | título da thumb, peso Regular |
+| `barlow-700-italic.woff2` | 700 | itálico | título da thumb, peso Bold |
+| `barlow-800-italic.woff2` | 800 | itálico | título da thumb, peso Extra Bold |
+| `barlow-900-italic.woff2` | 900 | itálico | **título da thumb, padrão (Black Italic)** |
+
+Sem eles a interface cai na pilha de fontes do sistema: funciona e é legível,
+mas o itálico do título sai **sintetizado** — inclinado por transformação — em
+vez do Black Italic desenhado.
+
+Se vierem em `.ttf`, pode subir assim mesmo que eu converto. E se subir pela
+interface web do GitHub, eles caem na raiz de `assets/`: me avise que eu movo
+para `assets/fonts/` com os nomes acima.
 
 ### `assets/icons/` ⬜ — opcional
 

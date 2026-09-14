@@ -486,13 +486,18 @@
        branco chega inteira ao PNG.                                       */
 
     function drawTexts(ctx, texts, scale) {
+      /* A família vem do token, e não de um nome repetido aqui: o export
+         e a tela não podem discordar sobre em que fonte o título está. */
+      var family = getComputedStyle(document.documentElement)
+        .getPropertyValue('--font-thumb-title').trim() || 'Barlow, sans-serif';
+
       texts.forEach(function (model) {
         var size = model.size * scale;
         var width = model.width * scale;
         var lineHeight = size * 1.1;
 
         ctx.save();
-        ctx.font = 'italic ' + model.weight + ' ' + size + 'px Barlow, system-ui, sans-serif';
+        ctx.font = 'italic ' + model.weight + ' ' + size + 'px ' + family;
         ctx.textBaseline = 'top';
 
         /* Palavras, cada uma com a cor do trecho de origem. */

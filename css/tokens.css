@@ -95,11 +95,15 @@
   --font-weight-legal:      400;   --line-height-legal:      1.5;
   --letter-spacing-label:   1.2px; /* único estilo com tracking */
 
-  /* Famílias. Os arquivos são auto-hospedados em assets/fonts/ com
-     @font-face — nunca CDN do Google. Ver README. */
-  --font-ui:            'Barlow', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-thumb-title:   'Barlow', system-ui, sans-serif;   /* Black Italic é o padrão */
-  --font-thumb-display: 'Anton', 'Barlow', system-ui, sans-serif;
+  /* Famílias. UMA SÓ: Barlow, auto-hospedada em assets/fonts/ com
+     @font-face — nunca CDN do Google. Ver README.
+
+     São dois tokens para o mesmo valor de propósito, porque são dois
+     trabalhos: um veste a interface, o outro veste o título dentro da
+     thumb. Se um dia o título mudar de fonte, é um token só que muda e a
+     interface não se mexe. */
+  --font-ui:          'Barlow', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-thumb-title: 'Barlow', system-ui, sans-serif;   /* Black Italic é o padrão */
 
 
   /* ── Coleção Spacing · 8 passos confirmados ────────────────────────

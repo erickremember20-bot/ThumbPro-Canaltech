@@ -5,10 +5,16 @@
    ===================================================================== */
 
 /* ── Fontes ────────────────────────────────────────────────────────────
-   Auto-hospedadas em assets/fonts/, nunca CDN do Google. Os arquivos
-   ainda não estão no repositório — enquanto não estiverem, o navegador
-   cai na pilha de sistema e a interface continua legível. Ver README
-   para a lista exata de nomes.                                          */
+   Uma família só: Barlow, em nove arquivos. Auto-hospedada em
+   assets/fonts/, nunca CDN do Google.
+
+   Os cinco pesos normais vestem a interface; os quatro itálicos são os
+   pesos que o título dentro da thumb oferece — Regular, Bold, Extra Bold
+   e Black, sempre em itálico, com o Black Italic como padrão da casa.
+
+   Enquanto os arquivos não estiverem em assets/fonts/, o navegador cai
+   na pilha de sistema: continua legível, mas o itálico do título sai
+   sintetizado em vez de desenhado. Ver README para os nomes exatos.     */
 
 @font-face { font-family:'Barlow'; font-style:normal; font-weight:400; font-display:swap;
              src:url('../assets/fonts/barlow-400.woff2') format('woff2'); }
@@ -28,8 +34,6 @@
              src:url('../assets/fonts/barlow-800-italic.woff2') format('woff2'); }
 @font-face { font-family:'Barlow'; font-style:italic; font-weight:900; font-display:swap;
              src:url('../assets/fonts/barlow-900-italic.woff2') format('woff2'); }
-@font-face { font-family:'Anton';  font-style:normal; font-weight:400; font-display:swap;
-             src:url('../assets/fonts/anton-400.woff2') format('woff2'); }
 
 
 /* ── Base ──────────────────────────────────────────────────────────── */
