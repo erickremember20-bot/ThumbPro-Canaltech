@@ -36,6 +36,11 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 
+/* O atributo hidden precisa ganhar de qualquer display que um componente
+   declare. Sem isto, .td-btn { display: inline-flex } mostra um botão que
+   o JS mandou esconder. */
+[hidden] { display: none !important; }
+
 html, body {
   height: 100%;
   margin: 0;
@@ -134,7 +139,17 @@ button:disabled {
   box-shadow: var(--shadow-glow-orange);
 }
 .td-btn--primary:hover:not(:disabled) { filter: brightness(1.12); }
-.td-btn--primary:disabled { box-shadow: none; }
+
+/* Um laranja por tela, e ele pertence à ação que AVANÇA. Um botão
+   desabilitado não avança nada — se continuasse laranja, gastaria o
+   destaque da tela num lugar onde não há saída. Fica neutro, com o
+   motivo escrito nele mesmo. */
+.td-btn--primary:disabled {
+  background: var(--surface-card-2);
+  color: var(--text-mute);
+  box-shadow: none;
+  border: 1px solid var(--border-line-2);
+}
 
 .td-btn--ghost {
   background: transparent;
