@@ -124,8 +124,14 @@ button:disabled {
   opacity: 0.5;
 }
 
+/* Alvo de toque de 44 no mobile. A exceção são os controles que já têm
+   uma área invisível própria — alças e chips da trilha: neles o 44 vem
+   do ::before/::after, e aplicar min-height aqui engordaria o traço
+   desenhado. Foi o que transformou as alças da imagem em barras. */
 @media (max-width: 880px) {
-  button, .td-field input, [role='button'] { min-height: 44px; }
+  button:not(.td-handle):not(.td-thandle):not(.td-step),
+  .td-field input,
+  [role='button'] { min-height: 44px; }
 }
 
 
@@ -655,6 +661,8 @@ button:disabled {
   font-size: var(--font-size-small-bold);
   font-weight: var(--font-weight-small-bold);
 }
+
+.td-step__short { display: none; }
 
 .td-step__note {
   font-size: var(--font-size-label);
@@ -1888,7 +1896,40 @@ button.td-pill--credits:hover { border-color: var(--text-mute); }
 
   .td-step__marker { display: none; }
   .td-step__note { display: none; }
-  .td-step__name { font-size: var(--font-size-label); letter-spacing: 0.4px; }
+  .td-step__name { display: none; }
+
+  .td-step__short {
+    display: block;
+    font-size: var(--font-size-small-bold);
+    font-weight: var(--font-weight-small-bold);
+    white-space: nowrap;
+  }
+
+  /* As alças do texto CRESCEM no mobile, em vez de encolher. Elas são
+     cromo de editor — o Figma não as desenha — então aqui quem manda é o
+     alvo de toque, e no dedo uma alça de 11px não existe. */
+  .td-thandle--corner { width: 16px; height: 16px; }
+  .td-thandle--corner::before { inset: -14px; }
+
+  .td-thandle--nw { top: -8px;    left: -8px; }
+  .td-thandle--ne { top: -8px;    right: -8px; }
+  .td-thandle--se { bottom: -8px; right: -8px; }
+  .td-thandle--sw { bottom: -8px; left: -8px; }
+
+  .td-thandle--n, .td-thandle--s { width: 44px; height: 10px; margin-left: -22px; }
+  .td-thandle--w, .td-thandle--e { height: 44px; width: 10px; margin-top: -22px; }
+  .td-thandle--n { top: -5px; }
+  .td-thandle--s { bottom: -5px; }
+  .td-thandle--w { left: -5px; }
+  .td-thandle--e { right: -5px; }
+
+  /* No mobile a área de pegada pode crescer para dentro sem roubar o
+     clique: a moldura mora atrás do texto, então onde as duas se cruzam
+     o texto ganha. */
+  .td-thandle--n::before,
+  .td-thandle--s::before { inset: -17px -4px; }
+  .td-thandle--w::before,
+  .td-thandle--e::before { inset: -4px -17px; }
 
   .td-panel__head { display: none; }
   .td-panel__rule { display: none; }

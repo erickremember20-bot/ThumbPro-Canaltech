@@ -382,7 +382,7 @@
 
   var STOPS = [
     {
-      name: 'Imagem',
+      name: 'Imagem', short: 'Imagem',
       note: 'sua foto no canvas',
       noteDone: 'imagem no lugar',
       title: 'Comece pela imagem',
@@ -395,7 +395,7 @@
       ready: function () { return !!state.image; }
     },
     {
-      name: 'Filtro de IA',
+      name: 'Filtro de IA', short: 'Filtro',
       note: 'escolha a direção',
       noteDone: 'direção aplicada',
       title: 'Escolha a direção de arte',
@@ -408,7 +408,7 @@
       blocked: 'Termine a prévia'
     },
     {
-      name: 'Texto',
+      name: 'Texto', short: 'Texto',
       note: 'título e destaque',
       noteDone: 'título escrito',
       title: 'Escreva o título',
@@ -421,7 +421,7 @@
       ready: function () { return true; }     /* thumb sem título é válida */
     },
     {
-      name: 'Moldura e export',
+      name: 'Moldura e export', short: 'Export',
       note: 'moldura e download',
       noteDone: 'baixada',
       title: 'Moldura e export',
@@ -501,9 +501,17 @@
       var labels = document.createElement('span');
       labels.className = 'td-step__labels';
 
+      /* O chip do mobile usa o rótulo curto — "Export" no lugar de
+         "Moldura e export". É o que as telas mobile do Figma escrevem, e
+         é o que cabe nos 84 do chip sem quebrar linha. */
       var name = document.createElement('span');
       name.className = 'td-step__name';
       name.textContent = stop.name;
+
+      var short = document.createElement('span');
+      short.className = 'td-step__short';
+      short.textContent = stop.short;
+      labels.appendChild(short);
 
       labels.appendChild(name);
 
