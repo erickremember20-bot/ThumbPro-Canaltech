@@ -1290,3 +1290,9 @@ label.td-btn { cursor: pointer; }
   background: center / 100% 100% no-repeat;
   pointer-events: none;
 }
+
+/* O pill de créditos é clicável: é por onde se ajusta o teto de gasto. */
+button.td-pill--credits { cursor: pointer; }
+button.td-pill--credits:hover { border-color: var(--text-mute); }
+
+.td-modal .td-field input[type='number'] { margin-bottom: var(--space-8); }

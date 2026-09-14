@@ -75,7 +75,54 @@
     <div class="td-modal__actions">
       <button type="button" class="td-btn td-btn--ghost" id="confirm-discard">Descartar</button>
       <button type="button" class="td-btn td-btn--ghost" id="confirm-skip">Seguir sem filtro · 0 ✦</button>
+      <button type="button" class="td-btn td-btn--ghost" id="confirm-budget" hidden>Ajustar o meu teto</button>
       <button type="button" class="td-btn td-btn--primary" id="confirm-go">Ver prévia · 1 ✦</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     O RECIBO
+     Aparece ANTES do download, não depois. Quem está prestes a baixar
+     ainda pode decidir alguma coisa; quem já baixou, não.
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="td-modal" id="receipt" role="dialog" aria-modal="true" aria-labelledby="receipt-title" hidden>
+  <div class="td-modal__veil" data-close></div>
+  <div class="td-modal__card">
+    <p class="td-modal__eyebrow">Pronta</p>
+    <h2 class="td-modal__title" id="receipt-title">Sua thumb está pronta</h2>
+    <p class="td-modal__text">Confira a conta antes de baixar. Baixar não cobra crédito.</p>
+
+    <dl class="td-ledger" id="receipt-ledger"></dl>
+
+    <div class="td-modal__actions">
+      <button type="button" class="td-btn td-btn--primary" id="receipt-go">Baixar PNG 1920 × 1080</button>
+      <button type="button" class="td-btn td-btn--ghost" id="receipt-back">Voltar a editar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Ajustar o teto de gasto. Ver o README: o saldo é um limite que a
+     pessoa dá a si mesma, porque as chaves são dela. -->
+<div class="td-modal" id="budget" role="dialog" aria-modal="true" aria-labelledby="budget-title" hidden>
+  <div class="td-modal__veil" data-close></div>
+  <div class="td-modal__card">
+    <p class="td-modal__eyebrow">Saldo</p>
+    <h2 class="td-modal__title" id="budget-title">Ajustar o seu teto de gasto</h2>
+    <p class="td-modal__text">
+      As chaves são suas, então o ✦ não é uma moeda que você compra de alguém:
+      é um teto que você dá a si mesmo, para a conta da API não surpreender no
+      fim do mês. Um crédito custa por volta de <strong>R$ 0,23</strong>.
+    </p>
+
+    <label class="td-field__label" for="budget-input">Créditos disponíveis</label>
+    <div class="td-field">
+      <input type="number" id="budget-input" min="0" step="1" inputmode="numeric">
+    </div>
+
+    <div class="td-modal__actions">
+      <button type="button" class="td-btn td-btn--primary" id="budget-save">Salvar o teto</button>
+      <button type="button" class="td-btn td-btn--ghost" id="budget-cancel">Cancelar</button>
     </div>
   </div>
 </div>
@@ -122,11 +169,11 @@
     <div class="td-topbar__spacer"></div>
 
     <!-- Saldo, sempre à vista. O número muda; o ✦ é parte do componente. -->
-    <p class="td-pill td-pill--credits">
+    <button type="button" class="td-pill td-pill--credits" id="credits"
+            aria-label="Saldo de créditos. Clique para ajustar o seu teto de gasto">
       <span id="credits-count">100</span>
       <span class="td-pill__spark" aria-hidden="true">✦</span>
-      <span class="td-sr">créditos</span>
-    </p>
+    </button>
 
     <button type="button" class="td-btn td-btn--ghost td-topbar__action" id="open-setup" aria-label="Trocar ou apagar as chaves">
       <svg class="td-icon" aria-hidden="true"><use href="#i-save"></use></svg>

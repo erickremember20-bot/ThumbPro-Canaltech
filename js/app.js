@@ -319,17 +319,60 @@
     filterDelivery:   2    /* entrega em 2K */
   };
 
+  /* O custo real de cada chamada, em dólar. É isto que dá sentido ao
+     crédito: ✦ não é moeda inventada, é o custo da API arredondado para
+     um número que cabe num botão. */
+  var USD = {
+    removeBackground: 0.020,
+    filterPreview:    0.045,
+    filterDelivery:   0.101
+  };
+
+  var USD_TO_BRL = 5.50;
+
+  /* Cada gasto é registrado com o nome do que foi feito. O recibo lê
+     daqui — ele não recalcula nada, só mostra o que aconteceu. */
+  var ledger = [];
+  var startedAt = Date.now();
+
   /* O crédito sai NO MOMENTO DA CHAMADA e não volta — nem se a pessoa
      cancelar a espera. A única devolução é quando a chamada FALHA: aí a
      IA não rodou, ninguém foi cobrado lá fora, e o saldo é preservado. */
-  function spend(amount) {
+  function spend(amount, label, usd) {
     state.credits -= amount;
+    ledger.push({ label: label, credits: amount, usd: usd || 0, at: Date.now() });
     render();
   }
 
   function refund(amount) {
     state.credits += amount;
+    /* Estornado: a linha sai do livro-caixa, senão o recibo cobraria
+       por uma chamada que não entregou nada. */
+    for (var i = ledger.length - 1; i >= 0; i--) {
+      if (ledger[i].credits === amount && !ledger[i].refunded) {
+        ledger[i].refunded = true;
+        break;
+      }
+    }
     render();
+  }
+
+  function spentCredits() {
+    return ledger.filter(notRefunded).reduce(function (total, row) {
+      return total + row.credits;
+    }, 0);
+  }
+
+  function spentUsd() {
+    return ledger.filter(notRefunded).reduce(function (total, row) {
+      return total + row.usd;
+    }, 0);
+  }
+
+  function notRefunded(row) { return !row.refunded; }
+
+  function brl(usd) {
+    return 'R$ ' + (usd * USD_TO_BRL).toFixed(2).replace('.', ',');
   }
 
   /* ── As quatro paradas ─────────────────────────────────────────────
@@ -592,6 +635,18 @@
     return wrap;
   }
 
+
+  /* Saldo insuficiente nunca é só um botão morto: o caminho de volta
+     aparece junto. */
+  function budgetWay() {
+    var button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'td-btn td-btn--ghost td-btn--block td-stack';
+    button.textContent = 'Ajustar o meu teto de gasto';
+    button.addEventListener('click', function () { openBudget(); });
+    return button;
+  }
+
   function buildRemoveBackground() {
     var box = document.createElement('div');
     box.className = 'td-tool';
@@ -610,6 +665,9 @@
       button.disabled = true;
       button.textContent = 'Saldo insuficiente · precisa de ' +
         COST.removeBackground + ' ✦';
+      box.appendChild(button);
+      box.appendChild(budgetWay());
+      return box;
     } else {
       button.textContent = (state.bgRemoved ? 'Remover fundo de novo' : 'Remover fundo') +
         ' · ' + COST.removeBackground + ' ✦';
@@ -694,7 +752,7 @@
     bgBusy = true;
     bgError = null;
     /* Debitado NO MOMENTO DA CHAMADA, como a regra manda. */
-    spend(COST.removeBackground);
+    spend(COST.removeBackground, 'Remoção de fundo', USD.removeBackground);
 
     window.TD_AI.removeBackground(surface.getLayer().src).then(function (result) {
       bgBusy = false;
@@ -799,6 +857,7 @@
   var confirmText    = document.getElementById('confirm-text');
   var confirmLedger  = document.getElementById('confirm-ledger');
   var confirmGo      = document.getElementById('confirm-go');
+  var budgetShortcut = document.getElementById('confirm-budget');
   var pendingFilter  = null;
   var confirmReturnFocus = null;
 
@@ -884,6 +943,7 @@
       confirmGo.disabled = true;
       confirmGo.textContent = 'Saldo insuficiente · precisa de ' + COST.filterPreview + ' ✦';
     }
+    budgetShortcut.hidden = enough;
 
     confirmModal.hidden = false;
     confirmGo.focus();
@@ -942,7 +1002,9 @@
     ai.abort = new AbortController();
 
     /* DEBITADO AGORA, no instante da chamada. */
-    spend(cost);
+    spend(cost,
+      stage === 'preview' ? 'Prévia · ' + filter.name : 'Entrega em 2K · ' + filter.name,
+      stage === 'preview' ? USD.filterPreview : USD.filterDelivery);
 
     /* A prévia manda uma entrada reduzida: 1K basta para julgar direção
        de arte, e custa menos. A entrega manda a composição inteira. */
@@ -1073,6 +1135,11 @@
     } else {
       approve.disabled = true;
       approve.textContent = 'Saldo insuficiente · precisa de ' + COST.filterDelivery + ' ✦';
+      box.appendChild(title);
+      box.appendChild(text);
+      box.appendChild(approve);
+      box.appendChild(budgetWay());
+      return box;
     }
 
     var discard = document.createElement('button');
@@ -1590,7 +1657,109 @@
 
   downloadButton.addEventListener('click', function () {
     if (state.step !== STOPS.length - 1) return;
+    openReceipt();
+  });
+
+
+  /* =====================================================================
+     ETAPA 9 · RECIBO E SALDO
+     ===================================================================== */
+
+  var receipt      = document.getElementById('receipt');
+  var receiptLedger= document.getElementById('receipt-ledger');
+  var budget       = document.getElementById('budget');
+  var budgetInput  = document.getElementById('budget-input');
+
+  function duration() {
+    var seconds = Math.round((Date.now() - startedAt) / 1000);
+    if (seconds < 60) return seconds + ' s';
+    var minutes = Math.floor(seconds / 60);
+    return minutes + ' min ' + (seconds % 60) + ' s';
+  }
+
+  /* O RECIBO APARECE ANTES DO DOWNLOAD. Quem está prestes a baixar ainda
+     pode decidir alguma coisa; quem já baixou, não. */
+  function openReceipt() {
+    receiptLedger.textContent = '';
+
+    function row(label, value, strong) {
+      var dt = document.createElement('dt');
+      dt.textContent = label;
+      var dd = document.createElement('dd');
+      dd.textContent = value;
+      if (strong) dd.className = 'td-ledger__strong';
+      receiptLedger.appendChild(dt);
+      receiptLedger.appendChild(dd);
+    }
+
+    row('Tempo até aqui', duration());
+
+    ledger.filter(notRefunded).forEach(function (entry) {
+      row(entry.label, entry.credits + ' ✦');
+    });
+
+    if (!spentCredits()) row('Nenhuma chamada de IA', '0 ✦');
+
+    row('Créditos usados', spentCredits() + ' ✦', true);
+    row('Custo real', brl(spentUsd()), true);
+
+    /* A conta que justifica o produto: a thumb inteira aconteceu aqui.
+       Na rotina antiga eram três ferramentas e dois downloads no meio. */
+    row('Trocas de ferramenta', '0');
+
+    receipt.hidden = false;
+    document.getElementById('receipt-go').focus();
+    document.addEventListener('keydown', onReceiptKey);
+  }
+
+  function closeReceipt() {
+    receipt.hidden = true;
+    document.removeEventListener('keydown', onReceiptKey);
+  }
+
+  function onReceiptKey(event) {
+    if (event.key === 'Escape') { event.preventDefault(); closeReceipt(); }
+  }
+
+  document.getElementById('receipt-back').addEventListener('click', closeReceipt);
+  receipt.querySelector('[data-close]').addEventListener('click', closeReceipt);
+  document.getElementById('receipt-go').addEventListener('click', function () {
+    closeReceipt();
     download();
+  });
+
+  /* ── O teto de gasto ────────────────────────────────────────────────
+     O saldo não é moeda que se compra de alguém: as chaves são da
+     pessoa, então o ✦ é um teto que ela dá a si mesma para a conta da
+     API não surpreender. É isso que dá ao "saldo insuficiente" um
+     caminho de volta honesto — sem inventar uma loja que não existe. */
+
+  function openBudget() {
+    budgetInput.value = state.credits;
+    budget.hidden = false;
+    budgetInput.focus();
+    budgetInput.select();
+    document.addEventListener('keydown', onBudgetKey);
+  }
+
+  function closeBudget() {
+    budget.hidden = true;
+    document.removeEventListener('keydown', onBudgetKey);
+  }
+
+  function onBudgetKey(event) {
+    if (event.key === 'Escape') { event.preventDefault(); closeBudget(); }
+  }
+
+  document.getElementById('credits').addEventListener('click', openBudget);
+  budgetShortcut.addEventListener('click', function () { closeConfirm(); openBudget(); });
+  document.getElementById('budget-cancel').addEventListener('click', closeBudget);
+  budget.querySelector('[data-close]').addEventListener('click', closeBudget);
+  document.getElementById('budget-save').addEventListener('click', function () {
+    var next = parseInt(budgetInput.value, 10);
+    if (!isNaN(next) && next >= 0) state.credits = next;
+    closeBudget();
+    render();
   });
 
 
@@ -1599,6 +1768,6 @@
 
   window.TD_EDITOR = { state: state, ai: ai, render: render, goTo: goTo, surface: surface,
                        texts: texts, askConfirm: askConfirm, renderFinal: renderFinal,
-                       download: download };
+                       download: download, openReceipt: openReceipt };
 
 })(window, document);

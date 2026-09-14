@@ -21,7 +21,7 @@ Abre com duplo clique em `index.html`.
 | 6 | Parada 2: modal de confirmação, Gemini, três estados de IA | ✅ feito |
 | 7 | Canvas de texto da parada 3 | ✅ feito |
 | 8 | Parada 4: molduras e export 1920×1080 | ✅ feito |
-| 9 | Recibo, contagem de créditos, saldo insuficiente | ⬜ |
+| 9 | Recibo, contagem de créditos, saldo insuficiente | ✅ feito |
 | 10 | Passada de acessibilidade | ⬜ |
 
 ---
@@ -81,6 +81,23 @@ Por quê:
 Efeito prático: a prévia sai mais rápida e mais barata que na V2, e a interface
 não promete resolução nenhuma — ela diz "prévia", que é o que a pessoa precisa
 saber.
+
+### O saldo é um teto que a pessoa dá a si mesma
+
+O briefing pede um estado de "saldo insuficiente" com o caminho de recarga
+visível. Mas recarregar *o quê*, se as chaves de API são da própria pessoa?
+Não há loja: ninguém compra crédito de ninguém aqui.
+
+**Decisão: o ✦ é um teto de gasto, não uma moeda.** Um crédito é o custo real
+de uma chamada de API arredondado para um número que cabe num botão — cerca de
+R$ 0,23. O saldo existe para a conta da API não surpreender no fim do mês, e
+quem o ajusta é a própria pessoa, pelo pill de créditos na barra superior.
+
+Isso mantém a regra do briefing de pé — saldo insuficiente desabilita a ação
+com o motivo visível **e** oferece o caminho de volta — sem inventar uma
+cobrança que não existe. Se algum dia houver um worker com limite por usuário,
+como descrito acima, o teto passa a vir do servidor e esta tela some.
+
 
 ### Sobre o Focus/Ring
 
